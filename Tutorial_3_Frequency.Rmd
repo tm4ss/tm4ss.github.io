@@ -1,0 +1,185 @@
+---
+title: "Tutorial 3: Frequency analysis"
+output: html_document
+bibliography: references.bib
+---
+
+This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the R package.
+
+1. Text preprocessing
+2. Time series
+3. Grouping of semantic categories
+4. Heatmaps
+
+```{r init, results='hide', eval=FALSE, message=FALSE, warning=FALSE}
+options(stringsAsFactors = FALSE)
+require(tm)
+```
+```{r init2, message=F, echo=F, warning=FALSE}
+options(stringsAsFactors = FALSE, digits = 3)
+library(tm)
+```
+
+### Text preprocessing
+
+Like in the previous tutorial we read the CSV data file containing the State of the union addresses. This time, we add two more columns for the year and the decade. For the year we select a sub string of the four first characters from the `date` column of the data frame (e.g. extracting "1990" from "1990-02-12"). For the decade we select a sub string of the first three characters and paste a 0 to it. In later parts of the exercise we can use these columns for grouping data.
+
+```{r readata, results='hide', message=FALSE, warning=FALSE}
+textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
+
+# we add some more metadata columns to the data frame
+textdata$year <- substr(textdata$date, 0, 4)
+textdata$decade <- paste0(substr(textdata$date, 0, 3), "0")
+```
+
+Then, we create a corpus object again. For metadata we can add a DateTimeStamp to our table mapping of metadata and data.frame fields. Moreover, we apply different preprocessing steps to the corpus text. `removePunctuation` leaves only alphanumeric characters in the text. `removeNumbers` removes numeric characters. Then lowercase transformation is performed and an English set of stop-words is removed.
+
+```{r preprocesscorpus, cache=TRUE}
+m <- list(ID = "id", content = "text", DateTimeStamp = "date")
+myReader <- readTabular(mapping = m)
+corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removeWords, stopwords("en"))
+corpus <- tm_map(corpus, stripWhitespace)
+```
+
+Effects of this preprocessing can be printed in the console. 
+
+```{r results='hide'}
+as.character(corpus[[1]])
+```
+
+We see that the text is now a sequence of text features corresponding to the selected methods (other preprocessing steps could include stemming or lemmatization).
+
+From the preprocessed corpus, we create a new DTM.
+
+```{r generateDTM}
+DTM <- DocumentTermMatrix(corpus)
+```
+
+The resulting DTM should have `r nrow(DTM)` rows and `r ncol(DTM)` columns.
+
+### Time series
+
+We now want to measure frequencies of certain terms over time. Frequencies in single decades are plotted as line graphs to follow their trends over time. First, we determine which terms to analyze and reduce our DTM to this these terms.
+
+```{r reduceDTM1, results='hide', message=FALSE, warning=FALSE}
+terms_to_observe <- c("nation", "war", "god", "terror", "security")
+
+DTM_reduced <- as.matrix(DTM[, terms_to_observe])
+```
+
+The reduced DTM contains counts for each of our `r length(terms_to_observe)` terms and in each of the `r nrow(DTM_reduced)` documents (rows of the reduced DTM). Since our corpus covers a time span of more than 200 years, we could aggregate frequencies in single documents per decade to get a meaningful representation of term frequencies over time. 
+
+Information of each decade per document we added in the beginning to the `textdata` variable. There are ten speeches per decade mostly (you can check with `table(textdata$decade`). We use `textdata$decade` as a grouping parameter for the `aggregate` function. This function sub-selects rows from the input data (`DTM_reduced`) for all different decade values given in the `by`-parameter. Each sub-selection is processed column-wise using the function provided in the third parameter (`sum`).
+
+```{r reduceDTM2, results='hide', message=FALSE, warning=FALSE}
+counts_per_year <- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)
+```
+
+`counts_per_year` now contains sums of term frequencies per decade. Time series for single terms can be plotted either by the simple `plot` function. Additional time series could be added by the `lines`-function (Tutorial 2). A more simple way is to use the matplot-function which can draw multiple lines in one command.
+
+```{r plotMat, results='hide', message=FALSE, warning=FALSE}
+# give x and y values beautiful names
+decades <- counts_per_year$decade
+frequencies <- counts_per_year[, terms_to_observe]
+
+# plot multiple frequencies
+matplot(decades, frequencies, type = "l")
+
+# add legend to the plot
+l <- length(terms_to_observe)
+legend('topleft', legend = terms_to_observe, col=1:l, text.col = 1:l, lty = 1:l)  
+```
+
+Among other things, we can observe peaks in reference to `war` around the US civil war, around 1900 and WWII. The term nation also peaks around 1900 giving hints for further investigations on possible relatedness of both terms during that time. References to security, god of terror appear to be more 'modern' phenomena.
+
+### Grouping of semantic categories
+
+Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple **Sentiment analysis** approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.
+
+We provide a selection of very positive / negative English words extracted from SentiWordNet 3.0 (see @BACCIANELLA10.769). Have a look in the text files to see, what they consist of.
+
+```{r buildTS1, warning=F}
+positive_terms_all <- readLines("data/senti_words_positive.txt")
+negative_terms_all <- readLines("data/senti_words_negative.txt")
+```
+
+To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple `row_sums` command.
+
+```{r buildTS2, warning=F, message=F}
+require(slam)
+
+positive_terms_in_suto <- intersect(colnames(DTM), positive_terms_all)
+counts_positive <- row_sums(DTM[, positive_terms_in_suto])
+
+negative_terms_in_suto <- intersect(colnames(DTM), negative_terms_all)
+counts_negative <- row_sums(DTM[, negative_terms_in_suto])
+```
+
+Since lengths of speeches tend to vary greatly, we do want to measure relative frequencies of sentiment terms. This can be achieved by dividing counts of sentiment terms by the number of all terms in each document. The relative frequencies we store in a dataframe for subsequent aggregation and visualization.
+
+```{r buildTS3, warning=F}
+counts_all_terms <- row_sums(DTM)
+
+relative_sentiment_frequencies <- data.frame(
+  positive = counts_positive / counts_all_terms,
+  negative = counts_negative / counts_all_terms
+)
+```
+
+Now we aggregate not per decade, but per president. Further we do not take the sum (not all presidents have the same number of speeches) but the mean. A sample output shows the computed mean sentiment scores per president.
+
+```{r buildTS4, warning=F}
+sentiments_per_president <- aggregate(relative_sentiment_frequencies, by = list(president = textdata$president), mean)
+
+head(sentiments_per_president)
+```
+
+Scores per president can be visualized as bar plot. The package `ggplot2` offers a great variety of plots. The package `reshape2` offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: http://ggplot2.org
+
+```{r buildTS5, warning=F, message=F}
+require(reshape2)
+df <- melt(sentiments_per_president, id.vars = "president")
+require(ggplot2)
+ggplot(data = df, aes(x = president, y = value, fill = variable)) + 
+  geom_bar(stat="identity", position=position_dodge()) + coord_flip()
+```
+
+The standard output is sorted by president's names alphabetically. We can make use of the reorder command, to sort by positive / negative sentiment score:
+
+```{r buildTS6, warning=F, eval=F}
+# order by positive sentiments
+ggplot(data = df, aes(x = reorder(president, df$value, head, 1), y = value, fill = variable)) + geom_bar(stat="identity", position=position_dodge()) + coord_flip()
+
+# order by negative sentiments
+ggplot(data = df, aes(x = reorder(president, df$value, tail, 1), y = value, fill = variable)) + geom_bar(stat="identity", position=position_dodge()) + coord_flip()
+```
+
+### Heatmaps
+
+The overlapping of several time series in a plot can become very confusing. Heatmaps provide an alternative for the visualization of multiple frequencies over time. In this visualization method, a time series is mapped as a row in a matrix grid. Each cell of the grid is filled with a color corresponding to the value from the time series. Thus, several time series can be displayed in parallel. 
+
+In addition, the time series can be sorted by similarity in a heatmap. In this way, similar frequency sequences with parallel shapes (heat activated cells) can be detected more quickly. Dendrograms can be plotted aside to visualize quantities of similarity.
+
+```{r HM1, fig.width=9, fig.height=8, warning=F}
+terms_to_observe <- c("war", "peace", "civil", "terror", "islam", 
+                      "threat", "security", "conflict", "together", 
+                      "friend", "enemy", "afghanistan", "muslim", 
+                      "germany", "world", "duty", "frontier", "north",
+                      "south", "black", "racism", "slavery")
+DTM_reduced <- as.matrix(DTM[, terms_to_observe])
+rownames(DTM_reduced) <- ifelse(as.integer(textdata$year) %% 2 == 0, textdata$year, "")
+heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE, margins = c(5, 10))
+```
+
+
+Optional exercises
+-------------------------------------------------
+1. Run the time series analysis with the terms "environment", "climate", "planet", "space".
+2. Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.
+3. Draw a heatmap of the terms "i", "you", "he", "she", "we", "they" aggregated per president. Caution: you need to modify the preprocessing in a certain way!
+
+# References

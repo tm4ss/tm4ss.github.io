@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
+
+<meta name="date" content="2017-09-11" />
+
+<title>Tutorial 4: Key term extraxtion</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro</a>
+</li>
+<li>
+  <a href="Tutorial_1_Data_acquisition.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 1
+  </a>
+</li>
+<li>
+  <a href="Tutorial_2_Read_data_Zipf.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 2
+  </a>
+</li>
+<li>
+  <a href="Tutorial_3_Frequency.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 3
+  </a>
+</li>
+<li>
+  <a href="Tutorial_4_Term_extraction.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 4
+  </a>
+</li>
+<li>
+  <a href="Tutorial_5_Co-occurrence.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 5
+  </a>
+</li>
+<li>
+  <a href="Tutorial_6_Topic_Models.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 6
+  </a>
+</li>
+<li>
+  <a href="Tutorial_7_Klassifikation.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 7
+  </a>
+</li>
+<li>
+  <a href="Tutorial_8_NER_POS.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 8
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Tutorial 4: Key term extraxtion</h1>
+<h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
+<h4 class="date"><em>2017-09-11</em></h4>
+
+</div>
+
+
+<p>This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus.</p>
+<ol style="list-style-type: decimal">
+<li>TF-IDF</li>
+<li>Log-likelihood ratio test</li>
+<li>Aggregations and visualization</li>
+</ol>
+<p>Like in the previous tutorial we read the CSV data file containing the State of the union addresses and preprocess the corpus object with a sequence of <code>tm_map</code> functions.</p>
+<p>This time, we also apply <strong>stemming</strong> to the corpus. Stemming reduces (potentially) inflected word forms to its word stem to unify similar semantic forms to the same text representation. For instance, ‘presidents’ becomes ‘president’ and ‘singing’ becomes ‘sing’.</p>
+<p>Finally, we create a Document-Term-Matrix.</p>
+<pre class="r"><code>options(stringsAsFactors = FALSE)
+library(tm)
+
+textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)
+english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
+
+# Create corpus object
+m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;, DateTimeStamp = &quot;date&quot;)
+myReader &lt;- readTabular(mapping = m)
+corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+corpus &lt;- tm_map(corpus, removeNumbers)
+corpus &lt;- tm_map(corpus, content_transformer(tolower))
+corpus &lt;- tm_map(corpus, removeWords, english_stopwords)
+
+# Stemming
+require(&quot;SnowballC&quot;)
+corpus &lt;- tm_map(corpus, stemDocument, language = &quot;en&quot;)
+corpus &lt;- tm_map(corpus, stripWhitespace)
+
+# View first document
+substr(as.character(corpus[[1]]), 0, 250)
+
+# Create DTM
+DTM &lt;- DocumentTermMatrix(corpus)</code></pre>
+<div id="tf-idf" class="section level1">
+<h1><span class="header-section-number">1</span> TF-IDF</h1>
+<p>A widely used method to weight terms according to their semantic contribution to a document is the <strong>term frequency–inverse document frequency</strong> measure (TF-IDF). The idea is, the more a term occurs in a document, the more contributing it is. At the same time, in the more documents a term occurs, the less informative it is for a single document. The product of both measures is the resulting weight.</p>
+<p>Let us compute TF-IDF weights for all terms in the first speech of Barack Obama.</p>
+<pre class="r"><code>require(slam)
+
+# Compute IDF: log(N / n_i)
+number_of_docs &lt;- nrow(DTM)
+term_in_docs &lt;- col_sums(DTM &gt; 0)
+idf &lt;- log2(number_of_docs / term_in_docs)
+
+# Compute TF
+first_obama_speech &lt;- which(textdata$president == &quot;Barack Obama&quot;)[1]
+tf &lt;- as.vector(DTM[first_obama_speech, ])
+
+# Compute TF-IDF
+tf_idf &lt;- tf * idf
+names(tf_idf) &lt;- colnames(DTM)</code></pre>
+<p>The last operation is to append the column names again to the resulting term weight vector. If we now sort the tf-idf weights decreasingly, we get the most important terms for the Obama speech, according to this weight.</p>
+<pre class="r"><code>sort(tf_idf, decreasing = T)[1:20]</code></pre>
+<pre><code>##    -start      dont       job   tonight      lend  recoveri    layoff 
+##  31.40700  27.64286  27.21418  24.28682  23.18042  23.06548  20.55525 
+##    colleg     ensur     crisi    budget  quitters long-term      iraq 
+##  20.18859  18.22675  18.06525  16.66461  15.70350  14.96518  13.83773 
+##     clean  mortgage      auto    global      weve   deficit 
+##  13.78296  13.70350  13.58946  13.40912  13.40912  13.29039</code></pre>
+<p>If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the tm-package provides a convenient function for computing tf-idf weights of a given DTM: <code>weightTfIdf(DTM)</code>.</p>
+</div>
+<div id="log-likelihood" class="section level1">
+<h1><span class="header-section-number">2</span> Log likelihood</h1>
+<p>We now use a more sophisticated method with a comparison corpus and the log likelihood statistic.</p>
+<pre class="r"><code>targetDTM &lt;- DocumentTermMatrix(corpus)
+
+termCountsTarget &lt;- as.vector(targetDTM[first_obama_speech, ])
+names(termCountsTarget) &lt;- colnames(targetDTM)
+# Just keep counts greater than zero
+termCountsTarget &lt;- termCountsTarget[termCountsTarget &gt; 0]</code></pre>
+<p>In <em>termCountsTarget</em> we have the tf for the first Obama speech again.</p>
+<p>As a comparison corpus, we select a corpus from the Leipzig Corpora Collection (<a href="http://corpora.uni-leipzig.de" class="uri">http://corpora.uni-leipzig.de</a>): 30.000 randomly selected sentences from the Wikipedia of 2010. <strong>CAUTION:</strong> The preprocessing of the comparison corpus must be identical to the preprocessing Of the target corpus to achieve meaningful results!</p>
+<pre class="r"><code>lines &lt;- readLines(&quot;resources/eng_wikipedia_2010_30K-sentences.txt&quot;, encoding = &quot;UTF-8&quot;)
+comparisonCorpus &lt;- Corpus(VectorSource(lines))
+comparisonCorpus &lt;- tm_map(comparisonCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+comparisonCorpus &lt;- tm_map(comparisonCorpus, removeNumbers)
+comparisonCorpus &lt;- tm_map(comparisonCorpus, content_transformer(tolower))
+comparisonCorpus &lt;- tm_map(comparisonCorpus, removeWords, english_stopwords)
+comparisonCorpus &lt;- tm_map(comparisonCorpus, stemDocument, language = &quot;en&quot;)
+comparisonCorpus &lt;- tm_map(comparisonCorpus, stripWhitespace)</code></pre>
+<p>From the comparison corpus, we also create a count of all terms.</p>
+<pre class="r"><code>comparisonDTM &lt;- DocumentTermMatrix(comparisonCorpus)
+termCountsComparison &lt;- col_sums(comparisonDTM)</code></pre>
+<p>In <em>termCountsComparison</em> we now have the frequencies of all (target) terms in the comparison corpus.</p>
+<p>Let us now calculate the log-likelihood ratio test by comparing frequencies of a term in both corpora, taking the size of both corpora into account. First for a single term:</p>
+<pre class="r"><code># Loglikelihood for a single term
+term &lt;- &quot;care&quot;
+
+# Determine variables
+a &lt;- termCountsTarget[term]
+b &lt;- termCountsComparison[term]
+c &lt;- sum(termCountsTarget)
+d &lt;- sum(termCountsComparison)
+
+# Compute log likelihood test
+Expected1 = c * (a+b) / (c+d)
+Expected2 = d * (a+b) / (c+d)
+t1 &lt;- a * log((a/Expected1))
+t2 &lt;- b * log((b/Expected2))
+logLikelihood &lt;- 2 * (t1 + t2)
+
+print(logLikelihood)</code></pre>
+<pre><code>##     care 
+## 68.73001</code></pre>
+<p>The LL value indicates whether the term occurs significantly more frequently / less frequently in the target counts than we would expect from the observation in the comparative counts. Specific significance thresholds are defined for the LL values:</p>
+<ul>
+<li>95th percentile; 5% level; p &lt; 0.05; critical value = 3.84</li>
+<li>99th percentile; 1% level; p &lt; 0.01; critical value = 6.63</li>
+<li>99.9th percentile; 0.1% level; p &lt; 0.001; critical value = 10.83</li>
+<li>99.99th percentile; 0.01% level; p &lt; 0.0001; critical value = 15.13</li>
+</ul>
+<p>With R it is easy to calculate the LL-value for all terms at once. This is possible because many computing operations in R can be applied not only to individual values, but to entire vectors and matrices. For example, <code>a / 2</code> results in a single value <em>a divided by 2</em> if <code>a</code> is a single number. If <code>a</code> is a vector, the result is also a vector, in which all values are divided by 2.</p>
+<p>ATTENTION: A comparison of term occurrences between two documents/corpora is actually only useful if the term occurs in both units. Since, however, we also want to include terms which are not contained in the comparative corpus (the <code>termCountsComparison</code> vector contains 0 values for these terms), we simply add 1 to all counts during the test. This is necessary to avoid uninterpretable <code>NaN</code> values which otherwise would result from the log-function on 0-values during the LL test. Alternatively, the test could be performed only on terms that actually occur in both corpora.</p>
+<p>First, let’s have a look into the set of terms only occurring in the target document, but not in the comparison corpus.</p>
+<pre class="r"><code># use set operation to get terms only occuring in target document
+uniqueTerms &lt;- setdiff(names(termCountsTarget), names(termCountsComparison))
+# Have a look into a random selection of terms unique in the target corpus
+sample(uniqueTerms, 20)</code></pre>
+<pre><code>##  [1] &quot;banks&quot;       &quot;resources&quot;   &quot;war-era&quot;     &quot;-start&quot;      &quot;theyll&quot;     
+##  [6] &quot;commun&quot;      &quot;generation&quot;  &quot;priorities&quot;  &quot;running&quot;     &quot;-teach&quot;     
+## [11] &quot;paycheck&quot;    &quot;peels&quot;       &quot;sacrifice&quot;   &quot;committed&quot;   &quot;federal&quot;    
+## [16] &quot;gains&quot;       &quot;website&quot;     &quot;minneapolis&quot; &quot;peril&quot;       &quot;training&quot;</code></pre>
+<p>Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the <code>a == 0</code> resp. <code>b == 0</code> expression add 1 to the expression which yields a 0 value after applying the log function.</p>
+<pre class="r"><code># Create vector of zeros to append to comparison counts
+zeroCounts &lt;- rep(0, length(uniqueTerms))
+names(zeroCounts) &lt;- uniqueTerms
+termCountsComparison &lt;- c(termCountsComparison, zeroCounts)
+
+# Get list of terms to compare from intersection of target and comparison vocabulary
+termsToCompare &lt;- intersect(names(termCountsTarget), names(termCountsComparison))
+
+# Calculate statistics (same as above, but now with vectors!)
+a &lt;- termCountsTarget[termsToCompare]
+b &lt;- termCountsComparison[termsToCompare]
+c &lt;- sum(termCountsTarget)
+d &lt;- sum(termCountsComparison)
+Expected1 = c * (a+b) / (c+d)
+Expected2 = d * (a+b) / (c+d)
+t1 &lt;- a * log((a/Expected1) + (a == 0))
+t2 &lt;- b * log((b/Expected2) + (b == 0))
+logLikelihood &lt;- 2 * (t1 + t2)
+
+# Compare relative frequencies to indicate over/underuse
+relA &lt;- a / c
+relB &lt;- b / d
+# underused terms are multiplied by -1
+logLikelihood[relA &lt; relB] &lt;- logLikelihood[relA &lt; relB] * -1</code></pre>
+<p>Let’s take a look at the results: The 50 more frequently used / less frequently used terms, and then the more frequently used terms compared to their frequency. We also see terms that have comparatively low frequencies are identified by the LL test as statistically significant compared to the reference corpus.</p>
+<pre class="r"><code># top terms (overuse in targetCorpus compared to comparisonCorpus)
+sort(logLikelihood, decreasing=TRUE)[1:25]</code></pre>
+<pre><code>##  american   economi    health   tonight       job    budget      care 
+## 127.26575  99.12254  86.54447  83.80928  78.68057  72.11434  68.73001 
+##   america     crisi  recoveri      lend   deficit      cost      plan 
+##  67.41958  64.94608  64.94608  61.72404  56.99759  56.62186  53.20404 
+##    reform    afford  congress    invest       tax    energi    -start 
+##  50.15442  47.46049  47.21880  45.13974  39.99798  38.76727  38.46741 
+##      educ      dont long-term    dollar 
+##  37.84352  37.54112  35.80695  35.05019</code></pre>
+<pre class="r"><code># bottom terms (underuse in targetCorpus compared to comparisonCorpus)
+sort(logLikelihood, decreasing=FALSE)[1:25]</code></pre>
+<pre><code>##       game       citi    develop       oper      point    general 
+## -4.3425856 -4.3167595 -2.9149729 -1.9059638 -1.8728417 -1.7416719 
+##     design       larg      earli     record        run       book 
+## -1.6340510 -1.6340510 -1.5596799 -1.4031554 -1.3621047 -1.3213579 
+##     includ       left       area     person     number    product 
+## -1.2478227 -1.2408068 -1.2179743 -1.1812503 -1.1290878 -0.9047823 
+##     produc    control      local       show    success       leav 
+## -0.8682676 -0.8592053 -0.8411617 -0.8174538 -0.7266182 -0.6336620 
+##        age 
+## -0.5605558</code></pre>
+<pre class="r"><code>llTop100 &lt;- sort(logLikelihood, decreasing=TRUE)[1:100]
+frqTop100 &lt;- termCountsTarget[names(llTop100)]
+frqLLcomparison &lt;- data.frame(llTop100, frqTop100)
+View(frqLLcomparison)
+
+# Number of signficantly overused terms (p &lt; 0.01)
+sum(logLikelihood &gt; 6.63)</code></pre>
+<pre><code>## [1] 329</code></pre>
+<p>The method extracted 329 key terms from the first Obama speech.</p>
+</div>
+<div id="aggregation-and-visualization" class="section level1">
+<h1><span class="header-section-number">3</span> Aggregation and visualization</h1>
+<p>Finally, visualize the result of the 50 most significant terms as Wordcloud. This can be realized simply by function of the package wordcloud. Additionally to the words and their weights (here we use likelihood values), we override default scaling and color parameters. Feel free to try different parameters to modify the wordcloud rendering.</p>
+<pre class="r"><code>require(wordcloud)
+top50 &lt;- sort(logLikelihood, decreasing = TRUE)[1:50]
+wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, &quot;Dark2&quot;), random.order = F)</code></pre>
+<p><img src="Tutorial_4_Term_extraction_files/figure-html/unnamed-chunk-2-1.png" width="480" style="display: block; margin: auto;" /></p>
+<p>Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.</p>
+<p>For this, we iterate over all different president names using a for-loop. Within the loop, we utilize a logical vector (Boolean TRUE/FALSE values), to split the DTM into two sub matrices: rows of the currently selected president and rows of all other presidents. From these matrices our counts of target and comparison frequencies are created. The statistical computation of the log-likelihood measure from above, we outsourced into the function <code>calculateLogLikelihood</code> which we load with the <code>source</code> command at the beginning of the block. The function just takes both frequency vectors as input parameters and outputs a LL-value for each term of the target vector.</p>
+<p>Results of the LL key term extraction are visualized again as a wordcloud. Instead of plotting the wordcloud into RStudio, this time we write the visualization as a PDF-file to disk into the <code>wordclouds</code> folder. After the for-loop is completed, the folder should contain 42 wordcloud PDFs, one for each president.</p>
+<pre class="r"><code>source(&quot;calculateLogLikelihood.R&quot;)
+
+presidents &lt;- unique(textdata$president)
+for (president in presidents) {
+  
+  cat(&quot;Extracting terms for president&quot;, president, &quot;\n&quot;)
+  
+  selector_logical_idx &lt;- textdata$president == president
+  
+  presidentDTM &lt;- targetDTM[selector_logical_idx, ]
+  termCountsTarget &lt;- col_sums(presidentDTM)
+  
+  otherDTM &lt;- targetDTM[!selector_logical_idx, ]
+  termCountsComparison &lt;- col_sums(otherDTM)
+  
+  loglik_terms &lt;- calculateLogLikelihood(termCountsTarget, termCountsComparison)
+  
+  top50 &lt;- sort(loglik_terms, decreasing = TRUE)[1:50]
+  
+  fileName &lt;- paste0(&quot;wordclouds/&quot;, president, &quot;.pdf&quot;)
+  pdf(fileName, width = 9, height = 7)
+  wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, &quot;Dark2&quot;), random.order = F)
+  dev.off()
+  
+}</code></pre>
+</div>
+<div id="optional-exercises" class="section level1">
+<h1><span class="header-section-number">4</span> Optional exercises</h1>
+<ol style="list-style-type: decimal">
+<li>Create a table (data.frame), which displays the top 25 terms of all speeches by frequency, tf-idf and log likelihood in columns.</li>
+</ol>
+<pre><code>##    word.frq  frq word.tfidf     tfidf   word.ll        ll
+## 1     state 7574    program 1366.6042  congress 2946.2685
+## 2    govern 7209    tonight 1163.5595    govern 2698.1090
+## 3      year 5925        job 1044.7222     state 1844.8106
+## 4    nation 5427     mexico  979.7642    nation 1654.3927
+## 5  congress 4987     budget  828.1032      unit 1229.1613
+## 6      unit 4562       bank  823.9534   countri 1189.2364
+## 7   countri 3930  territori  818.3297       law 1034.0600
+## 8     peopl 3703       gold  760.6911     great 1000.0192
+## 9     great 3628    billion  747.1415 recommend  924.3473
+## 10 american 3341       cent  745.8005  american  898.3763</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Create a wordcloud which compares Obama’s second speech with all his other speeches. <img src="Tutorial_4_Term_extraction_files/figure-html/extra2-1.png" width="672" /></li>
+</ol>
+</div>
+
+<p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

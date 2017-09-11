@@ -1,5 +1,17 @@
-Tutorial 6: Topic Models
-====================================
+---
+title: "Tutorial 6: Topic Models"
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    toc_float: true
+    number_sections: yes
+highlight: tango
+bibliography: references.bib
+csl: springer.csl
+---
 
 This exercise demonstrates the use of topic models on a text corpus for the extraction of latent semantic contexts in the documents. In this exercise we will:
 
@@ -10,14 +22,16 @@ This exercise demonstrates the use of topic models on a text corpus for the extr
 
 The process starts as usual with the reading of the corpus data. Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.
 
-For text preprocessing, we remove stopwords, since they tend to occur as "noise" in the estimated topics of the LDA model.
-
-```{r initalisierung, results='hide', message=FALSE, warning=FALSE}
+```{r setup, results='hide', message=FALSE, warning=FALSE}
 # setwd("Your work directory")
 options(stringsAsFactors = FALSE)
 library(tm)
 require(topicmodels)
+```
 
+For text preprocessing, we remove stopwords, since they tend to occur as "noise" in the estimated topics of the LDA model.
+
+```{r initalisierung, results='hide', message=FALSE, warning=FALSE, cache = T}
 textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
@@ -35,9 +49,9 @@ processedCorpus <- tm_map(processedCorpus, stemDocument, language = "en")
 processedCorpus <- tm_map(processedCorpus, stripWhitespace)
 ```
 
-### Model calculation
+# Model calculation
 
-After the preprocessing, we have two corpus objects: `processedCorpus`, on which we calculate the TopicModel. To this end, stopwords were removed, words were stemmed and converted to lowercase letters and special characters were removed. The second Corpus object `corpus` serves to be able to view the original texts and thus to facilitate a qualitative control of the topic model results.
+After the preprocessing, we have two corpus objects: `processedCorpus`, on which we calculate an LDA topic model @blei_latent_2003. To this end, stopwords were removed, words were stemmed and converted to lowercase letters and special characters were removed. The second Corpus object `corpus` serves to be able to view the original texts and thus to facilitate a qualitative control of the topic model results.
 
 We now calculate a topic model on the `processedCorpus`. For this purpose, a DTM of the corpus is created. In this case, we only want to consider terms that occur with a certain minimum frequency in the body. This is primarily used to speed up the model calculation.
 
@@ -109,7 +123,7 @@ top5termsPerTopic <- terms(topicModel, 5)
 topicNames <- apply(top5termsPerTopic, 2, paste, collapse=" ")
 ```
 
-### Visualization of Words and Topics
+# Visualization of Words and Topics
 
 Although wordclouds may not be optimal for scientific purposes they can provide a quick visual overview of a set of terms. Let's look at some topics as wordcloud.
 
@@ -165,7 +179,7 @@ ggplot(data = vizDataFrame, aes(topic, value, fill = document), ylab = "proporti
   facet_wrap(~ document, ncol = N)
 ```
 
-### Influence on topic distributions
+# Topic distributions
 
 The figure above shows how topics within a document are distributed according to the model. In the current model all three documents show at least a small percentage of each topic. However, two to three topics dominate each document.
 
@@ -190,11 +204,7 @@ topicNames <- apply(terms(topicModel2, 5), 2, paste, collapse = " ")  # reset to
 
 Now visualize the topic distributions in the three documents again. What are the differences in the distribution structure?
 
-``` {r results="hide", echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=6, fig.align='center'}
-# load libraries for visualization
-library("reshape2")
-library("ggplot2")
-N <- length(exampleIds)
+``` {r results="hide", echo=T, warning=FALSE, message=FALSE, fig.width=10, fig.height=6, fig.align='center'}
 # get topic proportions form example documents
 topicProportionExamples <- theta[exampleIds,]
 colnames(topicProportionExamples) <- topicNames
@@ -207,7 +217,14 @@ ggplot(data = vizDataFrame, aes(topic, value, fill = document), ylab = "proporti
   facet_wrap(~ document, ncol = N)
 ```
 
-### Topic ranking
+# Topic ranking
+
+First, we try to get a more meaningful order of top terms per topic by re-ranking them with a specific score @Chang.2012. The idea of re-ranking terms is similar to the idea of TF-IDF. The more a term appears in top levels w.r.t. its probability, the less meaningful it is to describe the topic. Hence, the scoring advanced favors terms to describe a topic.
+
+```{r, results='hide'}
+# re-rank top topic terms for topic names
+topicNames <- apply(lda::top.topic.words(beta, 5, by.score = T), 2, paste, collapse = " ")
+```
 
 What are the defining topics within a collection? There are different approaches to find out which can be used to bring the topics into a certain order.
 
@@ -248,7 +265,7 @@ We see that sorting topics by the  Rank-1 method places topics with rather speci
 
 This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most imprtant topics or the filtering of the original collection based on specific sub-topics.
 
-### Filtering documents
+# Filtering documents
 
 The fact that a topic model conveys of topic probabilities for each document makes it possible to use it for thematic filtering of a collection. AS filter we select only those documents which exceed a certain threshold of their probability value for certain topics (for example, each document which contains topic `X` to more than 20 percent).
 
@@ -268,11 +285,11 @@ filteredCorpus
 
 Our filtered corpus contains `r length(filteredCorpus)` documents related to the topic `r topicToFilter` to at least 20 %.
 
-### Topic proportions over time
+# Topic proportions over time
 
 In a last step, we provide a distant view on the topics in the data over time. For this, we aggregate mean topic proportions per decade of all SOTU speeches. These aggregated topic proportions can then be visualized, e.g. as a bar plot. 
 
-```{r fig.width=9, fig.height=5, fig.align='center'}
+```{r fig.width=9, fig.height=6, fig.align='center', warning=F, message=F}
 # append decade information for aggregation
 textdata$decade <- paste0(substr(textdata$date, 0, 3), "0")
 # get mean topic proportions per decade
@@ -284,21 +301,25 @@ colnames(topic_proportion_per_decade)[2:(K+1)] <- topicNames
 vizDataFrame <- melt(topic_proportion_per_decade, id.vars = "decade")
 
 # plot topic proportions per deacde as bar plot
-ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) + geom_bar(stat = "identity")
+require(pals)
+ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) + 
+  geom_bar(stat = "identity") + ylab("proportion") + 
+  scale_fill_manual(values = paste0(alphabet(20), "FF"), name = "decade") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 The visualization shows that topics around the relation between the federal government and the states as well as inner conflicts clearly dominate the first decades. Security issues and the economy are the most important topics of recent SOTU addresses.
 
-Remark
-------
+# Remark
 
 The 231 SOTU addresses are rather long documents. Documents lengths clearly affects the results of topic modeling. For very short texts (e.g. Twitter posts) or very long texts (e.g. books), it can make sense to concatenate/split single documents to receive longer/shorter textual units for modeling.
 
 For the SOTU speeches for instance, it may be beneficial to model on paragraphs instead of entire speeches. By manual inspection / qualitative inspection of the results you can check if this procedure yields better (interpretable) topics.
 
-Optional exercises
-------------------
+# Optional exercises
 
 1. Create a list of all documents that have a thematic context with *economy*.
 2. Repeat the exercises with a different K value (e.g., K = 5, 30, 50). What do you think of the results?
 3. Split the original text source into paragraphs (e.g. use `strsplit(textdata$text, "\n\n")`) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?
+
+# References

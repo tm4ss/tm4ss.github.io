@@ -1,5 +1,17 @@
-Tutorial 1: Data acquisition
-============================
+---
+title: "Tutorial 1: Data import and web scraping"
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    toc_float: true
+    number_sections: yes
+highlight: tango
+bibliography: references.bib
+csl: springer.csl
+---
 
 This tutorial covers how to extract and process text data from web pages or other documents for later analysis.
 The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called **Scraping**. For these tasks, we use the package "rvest".
@@ -9,7 +21,7 @@ In a third exercise, we will extract text data from various formats such as PDF,
 2. Extract links from a overview page and extract articles
 3. Extract text data from PDF and other formats on disk
 
-### Preparation
+# Preparation
 
 Create a new R Project (File -> New Project -> Existing directory) in the provided tutorial folder. Then create a new R script (File -> New File -> R Script) named "Tutorial_1.R". In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.
 
@@ -26,8 +38,7 @@ getwd()
 ```
 
 
-Exercise 1: Crawl a single web page
------------------------------------
+# Crawl single webpage
 
 In a first exercise, we will download a single web page from "The Guardian" and extract text together with relevant metadata such as the article date. Let's define the URL of the article of interest and load the *rvest* package, which provides very useful functions for web crawling and scraping.
 
@@ -102,8 +113,8 @@ cat(format(date_object, "%Y-%m-%d"))
 The variables `title_text`, `intro_text`, `body_text` and `date_object` now contain the raw data for any subsequent text processing.
 
 
-Exercise 2: Follow a series of links
-------------------------------------
+# Follow links
+
 
 Usually, we do not want download a single document, but a series of documents. In our second exercise, we want to download all Guardian articles tagged with "Angela Merkel". Instead of a tag page, we could also be interested in downloading results of a site-search engine or any other link collection. The task is always two-fold: First, we download and parse the tag overview page to extract all links to articles of interest: 
 
@@ -230,8 +241,7 @@ write.csv2(all_articles, file = "data/guardian_merkel.csv")
 
 The last command write the extracted articles to a CSV-file in the data directory for any later use.
 
-Exercise 3: Extract text from various file formats
---------------------------------------------------
+# Read various file formats
 
 In case you have already a collection of text data files on your disk, you can import them into R in a very convenient provided by the `readtext` package. The package depends on some other programs or libraries in your system, to provide extraction for Word- and PDF-documents. So there may be some hurdles to install the package.
 

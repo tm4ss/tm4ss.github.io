@@ -1,7 +1,16 @@
 ---
-title: "Tutorial 8: POS/NE"
-output: html_document
+title: "Tutorial 8: Part-of-Speech tagging / Named Entity Recognition"
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    toc_float: true
+    number_sections: yes
+highlight: tango
 bibliography: references.bib
+csl: springer.csl
 ---
 
 This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package.
@@ -57,9 +66,9 @@ annotated_corpus[[1]]
 annotated_corpus[[2]]
 ```
 
-## Filter by POS for further applications
+# Filter NEs for further applications
 
-We annotate the first paragraphs of the corpus, extract proper nouns (person names, locations etc.), and compute significance of co-occurrence of them.
+We annotate the first paragraphs of the corpus, extract proper nouns, also referred to as Named Entities (NEs) such as person names, locations etc., and compute significance of co-occurrence of them.
 
 ```{r cooc, message=FALSE, warning=FALSE, cache=T}
 sample_corpus <- sapply(corpus[1:1000], annotateDocuments, pos_filter = c("NNP", "NNPS"))
@@ -83,7 +92,7 @@ print(coocs[1:20])
 ```
 
 
-## German language support
+# German language support
 
 For German language support run
 
@@ -92,7 +101,7 @@ For German language support run
 # require("openNLPmodels.de")
 ```
 
-## Optional exercises
+# Optional exercises
 
 1. Plot a co-occurrence graph for the term "califoria_nnp" and its collocates, such as in tutorial 5
 2. Merging tokens by identical consecutive POS-tags can be a useful approach to identification of multi-word-units (MWU). Modify the function `annotateDocuments` in a way, that consecutive POS-tags get merged into a single token (e.g. "United_NNP States_NNP" becomes "United_States_NNP"). 

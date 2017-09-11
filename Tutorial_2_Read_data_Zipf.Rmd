@@ -1,5 +1,17 @@
-Tutorial 2: Processing of textual data
-======================================
+---
+title: "Tutorial 2: Processing of textual data"
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    toc_float: true
+    number_sections: yes
+highlight: tango
+bibliography: references.bib
+csl: springer.csl
+---
 
 In this tutorial, we demonstrate how to read text data in R, tokenize texts and create a document-term matrix.
 
@@ -7,8 +19,8 @@ In this tutorial, we demonstrate how to read text data in R, tokenize texts and 
 2. Create a document-term matrix,
 3. Investigate Zipf's law on distribution of words.
 
-Reading text data
------------------
+# Reading text data
+
 
 Set global options at the beginning.
 
@@ -75,8 +87,8 @@ paste0(substring(as.character(corpus[[1]]), 0, 120), "...")
 
 Success!!! We now have `r length(corpus)` speeches for further analysis available in a convenient tm corpus object!
 
-Text statistics
----------------
+# Text statistics
+
 
 A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be __tokenized__. This means that all the words in the texts need to be identified and separated. Only in this way is it possible to count the frequency of individual word forms. A word form is also called **"type"**. The occurrence of a type in a text is a **"token"**.
 
@@ -156,8 +168,8 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = "green",
 
 The green range marks the range of meaningful terms for the collection.
 
-Optional exercises
--------------------------------------------------
+# Optional exercises
+
 1. Print out the word list without stop words and low frequent words.
 ```{r echo=FALSE}
 head(wordlist[meaningful_range_idx, ], 25)

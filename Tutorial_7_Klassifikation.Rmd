@@ -1,5 +1,18 @@
-Tutorial 7: Classification
-====================================
+---
+title: "Tutorial 7: Classification"
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    toc_float: true
+    number_sections: yes
+highlight: tango
+bibliography: references.bib
+csl: springer.csl
+---
+
 
 In this tutorial we show the use of supervised machine learning for text classification. The basic idea is to compute a model based on training data. Training data usually are hand-coded documents or text snippets associated with a specific category (class). From these texts, features (e.g. words) are extracted and associated with categories in the model. The model then can be utilized to categorize new texts.
 
@@ -16,7 +29,7 @@ We cover basic principles of the process such as cross-validation and feature en
 
 As data, again we use the "State of the Union"-addresses. But this time, we operate on paragraphs instead of documents. The file `data/sotu_paragraphs.csv` provides the speeches in the appropriate format. For each paragraph, we want to know whether it covers content related to **domestic or foreign affairs**.
 
-## Read paragraphs
+# Read paragraphs
 
 As already known, we read the text source (21334 paragraphs from 231 speeches). For the moment, we apply very basic preprocessing.
 
@@ -39,7 +52,7 @@ processedCorpus <- tm_map(processedCorpus, content_transformer(tolower))
 processedCorpus <- tm_map(processedCorpus, stripWhitespace)
 ```
 
-## Load training data
+# Load training data
 
 We provide 300 manually annotated example paragraphs as training data. In a CSV-file, the paragraph id and the corresponding category is stored.
 
@@ -80,7 +93,7 @@ DTM <- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global =
 dim(DTM)
 ```
 
-## Classification
+# Classification
 
 Now we build a linear SVM classification model with the LiblineaR package. SVM is a large margin classification approach which tries to find an optimal seperating hyperplane between data points of two different classes. There are a number of different kernel functions to compute the feature space where this hyperplane is located in (e.g. radial, polynomial, sigmoid kernel). For text classification usually the "linear" kernel is the best choice. The package LiblineaR wraps around the open source library LIBLINEAR which provides a very fast implementation.
 
@@ -144,7 +157,7 @@ This little experiment shows that depending on the definition of our positive cl
 2. To utilize accuracy and F-measure in a meaningful way, the less frequent class should be defined as POSITIVE class (FOREIGN in our case).
 
 
-## K-fold cross validation
+# K-fold cross validation
 
 To evaluate a classifier, the training data can be divided into training and test data. The model learns on the former and is evaluated with the latter. In this procedure, we unfortunately lose the test data to learn from. If there is little training data available, the k-fold cross-validation is a more suitable procedure. 
 
@@ -209,11 +222,11 @@ print(colMeans(evalMeasures))
 
 Accuracy is around 70%, F-measure is around 0.60. Let's try some approaches to optimize the automatic classification.
 
-## Optimization
+# Optimization
 
 These first tries have clarified how to utilize and evaluate machine learning functions for text in R. Now we concentrate on optimization strategies to get better results from the automatic classification process.
 
-### C-Parameter
+## C-Parameter
 
 For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function).  The **C-paramter** determines the cost of classifications on the training data during SVM training. 
 
@@ -241,7 +254,7 @@ print(paste0("Best C value: ", bestC, ", F1 = ", max(fValues)))
 
 From the empirical test, we can obtain C = `r bestC` as optimal choice for the SVM cost parameter. On the current training data set with the current features it achieves `r max(fValues)` F-score.
 
-### Optimized Preprocessing
+## Optimized Preprocessing
 
 Not only the SVM has parameters which can be optimized to improve the results. More important are the features used for classification. In our preprocessing chain above, we extracted single types and transformed them into lower case. We now add different preprocessing steps and check on the results. To get an optimal cost parameter for each new feature set, we wrapped the code for C-parameter optimization into the `optimize_C` function.
 
@@ -320,7 +333,7 @@ CAUTION: Testing different features must be done for each new task / language in
 
 GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead investing time into feature optimization it will probably be also a good idea to invest into generation of more training data.
 
-### Final classification
+# Final classification
 
 We now apply our final classification model to the entire data set, to determine the occurrence of FORGEIN/DOMESTIC affairs related content in each single speech.
 
@@ -350,7 +363,7 @@ ggplot(presidents_df, aes(x = speech, y = value, fill = category)) + geom_bar(st
 
 Can you see how the position of FORGEIN affairs related content switches from the beginning to the end around the turn to the 20th century?
 
-Optional exercises
-----------------------------
+# Optional exercises
+
 1. Divide the training data into a 80% training set and 20% test set. Train an SVM on the training set and evaluate the performance on the test set. As performance measure use **Krippendorff'a alpha** and **Cohen's Kappa** as provided in the `irr` package for R.
 2. Use the `proba = T` parameter for the `predict` method during the final classification to evaluate on label probabilities instead of concrete label decisions. Use the output of probabilities for the label "FOREIGN" to classify paragraphs as "FOREIGN" only if the label probability is greater than 60%. Visualize the result. What can you observe compared to the previous plot (decision boundary around 50%)?

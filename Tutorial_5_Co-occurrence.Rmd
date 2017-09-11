@@ -1,5 +1,17 @@
-Tutorial 5: Co-occurrence analysis
-========================================================
+---
+title: "Tutorial 5: Co-occurrence analysis"
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    toc_float: true
+    number_sections: yes
+highlight: tango
+bibliography: references.bib
+csl: springer.csl
+---
 
 This exercise will demonstrate how to perform co-occurrence analysis with **R** and the tm-package. It is shown how different significance measures can be used to extract semantic links between words. 
 
@@ -17,6 +29,8 @@ m <- list(ID = "id", content = "text", DateTimeStamp = "date")
 myReader <- readTabular(mapping = m)
 corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
 ```
+
+# Sentence detection
 
 The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighbouring words. One of the most frequently used context window is the sentence. 
 
@@ -111,7 +125,7 @@ minimumFrequency <- 10
 binDTM <- DocumentTermMatrix(sentenceCorpus, control=list(bounds = list(global=c(minimumFrequency, Inf)), weighting = weightBin))
 ```
 
-### Counting co-occurrences
+# Counting co-occurrences
 
 The counting of the joint word occurrence is easily possible via a matrix multiplication (https://en.wikipedia.org/wiki/Matrix_multiplication) on the binary DTM. For this purpose, the transposed matrix (dimensions: nTypes x nDocs) is multiplied by the original matrix (nDocs x nTypes), which as a result encodes a term-term matrix (dimensions: nTypes x nTypes).
 
@@ -134,7 +148,7 @@ as.matrix(coocCounts[202:205, 202:205])
 
 Interprete as follows: `r colnames(coocCounts)[204]` appears together `r coocCounts[204, 205]` times with `r colnames(coocCounts)[205]` in the `r nrow(binDTM)` sentences of the SUTO addresses. `r colnames(coocCounts)[204]` alone occurs `r coocCounts[204, 204]` times.
 
-### Evaluation of statistical significance
+# Statistical significance
 
 In order to not only count joint occurrence we have to determine their significance. Different significance-measures can be used. We need also various counts to calculate the significance of the joint occurrence of a term `i` (`coocTerm`) with any other term `j`:
 * k - Number of all context units in the corpus
@@ -187,7 +201,7 @@ print(resultOverView)
 ```
 
 
-### Visualization of co-occurrence
+# Visualization of co-occurrence
 
 In the following, we create a network visualization of significant co-occurrences. 
 
@@ -321,10 +335,59 @@ plot(graphNetwork,
 
 ```
 
-Optional exercises
--------------------------------------------------
+# Optional exercises
+
 1. Create term networks for "civil", "germany", "tax"
-2. For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. Try lower values for `numberOfCoocs` instead to create a less dense network plot.
+2. For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. 
+```{r optionalEx2, eval=T,cache=T,message=F,warning=F,echo=F,fig.width=10,fig.height=8}
+
+# Set the graph and type. In this case, "F" means "Force Directed"
+graphNetwork <- graph.data.frame(resultGraph, directed = F)
+
+# Identification of all nodes with less than 2 edges
+graphVs <- V(graphNetwork)[degree(graphNetwork) < 1]
+# These edges are removed from the graph
+graphNetwork <- delete.vertices(graphNetwork, graphVs) 
+
+# Assign colors to edges and nodes (searchterm blue, rest orange)
+V(graphNetwork)$color <- ifelse(V(graphNetwork)$name == coocTerm, 'cornflowerblue', 'orange') 
+
+# Edges with a significance of at least 50% of the maximum sig- nificance in the graph are drawn in orange
+halfMaxSig <- max(E(graphNetwork)$sig) * 0.5
+E(graphNetwork)$color <- ifelse(E(graphNetwork)$sig > halfMaxSig, "coral", "azure3")
+
+# Disable edges with radius
+E(graphNetwork)$curved <- 0 
+# Size the nodes by their degree of networking
+V(graphNetwork)$size <- log(degree(graphNetwork)) * 5
+
+# All nodes must be assigned a standard minimum-size
+V(graphNetwork)$size[V(graphNetwork)$size < 5] <- 3 
+
+# edge thickness
+E(graphNetwork)$width <- 2
+
+# Define the frame and spacing for the plot
+par(mai=c(0,0,1,0)) 
+
+# Finaler Plot
+plot(graphNetwork,				
+     layout = layout.fruchterman.reingold,	# Force Directed Layout 
+     main = paste(coocTerm, ' Graph'),
+     vertex.label.family = "sans",
+     vertex.label.cex = 0.8,
+     vertex.shape = "circle",
+     vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
+     vertex.frame.color = 'darkolivegreen',
+     vertex.label.color = 'black',		# Color of node names
+     vertex.label.font = 2,			# Font of node names
+     vertex.label = V(graphNetwork)$name,		# node names
+     vertex.label.cex = 1 # font size of node names 
+)
+```
+The plot may get very messy. Try lower values for `numberOfCoocs` to create a less dense network plot.
+
+
 3. Separate the DTM into two time periods (year < 1950; year > = 1950). Represent the graphs for the term "california" for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (`get_binDTM <- function(mycorpus)`) and for visualizing a co-occurrence network (`vis_cooc_network <- function(binDTM, coocTerm)`).
 ```{r optionalEx, eval=T,cache=T,message=F,warning=F,echo=F,fig.width=10,fig.height=8}
 

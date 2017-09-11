@@ -1,5 +1,4 @@
-# tm4ss.github.io
-A text mining course for social scientists and digital humanists
+# tm4ss - Text Mining for Social Scientists and Digital Humanists
 
 This course consists of 8 tutorials written in R-markdown and further described in [this paper](http://gscl2017.dfki.de/proceedings.php). 
 
@@ -20,10 +19,16 @@ In the /docs folder, you have access to the **[rendered tutorials](https://tm4ss
 
 Click **[here for the rendered tutorials](https://tm4ss.github.io/docs)**.
 
-## License
+## License & Citation
 
 This course was created by Gregor Wiedemann and Andreas Niekler. It was freely released under GPLv3 in September 2017. If you use (parts of) it for your own teaching or analysis, please cite
 
 ```
 Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: a five day text mining course for humanists and social scientists in R. Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH), GSCL 2017, Berlin.
+```
+
+Bibtex
+
+```
+  follows asap
 ```

@@ -165,7 +165,7 @@ For this, training data is split into e.g. K = 10 parts. Then k-1 parts are used
 
 The final result is determined from the average of the quality of the k runs. This allows a good approximation to the classification quality, including all training data.
 
-The `get_k_fold_logical_indexes` function introduced below returns a logical vector for the fold `j` for cross-validation. It splits a training data record of the size `n` into` k` folds. The resulting vector and its negated vector can be used for easy training data / test data selection.
+The `get_k_fold_logical_indexes` function introduced below returns a logical vector for the fold `j` for cross-validation. It splits a training data record of the size `n` into `k` folds. The resulting vector and its negated vector can be used for easy training data / test data selection.
 
 ```{r}
 
@@ -228,7 +228,7 @@ These first tries have clarified how to utilize and evaluate machine learning fu
 
 ## C-Parameter
 
-For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function).  The **C-paramter** determines the cost of classifications on the training data during SVM training. 
+For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function).  The **C-parameter** determines the cost of classifications on the training data during SVM training. 
 
 High values of C lead to a high costs of misclassification. The decision boundary which the classifier learns, will try to avoid any misclassification. But, values too high can lead to an overfitting of the model. This means, it adapts well to the training data, but classification will more likely fail on new test data.
 
@@ -299,7 +299,7 @@ k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)
 
 **Minimum feature frequency**
 
-Up to this point, we dropped features occurring less than 5 time in our data. Let's see if we include more features by decreasing the minimum frequency.
+Up to this point, we dropped features occurring less than five times in our data. Let's see if we include more features by decreasing the minimum frequency.
 
 ```{r, optimizePreprocessing3, cache = T, message=FALSE, warning=FALSE}
 # More features

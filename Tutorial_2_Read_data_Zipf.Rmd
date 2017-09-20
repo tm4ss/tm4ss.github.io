@@ -29,7 +29,7 @@ Set global options at the beginning.
 options(stringsAsFactors = FALSE)
 ```
 
-The `read.csv` command reads a **CSV** (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a *separator* character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = `TRUE` or` FALSE`) and the character set.
+The `read.csv` command reads a **CSV** (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a *separator* character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = `TRUE` or `FALSE`) and the character set.
 
 We read a CSV containing 231 "State of the Union" addresses of the presidents of the United States. The texts are freely available from http://stateoftheunion.onetwothree.net. Our CSV file has the format: `"id";"speech_type";"president";"date";"text"`. Text is encapsualted into quotes (`"`). Since sepration is marked by `;` instead of `,`, we need to specify the separator char. 
 
@@ -175,7 +175,7 @@ The green range marks the range of meaningful terms for the collection.
 head(wordlist[meaningful_range_idx, ], 25)
 ```
 2. If you look at the result, are there any corpus specific terms that should also be considered as stop word?
-3. What is the share of terms regarding the entire vocabulary which occurr only once in the corpus?
+3. What is the share of terms regarding the entire vocabulary which occur only once in the corpus?
 ```{r echo=FALSE}
 sum(wordlist$freqs == 1) / nrow(wordlist)
 ```

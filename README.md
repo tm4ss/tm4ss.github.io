@@ -30,5 +30,14 @@ Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: a five day text mining cou
 Bibtex
 
 ```
-  follows asap
+@inproceedings{WN17,
+  author    = {Gregor Wiedemann and Andreas Niekler},
+  title     = {Hands-On: {A} Five Day Text Mining Course for Humanists and Social Scientists in {R}},
+  booktitle = {Proceedings of the Workshop on Teaching {NLP} for Digital Humanities
+               (Teach4DH) 2017, Berlin, Germany, September 12, 2017.},
+  pages     = {57--65},
+  year      = {2017},
+  crossref  = {DBLP:conf/gldv/2017teach4dh},
+  url       = {http://ceur-ws.org/Vol-1918/wiedemann.pdf},
+}
 ```

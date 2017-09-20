@@ -1,5 +1,5 @@
 ---
-title: "Tutorial 4: Key term extraxtion"
+title: "Tutorial 4: Key term extraction"
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: 
@@ -155,12 +155,12 @@ The LL value indicates whether the term occurs significantly more frequently / l
 
 With R it is easy to calculate the LL-value for all terms at once. This is possible because many computing operations in R can be applied not only to individual values, but to entire vectors and matrices. For example, `a / 2` results in a single value *a divided by 2* if `a` is a single number. If `a` is a vector, the result is also a vector, in which all values are divided by 2.
 
-ATTENTION: A comparison of term occurrences between two documents/corpora is actually only useful if the term occurs in both units. Since, however, we also want to include terms which are not contained in the comparative corpus (the `termCountsComparison` vector contains 0 values for these terms), we simply add 1 to all counts during the test. This is necessary to avoid uninterpretable `NaN` values which otherwise would result from the log-function on 0-values during the LL test. Alternatively, the test could be performed only on terms that actually occur in both corpora.
+ATTENTION: A comparison of term occurrences between two documents/corpora is actually only useful if the term occurs in both units. Since, however, we also want to include terms which are not contained in the comparative corpus (the `termCountsComparison` vector contains 0 values for these terms), we simply add 1 to all counts during the test. This is necessary to avoid `NaN` values which otherwise would result from the log-function on 0-values during the LL test. Alternatively, the test could be performed only on terms that actually occur in both corpora.
 
 First, let's have a look into the set of terms only occurring in the target document, but not in the comparison corpus.
 
 ```{r allTermComparison}
-# use set operation to get terms only occuring in target document
+# use set operation to get terms only occurring in target document
 uniqueTerms <- setdiff(names(termCountsTarget), names(termCountsComparison))
 # Have a look into a random selection of terms unique in the target corpus
 sample(uniqueTerms, 20)
@@ -224,7 +224,7 @@ top50 <- sort(logLikelihood, decreasing = TRUE)[1:50]
 wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, "Dark2"), random.order = F)
 ```
 
-Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.
+Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a Wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.
 
 For this, we iterate over all different president names using a for-loop. Within the loop, we utilize a logical vector (Boolean TRUE/FALSE values), to split the DTM into two sub matrices: rows of the currently selected president and rows of all other presidents. From these matrices our counts of target and comparison frequencies are created. The statistical computation of the log-likelihood measure from above, we outsourced into the function `calculateLogLikelihood` which we load with the `source` command at the beginning of the block. The function just takes both frequency vectors as input parameters and outputs a LL-value for each term of the target vector.
 

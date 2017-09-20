@@ -32,9 +32,9 @@ corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myRead
 
 # Sentence detection
 
-The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighbouring words. One of the most frequently used context window is the sentence. 
+The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighboring words. One of the most frequently used context window is the sentence. 
 
-Documents are decomposed into sentences. Senteces are defined as a separate (quasi-)documents in a new corpus object of the tm-package. The further application of the tm-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.
+Documents are decomposed into sentences. Sentences are defined as a separate (quasi-)documents in a new corpus object of the tm-package. The further application of the tm-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.
 
 Important: The sentence segmentation must take place *before* the other preprocessing steps because the sentence-segmentation-model relies on intact word forms and punctuation marks.
 

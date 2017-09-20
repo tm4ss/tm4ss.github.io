@@ -17,8 +17,8 @@ This exercise demonstrates the use of topic models on a text corpus for the extr
 
 1. Read in and preprocess text data,
 2. Calculate a topic model using the R package *topmicmodels* and analyze its results in more detail,
-3. vizualize the results from the calculated model and
-4. Subselect documents based on the topic.
+3. Visualize the results from the calculated model and
+4. Select documents based on their topic composition.
 
 The process starts as usual with the reading of the corpus data. Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.
 
@@ -83,7 +83,7 @@ topicModel <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, verbose = 25)
 
 Depending on the size of the vocabulary, the collection size and the number K, the inference of topic models can take a very long time. This calculation may take several minutes. If it takes too long, reduce the vocabulary in the DTM by increasing the minimum frequency in the previous step.
 
-The topic model inference results in two (approximate) aposteriori probability distributions: a distribution `theta` over K topics within each document and a distribution `beta` over V terms within each topic, where V represents the length of the vocabulary of the collection (V = `r nTerms(DTM)`). Let's take a closer look at these results:
+The topic model inference results in two (approximate) posterior probability distributions: a distribution `theta` over K topics within each document and a distribution `beta` over V terms within each topic, where V represents the length of the vocabulary of the collection (V = `r nTerms(DTM)`). Let's take a closer look at these results:
 
 
 ```{r}
@@ -116,7 +116,7 @@ exampleTermData <- terms(topicModel, 10)
 exampleTermData[, 1:8]
 ```
 
-For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concat the five most likely terms of each topic to a string that represents a pseudo-name for each topic.
+For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concatenate the five most likely terms of each topic to a string that represents a pseudo-name for each topic.
 
 ``` {r}
 top5termsPerTopic <- terms(topicModel, 5)
@@ -263,7 +263,7 @@ paste(so, ":", names(so))
 
 We see that sorting topics by the  Rank-1 method places topics with rather specific thematic coherences in upper ranks of the list. 
 
-This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most imprtant topics or the filtering of the original collection based on specific sub-topics.
+This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most important topics or the filtering of the original collection based on specific sub-topics.
 
 # Filtering documents
 

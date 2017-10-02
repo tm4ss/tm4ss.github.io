@@ -11,9 +11,9 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-09-11" />
+<meta name="date" content="2017-10-02" />
 
-<title>Tutorial 4: Key term extraxtion</title>
+<title>Tutorial 4: Key term extraction</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -347,9 +347,9 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Tutorial 4: Key term extraxtion</h1>
+<h1 class="title toc-ignore">Tutorial 4: Key term extraction</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-09-11</em></h4>
+<h4 class="date"><em>2017-10-02</em></h4>
 
 </div>
 
@@ -467,16 +467,16 @@ print(logLikelihood)</code></pre>
 <li>99.99th percentile; 0.01% level; p &lt; 0.0001; critical value = 15.13</li>
 </ul>
 <p>With R it is easy to calculate the LL-value for all terms at once. This is possible because many computing operations in R can be applied not only to individual values, but to entire vectors and matrices. For example, <code>a / 2</code> results in a single value <em>a divided by 2</em> if <code>a</code> is a single number. If <code>a</code> is a vector, the result is also a vector, in which all values are divided by 2.</p>
-<p>ATTENTION: A comparison of term occurrences between two documents/corpora is actually only useful if the term occurs in both units. Since, however, we also want to include terms which are not contained in the comparative corpus (the <code>termCountsComparison</code> vector contains 0 values for these terms), we simply add 1 to all counts during the test. This is necessary to avoid uninterpretable <code>NaN</code> values which otherwise would result from the log-function on 0-values during the LL test. Alternatively, the test could be performed only on terms that actually occur in both corpora.</p>
+<p>ATTENTION: A comparison of term occurrences between two documents/corpora is actually only useful if the term occurs in both units. Since, however, we also want to include terms which are not contained in the comparative corpus (the <code>termCountsComparison</code> vector contains 0 values for these terms), we simply add 1 to all counts during the test. This is necessary to avoid <code>NaN</code> values which otherwise would result from the log-function on 0-values during the LL test. Alternatively, the test could be performed only on terms that actually occur in both corpora.</p>
 <p>First, let’s have a look into the set of terms only occurring in the target document, but not in the comparison corpus.</p>
-<pre class="r"><code># use set operation to get terms only occuring in target document
+<pre class="r"><code># use set operation to get terms only occurring in target document
 uniqueTerms &lt;- setdiff(names(termCountsTarget), names(termCountsComparison))
 # Have a look into a random selection of terms unique in the target corpus
 sample(uniqueTerms, 20)</code></pre>
-<pre><code>##  [1] &quot;banks&quot;       &quot;resources&quot;   &quot;war-era&quot;     &quot;-start&quot;      &quot;theyll&quot;     
-##  [6] &quot;commun&quot;      &quot;generation&quot;  &quot;priorities&quot;  &quot;running&quot;     &quot;-teach&quot;     
-## [11] &quot;paycheck&quot;    &quot;peels&quot;       &quot;sacrifice&quot;   &quot;committed&quot;   &quot;federal&quot;    
-## [16] &quot;gains&quot;       &quot;website&quot;     &quot;minneapolis&quot; &quot;peril&quot;       &quot;training&quot;</code></pre>
+<pre><code>##  [1] &quot;creating&quot;    &quot;growing&quot;     &quot;peels&quot;       &quot;republicans&quot; &quot;tragedy&quot;    
+##  [6] &quot;begins&quot;      &quot;promise&quot;     &quot;biden&quot;       &quot;extended&quot;    &quot;working&quot;    
+## [11] &quot;peril&quot;       &quot;prosperity&quot;  &quot;familys&quot;     &quot;surely&quot;      &quot;business&quot;   
+## [16] &quot;jobs&quot;        &quot;equipment&quot;   &quot;places&quot;      &quot;ensure&quot;      &quot;parentteach&quot;</code></pre>
 <p>Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the <code>a == 0</code> resp. <code>b == 0</code> expression add 1 to the expression which yields a 0 value after applying the log function.</p>
 <pre class="r"><code># Create vector of zeros to append to comparison counts
 zeroCounts &lt;- rep(0, length(uniqueTerms))
@@ -542,7 +542,7 @@ sum(logLikelihood &gt; 6.63)</code></pre>
 top50 &lt;- sort(logLikelihood, decreasing = TRUE)[1:50]
 wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, &quot;Dark2&quot;), random.order = F)</code></pre>
 <p><img src="Tutorial_4_Term_extraction_files/figure-html/unnamed-chunk-2-1.png" width="480" style="display: block; margin: auto;" /></p>
-<p>Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.</p>
+<p>Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a Wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.</p>
 <p>For this, we iterate over all different president names using a for-loop. Within the loop, we utilize a logical vector (Boolean TRUE/FALSE values), to split the DTM into two sub matrices: rows of the currently selected president and rows of all other presidents. From these matrices our counts of target and comparison frequencies are created. The statistical computation of the log-likelihood measure from above, we outsourced into the function <code>calculateLogLikelihood</code> which we load with the <code>source</code> command at the beginning of the block. The function just takes both frequency vectors as input parameters and outputs a LL-value for each term of the target vector.</p>
 <p>Results of the LL key term extraction are visualized again as a wordcloud. Instead of plotting the wordcloud into RStudio, this time we write the visualization as a PDF-file to disk into the <code>wordclouds</code> folder. After the for-loop is completed, the folder should contain 42 wordcloud PDFs, one for each president.</p>
 <pre class="r"><code>source(&quot;calculateLogLikelihood.R&quot;)

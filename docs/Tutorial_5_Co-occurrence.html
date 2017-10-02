@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-09-11" />
+<meta name="date" content="2017-10-02" />
 
 <title>Tutorial 5: Co-occurrence analysis</title>
 
@@ -349,7 +349,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 5: Co-occurrence analysis</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-09-11</em></h4>
+<h4 class="date"><em>2017-10-02</em></h4>
 
 </div>
 
@@ -368,8 +368,8 @@ myReader &lt;- readTabular(mapping = m)
 corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))</code></pre>
 <div id="sentence-detection" class="section level1">
 <h1><span class="header-section-number">1</span> Sentence detection</h1>
-<p>The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighbouring words. One of the most frequently used context window is the sentence.</p>
-<p>Documents are decomposed into sentences. Senteces are defined as a separate (quasi-)documents in a new corpus object of the tm-package. The further application of the tm-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.</p>
+<p>The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighboring words. One of the most frequently used context window is the sentence.</p>
+<p>Documents are decomposed into sentences. Sentences are defined as a separate (quasi-)documents in a new corpus object of the tm-package. The further application of the tm-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.</p>
 <p>Important: The sentence segmentation must take place <em>before</em> the other preprocessing steps because the sentence-segmentation-model relies on intact word forms and punctuation marks.</p>
 <p>The following code defines two functions. One selects documents, the other decomposes a given document text into sentences with the help of a probabilistic model.</p>
 <pre class="r"><code>require(openNLP)
@@ -586,13 +586,13 @@ for (i in 1:numberOfCoocs){
 <p>As a result, <code>resultGraph</code> now contains all <code>numberOfCoocs * numberOfCoocs</code> edges of a term co-occurrence network.</p>
 <pre class="r"><code># Sample of some examples from resultGraph
 resultGraph[sample(nrow(resultGraph), 6), ]</code></pre>
-<pre><code>##         from       to      sig
-## 1012 arizona  pursuit 12.27342
-## 93     coast  eastern 79.07697
-## 138  pacific    japan 79.06188
-## 1014    iowa kentucky 31.11145
-## 613    mines products 35.44232
-## 1312 arizona governor 10.21321</code></pre>
+<pre><code>##            from          to       sig
+## 102      mexico    boundary 127.80721
+## 74        upper     council  20.20561
+## 56        texas      states 133.45635
+## 412     arizona reservation  22.38981
+## 75      mineral    deposits  23.37492
+## 147 acquisition      wealth  17.47875</code></pre>
 <p>The package iGraph offers multiple graph visualizations for graph objects. Graph objects can be created from triple lists, such as those we just generated. In the next step we load the package iGraph and create a visualization of all nodes and edges from the object <code>resultGraph</code>.</p>
 <pre class="r"><code>require(igraph)
 

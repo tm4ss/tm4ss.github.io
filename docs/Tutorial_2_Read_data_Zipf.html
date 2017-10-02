@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-09-11" />
+<meta name="date" content="2017-10-02" />
 
 <title>Tutorial 2: Processing of textual data</title>
 
@@ -349,7 +349,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 2: Processing of textual data</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-09-11</em></h4>
+<h4 class="date"><em>2017-10-02</em></h4>
 
 </div>
 
@@ -365,7 +365,7 @@ div.tocify {
 <p>Set global options at the beginning.</p>
 <pre class="r"><code># Global options
 options(stringsAsFactors = FALSE)</code></pre>
-<p>The <code>read.csv</code> command reads a <strong>CSV</strong> (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a <em>separator</em> character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = <code>TRUE</code> or<code>FALSE</code>) and the character set.</p>
+<p>The <code>read.csv</code> command reads a <strong>CSV</strong> (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a <em>separator</em> character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = <code>TRUE</code> or <code>FALSE</code>) and the character set.</p>
 <p>We read a CSV containing 231 “State of the Union” addresses of the presidents of the United States. The texts are freely available from <a href="http://stateoftheunion.onetwothree.net" class="uri">http://stateoftheunion.onetwothree.net</a>. Our CSV file has the format: <code>&quot;id&quot;;&quot;speech_type&quot;;&quot;president&quot;;&quot;date&quot;;&quot;text&quot;</code>. Text is encapsualted into quotes (<code>&quot;</code>). Since sepration is marked by <code>;</code> instead of <code>,</code>, we need to specify the separator char.</p>
 <pre class="r"><code># read csv into a data.frame
 textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, header = TRUE, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)</code></pre>
@@ -529,7 +529,7 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 ## war               war  1887</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>If you look at the result, are there any corpus specific terms that should also be considered as stop word?</li>
-<li>What is the share of terms regarding the entire vocabulary which occurr only once in the corpus?</li>
+<li>What is the share of terms regarding the entire vocabulary which occur only once in the corpus?</li>
 </ol>
 <pre><code>## [1] 0.4728986</code></pre>
 <ol start="4" style="list-style-type: decimal">

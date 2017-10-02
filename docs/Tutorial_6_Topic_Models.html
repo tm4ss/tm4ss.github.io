@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-09-11" />
+<meta name="date" content="2017-10-02" />
 
 <title>Tutorial 6: Topic Models</title>
 
@@ -349,7 +349,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 6: Topic Models</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-09-11</em></h4>
+<h4 class="date"><em>2017-10-02</em></h4>
 
 </div>
 
@@ -358,8 +358,8 @@ div.tocify {
 <ol style="list-style-type: decimal">
 <li>Read in and preprocess text data,</li>
 <li>Calculate a topic model using the R package <em>topmicmodels</em> and analyze its results in more detail,</li>
-<li>vizualize the results from the calculated model and</li>
-<li>Subselect documents based on the topic.</li>
+<li>Visualize the results from the calculated model and</li>
+<li>Select documents based on their topic composition.</li>
 </ol>
 <p>The process starts as usual with the reading of the corpus data. Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.</p>
 <pre class="r"><code># setwd(&quot;Your work directory&quot;)
@@ -405,7 +405,7 @@ set.seed(9161)
 # compute the LDA model, inference via 1000 iterations of Gibbs sampling
 topicModel &lt;- LDA(DTM, K, method=&quot;Gibbs&quot;, control=list(iter = 500, verbose = 25))</code></pre>
 <p>Depending on the size of the vocabulary, the collection size and the number K, the inference of topic models can take a very long time. This calculation may take several minutes. If it takes too long, reduce the vocabulary in the DTM by increasing the minimum frequency in the previous step.</p>
-<p>The topic model inference results in two (approximate) aposteriori probability distributions: a distribution <code>theta</code> over K topics within each document and a distribution <code>beta</code> over V terms within each topic, where V represents the length of the vocabulary of the collection (V = 7673). Let’s take a closer look at these results:</p>
+<p>The topic model inference results in two (approximate) posterior probability distributions: a distribution <code>theta</code> over K topics within each document and a distribution <code>beta</code> over V terms within each topic, where V represents the length of the vocabulary of the collection (V = 7673). Let’s take a closer look at these results:</p>
 <pre class="r"><code># have a look a some of the results (posterior distributions)
 tmResult &lt;- posterior(topicModel)
 # format of the resulting object
@@ -454,7 +454,7 @@ dim(theta)               # nDocs(DTM) distributions over K topics</code></pre>
 ##  [8,] &quot;presid&quot;    &quot;treati&quot;  
 ##  [9,] &quot;law&quot;       &quot;power&quot;   
 ## [10,] &quot;republ&quot;    &quot;duti&quot;</code></pre>
-<p>For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concat the five most likely terms of each topic to a string that represents a pseudo-name for each topic.</p>
+<p>For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concatenate the five most likely terms of each topic to a string that represents a pseudo-name for each topic.</p>
 <pre class="r"><code>top5termsPerTopic &lt;- terms(topicModel, 5)
 topicNames &lt;- apply(top5termsPerTopic, 2, paste, collapse=&quot; &quot;)</code></pre>
 </div>
@@ -589,7 +589,7 @@ sort(countsOfPrimaryTopics, decreasing = TRUE)</code></pre>
 ## [19] &quot;0 : state constitut union right principl&quot;    
 ## [20] &quot;0 : constitut california slaveri peopl slave&quot;</code></pre>
 <p>We see that sorting topics by the Rank-1 method places topics with rather specific thematic coherences in upper ranks of the list.</p>
-<p>This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most imprtant topics or the filtering of the original collection based on specific sub-topics.</p>
+<p>This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most important topics or the filtering of the original collection based on specific sub-topics.</p>
 </div>
 <div id="filtering-documents" class="section level1">
 <h1><span class="header-section-number">5</span> Filtering documents</h1>

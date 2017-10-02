@@ -361,9 +361,10 @@ require(ggplot2)
 ggplot(presidents_df, aes(x = speech, y = value, fill = category)) + geom_bar(stat = "identity") + coord_flip()
 ```
 
-Can you see how the position of FORGEIN affairs related content switches from the beginning to the end around the turn to the 20th century?
+Can you see how DOMESTIC affairs related content gets more important over the course of centuries? Actually, also the position of DOMESTIC policy statements changes around the turn from the 19th to 20th century.
 
 # Optional exercises
 
 1. Divide the training data into a 80% training set and 20% test set. Train an SVM on the training set and evaluate the performance on the test set. As performance measure use **Krippendorff'a alpha** and **Cohen's Kappa** as provided in the `irr` package for R.
 2. Use the `proba = T` parameter for the `predict` method during the final classification to evaluate on label probabilities instead of concrete label decisions. Use the output of probabilities for the label "FOREIGN" to classify paragraphs as "FOREIGN" only if the label probability is greater than 60%. Visualize the result. What can you observe compared to the previous plot (decision boundary around 50%)?
+3. Find a visualization that shows the position of FOREIGN and DOMESTIC paragraphs in each speech.

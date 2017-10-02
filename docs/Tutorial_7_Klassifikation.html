@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-09-11" />
+<meta name="date" content="2017-10-02" />
 
 <title>Tutorial 7: Classification</title>
 
@@ -349,7 +349,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 7: Classification</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-09-11</em></h4>
+<h4 class="date"><em>2017-10-02</em></h4>
 
 </div>
 
@@ -495,7 +495,7 @@ F.measure(pseudoLabelsDOM, testLabels, positiveClassName = &quot;DOMESTIC&quot;)
 <p>To evaluate a classifier, the training data can be divided into training and test data. The model learns on the former and is evaluated with the latter. In this procedure, we unfortunately lose the test data to learn from. If there is little training data available, the k-fold cross-validation is a more suitable procedure.</p>
 <p>For this, training data is split into e.g. K = 10 parts. Then k-1 parts are used for training and 1 part is used for testing. This process is repeated k times, with another split of the overall data set for testing in each iteration.</p>
 <p>The final result is determined from the average of the quality of the k runs. This allows a good approximation to the classification quality, including all training data.</p>
-<p>The <code>get_k_fold_logical_indexes</code> function introduced below returns a logical vector for the fold <code>j</code> for cross-validation. It splits a training data record of the size <code>n</code> into<code>k</code> folds. The resulting vector and its negated vector can be used for easy training data / test data selection.</p>
+<p>The <code>get_k_fold_logical_indexes</code> function introduced below returns a logical vector for the fold <code>j</code> for cross-validation. It splits a training data record of the size <code>n</code> into <code>k</code> folds. The resulting vector and its negated vector can be used for easy training data / test data selection.</p>
 <pre class="r"><code>get_k_fold_logical_indexes &lt;- function(j, k, n) {
   if (j &gt; k) stop(&quot;Cannot select fold larger than nFolds&quot;)
   fold_lidx &lt;- rep(FALSE, k)
@@ -565,7 +565,7 @@ print(colMeans(evalMeasures))</code></pre>
 <p>These first tries have clarified how to utilize and evaluate machine learning functions for text in R. Now we concentrate on optimization strategies to get better results from the automatic classification process.</p>
 <div id="c-parameter" class="section level2">
 <h2><span class="header-section-number">5.1</span> C-Parameter</h2>
-<p>For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function). The <strong>C-paramter</strong> determines the cost of classifications on the training data during SVM training.</p>
+<p>For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function). The <strong>C-parameter</strong> determines the cost of classifications on the training data during SVM training.</p>
 <p>High values of C lead to a high costs of misclassification. The decision boundary which the classifier learns, will try to avoid any misclassification. But, values too high can lead to an overfitting of the model. This means, it adapts well to the training data, but classification will more likely fail on new test data.</p>
 <p>Low values of C lead to less strict decision boundaries, which accepts some misclassifications. Such a model might generalize better on unseen data. But in the end, there is now exact method to determine a good C-value beforehand. It rather is an empirical question. To choose an optimal C-value, we simply try from a range of values, run k-fold-cross-validation for each single value and decide for the C which resulted in the best classification accuracy / F-measure. This is realized in the following for-loop, which utilizes the function <code>k_fold_cross_validation</code>. The function (have a look into <code>F.measure.R</code>) simply wraps the code for cross-validation, we used above.</p>
 <pre class="r"><code>cParameterValues &lt;- c(0.003, 0.01, 0.03, 0.1, 0.3, 1, 3 , 10, 30, 100)
@@ -659,7 +659,7 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
 ## 0.5516524 0.7598737 0.7460819 0.6328462 0.7566667 9.1000000</code></pre>
 <p><strong>Minimum feature frequency</strong></p>
-<p>Up to this point, we dropped features occurring less than 5 time in our data. Let’s see if we include more features by decreasing the minimum frequency.</p>
+<p>Up to this point, we dropped features occurring less than five times in our data. Let’s see if we include more features by decreasing the minimum frequency.</p>
 <pre class="r"><code># More features
 minimumFrequency &lt;- 2
 DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
@@ -735,13 +735,14 @@ presidents_df$speech &lt;- factor(presidents_df$speech, levels = unique(presiden
 require(ggplot2)
 ggplot(presidents_df, aes(x = speech, y = value, fill = category)) + geom_bar(stat = &quot;identity&quot;) + coord_flip()</code></pre>
 <p><img src="Tutorial_7_Klassifikation_files/figure-html/finalClassification2-1.png" width="960" /></p>
-<p>Can you see how the position of FORGEIN affairs related content switches from the beginning to the end around the turn to the 20th century?</p>
+<p>Can you see how DOMESTIC affairs related content gets more important over the course of centuries? Actually, also the position of DOMESTIC policy statements changes around the turn from the 19th to 20th century.</p>
 </div>
 <div id="optional-exercises" class="section level1">
 <h1><span class="header-section-number">7</span> Optional exercises</h1>
 <ol style="list-style-type: decimal">
 <li>Divide the training data into a 80% training set and 20% test set. Train an SVM on the training set and evaluate the performance on the test set. As performance measure use <strong>Krippendorff’a alpha</strong> and <strong>Cohen’s Kappa</strong> as provided in the <code>irr</code> package for R.</li>
 <li>Use the <code>proba = T</code> parameter for the <code>predict</code> method during the final classification to evaluate on label probabilities instead of concrete label decisions. Use the output of probabilities for the label “FOREIGN” to classify paragraphs as “FOREIGN” only if the label probability is greater than 60%. Visualize the result. What can you observe compared to the previous plot (decision boundary around 50%)?</li>
+<li>Find a visualization that shows the position of FOREIGN and DOMESTIC paragraphs in each speech.</li>
 </ol>
 </div>
 

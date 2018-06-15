@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-10-02" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 7: Classification</title>
 
@@ -25,8 +25,8 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +36,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,7 +351,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 7: Classification</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-10-02</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
@@ -377,14 +379,12 @@ textdata &lt;- read.csv(&quot;data/sotu_paragraphs.csv&quot;, sep = &quot;;&quot
 english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
 # Create corpus object
-m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;, DateTimeStamp = &quot;date&quot;)
-myReader &lt;- readTabular(mapping = m)
-corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus &lt;- Corpus(DataframeSource(textdata))
 
 # Preprocessing chain
-processedCorpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+processedCorpus &lt;- tm_map(corpus, content_transformer(tolower))
+processedCorpus &lt;- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
 processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
-processedCorpus &lt;- tm_map(processedCorpus, content_transformer(tolower))
 processedCorpus &lt;- tm_map(processedCorpus, stripWhitespace)</code></pre>
 </div>
 <div id="load-training-data" class="section level1">
@@ -415,17 +415,17 @@ print(classCounts)</code></pre>
 DTM &lt;- DocumentTermMatrix(processedCorpus)
 # How many features do we have?
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 28038</code></pre>
+<pre><code>## [1] 21334 26271</code></pre>
 <pre class="r"><code># Probably the DTM is too big for the classifier. Let us reduce it
 minimumFrequency &lt;- 5
 DTM &lt;- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10813</code></pre>
+<pre><code>## [1] 21334 10701</code></pre>
 </div>
 <div id="classification" class="section level1">
 <h1><span class="header-section-number">3</span> Classification</h1>
-<p>Now we build a linear SVM classification model with the LiblineaR package. SVM is a large margin classification approach which tries to find an optimal seperating hyperplane between data points of two different classes. There are a number of different kernel functions to compute the feature space where this hyperplane is located in (e.g. radial, polynomial, sigmoid kernel). For text classification usually the “linear” kernel is the best choice. The package LiblineaR wraps around the open source library LIBLINEAR which provides a very fast implementation.</p>
-<p>First, we load the packages. Since Liblinear requires a special Sparse Matrix format, we also load the “SparseM” package and a conversion function which allows to convert <code>slam</code>-matrices (as used in the tm package) into <code>SparseM</code>-matrices.</p>
+<p>Now we build a linear classification model with the LiblineaR package. The package LiblineaR wraps around the open source library LIBLINEAR which provides a very fast implementations for two text classification algorithms: 1. Logistic Regression, and 2. Support Vector Machines (SVM) with a linear kernel. For both algorithms, different regularization methods exist (e.g. L1, and L2-regularization). The combination of algorithms and regularization can be controlled by the <code>type</code> parameter of the <code>LiblineaR</code> function. We stick to the default type, L2-regularized logistic regression (LR), since it usually achieves good performance in text classification.</p>
+<p>First, we load the packages. Since Liblinear requires a special Sparse Matrix format, we also load the “SparseM” package and a conversion function which allows to convert <code>slam</code>-matrices (as used in the <code>tm</code> package) into <code>SparseM</code>-matrices.</p>
 <p>Then, we split the annotated data into a training set (80%) and a test set (20%) using a boolean selector. The expression assigned to <code>selector_idx</code> creates a boolean vector of length 300 containing a FALSE value in every fifths position. This selector is used to select to training set. Its inverted vector (!) is used to select the test set.</p>
 <pre class="r"><code>require(LiblineaR)
 require(SparseM)
@@ -442,14 +442,14 @@ trainingLabels &lt;- annotatedLabels[selector_idx]
 testDTM &lt;- annotatedDTM[!selector_idx, ]
 testLabels &lt;- annotatedLabels[!selector_idx]
 
-# create SVM model
+# create LR classification model
 model &lt;- LiblineaR(trainingDTM, trainingLabels)
 summary(model)</code></pre>
 <pre><code>##            Length Class  Mode     
 ## TypeDetail     1  -none- character
 ## Type           1  -none- numeric  
-## W          10814  -none- numeric  
-## Bias           1  -none- logical  
+## W          10702  -none- numeric  
+## Bias           1  -none- numeric  
 ## ClassNames     2  factor numeric  
 ## NbClass        1  -none- numeric</code></pre>
 <p>The model created by the LiblineaR function can now be utilized to predict the labels of the test set. Then we compare the result of the automatic classification to our known labels to determine the accuracy of the process.</p>
@@ -459,24 +459,24 @@ contingencyTable &lt;- table(predictedLabels, testLabels)
 print(contingencyTable) # Kontingenztabelle ausgeben</code></pre>
 <pre><code>##                testLabels
 ## predictedLabels DOMESTIC FOREIGN
-##        DOMESTIC       27       5
-##        FOREIGN        18      10</code></pre>
+##        DOMESTIC       28       5
+##        FOREIGN        17      10</code></pre>
 <pre class="r"><code>accuracy &lt;- sum(diag(contingencyTable)) / length(testLabels)
 print(accuracy) # Accuracy = Anteil korrekt klassifizierter Elemente</code></pre>
-<pre><code>## [1] 0.6166667</code></pre>
-<p>The accuracy of 0.6166667 appears moderate for a first try. But how does it actually relate to a base line? Think of the imbalanced class proportions in our training set. Let us create a pseudo classification as base line, in which we do not classify at all, but simply assume the label “DOMESTIC” or “FOREIGN” for each paragraph.</p>
+<pre><code>## [1] 0.6333333</code></pre>
+<p>The accuracy of 0.6333333 appears moderate for a first try. But how does it actually relate to a base line? Think of the imbalanced class proportions in our training set. Let us create a pseudo classification as base line, in which we do not classify at all, but simply assume the label “DOMESTIC” or “FOREIGN” for each paragraph.</p>
 <p>We further employ a function called <code>F.measure</code> which gives more differentiated measures than simple accuracy (<code>A</code>)to determine the classification quality. The F.measure (<code>F</code>) is the harmonic mean of Precision (<code>P</code>) and Recall (<code>R</code>) (see <a href="https://en.wikipedia.org/wiki/Precision_and_recall#Definition_.28classification_context.29" class="uri">https://en.wikipedia.org/wiki/Precision_and_recall#Definition_.28classification_context.29</a> for Details).</p>
 <pre class="r"><code># Create pseudo classification
 pseudoLabelsDOM &lt;- factor(rep(&quot;DOMESTIC&quot;, length(testLabels)), levels(testLabels))
 pseudoLabelsFOR &lt;- factor(rep(&quot;FOREIGN&quot;, length(testLabels)), levels(testLabels))
 
-# Evaluation of former SVM classification with F-measures
+# Evaluation of former LR classification with F-measures
 F.measure(predictedLabels, testLabels, positiveClassName = &quot;DOMESTIC&quot;)</code></pre>
 <pre><code>##          P          R          S          F          A       Pos. 
-##  0.8437500  0.6000000  0.6666667  0.7012987  0.6166667 45.0000000</code></pre>
+##  0.8484848  0.6222222  0.6666667  0.7179487  0.6333333 45.0000000</code></pre>
 <pre class="r"><code>F.measure(predictedLabels, testLabels, positiveClassName = &quot;FOREIGN&quot;)</code></pre>
 <pre><code>##          P          R          S          F          A       Pos. 
-##  0.3571429  0.6666667  0.6000000  0.4651163  0.6166667 15.0000000</code></pre>
+##  0.3703704  0.6666667  0.6222222  0.4761905  0.6333333 15.0000000</code></pre>
 <pre class="r"><code># Evaluation of pseudo classification with F-measures
 F.measure(pseudoLabelsDOM, testLabels, positiveClassName = &quot;DOMESTIC&quot;)</code></pre>
 <pre><code>##          P          R          S          F          A       Pos. 
@@ -544,28 +544,28 @@ for (j in 1:k) {
 # Final evaluation values of k runs:
 print(evalMeasures)</code></pre>
 <pre><code>##                       P         R         S         F         A Pos.
-## kthEvaluation 0.5454545 0.6000000 0.7500000 0.5714286 0.7000000   10
+## kthEvaluation 0.5000000 0.6000000 0.7000000 0.5454545 0.6666667   10
 ## kthEvaluation 0.7000000 0.8750000 0.5714286 0.7777778 0.7333333   16
 ## kthEvaluation 0.3636364 0.5714286 0.6956522 0.4444444 0.6666667    7
 ## kthEvaluation 0.5000000 0.8888889 0.6190476 0.6400000 0.7000000    9
-## kthEvaluation 0.4166667 0.7142857 0.6956522 0.5263158 0.7000000    7
+## kthEvaluation 0.4545455 0.7142857 0.7391304 0.5555556 0.7333333    7
 ## kthEvaluation 0.3888889 1.0000000 0.5217391 0.5600000 0.6333333    7
-## kthEvaluation 0.5000000 0.7272727 0.5789474 0.5925926 0.6333333   11
+## kthEvaluation 0.4705882 0.7272727 0.5263158 0.5714286 0.6000000   11
 ## kthEvaluation 0.4166667 0.8333333 0.7083333 0.5555556 0.7333333    6
-## kthEvaluation 0.5555556 1.0000000 0.6000000 0.7142857 0.7333333   10
+## kthEvaluation 0.5000000 1.0000000 0.5000000 0.6666667 0.6666667   10
 ## kthEvaluation 0.3846154 0.6250000 0.6363636 0.4761905 0.6333333    8</code></pre>
 <pre class="r"><code># Average over all folds
 print(colMeans(evalMeasures))</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.4771484 0.7835209 0.6377164 0.5858591 0.6866667 9.1000000</code></pre>
-<p>Accuracy is around 70%, F-measure is around 0.60. Let’s try some approaches to optimize the automatic classification.</p>
+## 0.4678941 0.7835209 0.6218011 0.5793074 0.6766667 9.1000000</code></pre>
+<p>Accuracy is around 1%, F-measure is around 1%. Let’s try some approaches to optimize the automatic classification.</p>
 </div>
 <div id="optimization" class="section level1">
 <h1><span class="header-section-number">5</span> Optimization</h1>
 <p>These first tries have clarified how to utilize and evaluate machine learning functions for text in R. Now we concentrate on optimization strategies to get better results from the automatic classification process.</p>
 <div id="c-parameter" class="section level2">
 <h2><span class="header-section-number">5.1</span> C-Parameter</h2>
-<p>For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function). The <strong>C-parameter</strong> determines the cost of classifications on the training data during SVM training.</p>
+<p>For a linear classification model, the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function). The <strong>C-parameter</strong> determines the cost of classifications on the training data during training.</p>
 <p>High values of C lead to a high costs of misclassification. The decision boundary which the classifier learns, will try to avoid any misclassification. But, values too high can lead to an overfitting of the model. This means, it adapts well to the training data, but classification will more likely fail on new test data.</p>
 <p>Low values of C lead to less strict decision boundaries, which accepts some misclassifications. Such a model might generalize better on unseen data. But in the end, there is now exact method to determine a good C-value beforehand. It rather is an empirical question. To choose an optimal C-value, we simply try from a range of values, run k-fold-cross-validation for each single value and decide for the C which resulted in the best classification accuracy / F-measure. This is realized in the following for-loop, which utilizes the function <code>k_fold_cross_validation</code>. The function (have a look into <code>F.measure.R</code>) simply wraps the code for cross-validation, we used above.</p>
 <pre class="r"><code>cParameterValues &lt;- c(0.003, 0.01, 0.03, 0.1, 0.3, 1, 3 , 10, 30, 100)
@@ -591,26 +591,26 @@ axis(1,at=1:length(cParameterValues), labels = cParameterValues)</code></pre>
 <p><img src="Tutorial_7_Klassifikation_files/figure-html/optimizeC-1.png" width="672" /></p>
 <pre class="r"><code>bestC &lt;- cParameterValues[which.max(fValues)]
 print(paste0(&quot;Best C value: &quot;, bestC, &quot;, F1 = &quot;, max(fValues)))</code></pre>
-<pre><code>## [1] &quot;Best C value: 1, F1 = 0.585859092174882&quot;</code></pre>
-<p>From the empirical test, we can obtain C = 1 as optimal choice for the SVM cost parameter. On the current training data set with the current features it achieves 0.5858591 F-score.</p>
+<pre><code>## [1] &quot;Best C value: 1, F1 = 0.579307359307359&quot;</code></pre>
+<p>From the empirical test, we can obtain C = 1 as optimal choice for the cost parameter. On the current training data set with the current features it achieves 0.5793074 F-score.</p>
 </div>
 <div id="optimized-preprocessing" class="section level2">
 <h2><span class="header-section-number">5.2</span> Optimized Preprocessing</h2>
-<p>Not only the SVM has parameters which can be optimized to improve the results. More important are the features used for classification. In our preprocessing chain above, we extracted single types and transformed them into lower case. We now add different preprocessing steps and check on the results. To get an optimal cost parameter for each new feature set, we wrapped the code for C-parameter optimization into the <code>optimize_C</code> function.</p>
+<p>Not only the classification model has parameters which can be optimized to improve the results. More important are the features used for classification. In our preprocessing chain above, we extracted single types and transformed them into lower case. We now add different preprocessing steps and check on the results. To get an optimal cost parameter for each new feature set, we wrapped the code for C-parameter optimization into the <code>optimize_C</code> function.</p>
 <p><strong>Stop word removal</strong></p>
 <p>Stop words often do not contribute to the meaning of a text. For the decision between DOMESTIC and FOREIGN affairs, we do not expect any useful information from them. So let’s remove them and if it improves the classifier.</p>
-<pre class="r"><code>processedCorpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
-processedCorpus &lt;- tm_map(processedCorpus, content_transformer(tolower))
+<pre class="r"><code>processedCorpus &lt;- tm_map(corpus, content_transformer(tolower))
 processedCorpus &lt;- tm_map(processedCorpus, removeWords, english_stopwords)
+processedCorpus &lt;- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
 processedCorpus &lt;- tm_map(processedCorpus, stripWhitespace)
 
 as.character(processedCorpus[[4963]])</code></pre>
-<pre><code>## [1] &quot; legislation extend colony newfoundland articles treaty washington day protocol effect signed behalf united states great britain day duly proclaimed day copy proclamation submitted herewith&quot;</code></pre>
+<pre><code>## [1] &quot; legislation extend colony newfoundland articles treaty washington th day protocol effect signed behalf united states great britain th day duly proclaimed day copy proclamation submitted herewith&quot;</code></pre>
 <pre class="r"><code>minimumFrequency &lt;- 5
 DTM &lt;- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10375</code></pre>
+<pre><code>## [1] 21334 10234</code></pre>
 <pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
@@ -623,10 +623,10 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.03, F1 = 0.63250677828278&quot;</code></pre>
+## [1] &quot;Best C value: 0.03, F1 = 0.643298703748619&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.5743260 0.7254419 0.7813149 0.6325068 0.7666667 9.1000000</code></pre>
+## 0.5987488 0.7111562 0.8038822 0.6432987 0.7800000 9.1000000</code></pre>
 <p>Now let us see, if the use of bigrams, i.e. concatenations of sequences of two words can improve the result. Bigrams help to overcome a little bit the bag-of-words assumption of Document-Term-Matrices. With them, we can learn multi-word units such as <em>great britain</em>, <em>international affairs</em> or <em>united nations</em> as meaningful features for our task. The package <code>tokenizers</code> provides a simple and fast implementation to generate n-grams.</p>
 <p><strong>Bigrams</strong></p>
 <pre class="r"><code>require(tokenizers)
@@ -636,12 +636,12 @@ tokenize_ngrams(&quot;This is a test&quot;, n = 2, n_min = 1, ngram_delim = &quo
 minimumFrequency &lt;- 5
 DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 22782</code></pre>
+<pre><code>## [1] 21334 10234</code></pre>
 <pre class="r"><code>sample(colnames(DTM), 10)</code></pre>
-<pre><code>##  [1] &quot;government_fail&quot;     &quot;board_constituted&quot;   &quot;vital_interests&quot;    
-##  [4] &quot;active_military&quot;     &quot;military_officers&quot;   &quot;relations_venezuela&quot;
-##  [7] &quot;storage&quot;             &quot;america_proud&quot;       &quot;permission&quot;         
-## [10] &quot;structure&quot;</code></pre>
+<pre><code>##  [1] &quot;laden&quot;             &quot;supersede&quot;         &quot;laughter&quot;         
+##  [4] &quot;conciliate&quot;        &quot;waves&quot;             &quot;proven&quot;           
+##  [7] &quot;beliefs&quot;           &quot;expressed&quot;         &quot;praiseworthy&quot;     
+## [10] &quot;instrumentalities&quot;</code></pre>
 <pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
@@ -654,17 +654,17 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.1, F1 = 0.632846173434409&quot;</code></pre>
+## [1] &quot;Best C value: 0.03, F1 = 0.657342988594839&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.5516524 0.7598737 0.7460819 0.6328462 0.7566667 9.1000000</code></pre>
+## 0.6322403 0.7086562 0.8244239 0.6573430 0.7933333 9.1000000</code></pre>
 <p><strong>Minimum feature frequency</strong></p>
 <p>Up to this point, we dropped features occurring less than five times in our data. Let’s see if we include more features by decreasing the minimum frequency.</p>
 <pre class="r"><code># More features
 minimumFrequency &lt;- 2
 DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 96021</code></pre>
+<pre><code>## [1] 21334 15916</code></pre>
 <pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
@@ -677,10 +677,10 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.1, F1 = 0.632846173434409&quot;</code></pre>
+## [1] &quot;Best C value: 0.03, F1 = 0.666647017898869&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.5516524 0.7598737 0.7460819 0.6328462 0.7566667 9.1000000</code></pre>
+## 0.6502056 0.7086562 0.8335336 0.6666470 0.8000000 9.1000000</code></pre>
 <p><strong>Stemming</strong></p>
 <p>As a last method, we utilize stemming (before bigram-concatenation) to unify different variants of the same semantic form (such as <em>nation</em> and <em>nations</em>).</p>
 <pre class="r"><code># Stemming
@@ -689,7 +689,7 @@ stemmed_bigram_corpus &lt;- tm_map(stemmed_corpus, content_transformer(tokenize_
 minimumFrequency &lt;- 2
 DTM &lt;- DocumentTermMatrix(stemmed_bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
 dim(DTM)</code></pre>
-<pre><code>## [1]  21334 106152</code></pre>
+<pre><code>## [1] 21334  8959</code></pre>
 <pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
@@ -702,45 +702,66 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.1, F1 = 0.644626432391138&quot;</code></pre>
+## [1] &quot;Best C value: 3, F1 = 0.637124712893845&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.5696785 0.7775685 0.7424381 0.6446264 0.7600000 9.1000000</code></pre>
-<p>While each individual approach to optimize our text features for classification did not improve the result greatly, some combinations indeed have a significant effect. Especially the combination of stemming and bigrams appears to be useful to improve the results.</p>
-<p>CAUTION: Testing different features must be done for each new task / language individually, since there is no “one-size fits all” approach to this.</p>
-<p>GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead investing time into feature optimization it will probably be also a good idea to invest into generation of more training data.</p>
+## 0.5610526 0.7570328 0.7393549 0.6371247 0.7533333 9.1000000</code></pre>
+<p>Each individual approach to optimize our text features for classification has some effect on the results. Best results could be obtained from a combination of bigram features with minimum frequency 2 and stop word removal. Stemming did not have a positive effect on the performance.</p>
+<p>But, testing different features must be done for each new task / language individually, since there is no “one-size fits all” approach to this.</p>
+<p>GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead of spending too much time on feature optimization, it will probably be a better idea to invest into generation of more training data first.</p>
 </div>
 </div>
 <div id="final-classification" class="section level1">
 <h1><span class="header-section-number">6</span> Final classification</h1>
-<p>We now apply our final classification model to the entire data set, to determine the occurrence of FORGEIN/DOMESTIC affairs related content in each single speech.</p>
+<p>We now apply our best classification model to the entire data set, to determine the occurrence of FORGEIN/DOMESTIC affairs related content in each single speech.</p>
 <pre class="r"><code># Final classification
-final_model &lt;- LiblineaR(annotatedDTM, annotatedLabels, cost = best_C)
+DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(2, Inf))))
+annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
+best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
+<pre><code>## [1] &quot;C = 0.003&quot;
+## [1] &quot;C = 0.01&quot;
+## [1] &quot;C = 0.03&quot;
+## [1] &quot;C = 0.1&quot;
+## [1] &quot;C = 0.3&quot;
+## [1] &quot;C = 1&quot;
+## [1] &quot;C = 3&quot;
+## [1] &quot;C = 10&quot;
+## [1] &quot;C = 30&quot;
+## [1] &quot;C = 100&quot;
+## [1] &quot;Best C value: 0.03, F1 = 0.666647017898869&quot;</code></pre>
+<pre class="r"><code>final_model &lt;- LiblineaR(annotatedDTM, annotatedLabels, cost = best_C)
 final_labels &lt;- predict(final_model, convertSlamToSparseM(DTM))$predictions
 table(final_labels) / sum(table(final_labels))</code></pre>
 <pre><code>## final_labels
 ##  DOMESTIC   FOREIGN 
-## 0.5417174 0.4582826</code></pre>
+## 0.6381363 0.3618637</code></pre>
 <p>We see that the classifier puts the majority of the around 21,000 paragraphs into the DOMESTIC category. We can visualize the result as a bar chart with <code>ggplot2</code>. For better readability</p>
 <pre class="r"><code>speech_year &lt;- substr(textdata$date, 0, 4)
+speech_id &lt;- textdata$speech_doc_id
+paragraph_position &lt;- unlist(sapply(table(speech_id), FUN = function(x) {1:x}))
 presidents_df &lt;- data.frame(
-  speech = paste0(textdata$president, &quot;_&quot;, speech_year),
-  category = final_labels,
-  value = 1
+  paragraph_position = paragraph_position,
+  speech = paste0(speech_id, &quot;: &quot;, textdata$president, &quot;_&quot;, speech_year),
+  category = final_labels
 )
 
 # preserve speech order in chart by using factors
 presidents_df$speech &lt;- factor(presidents_df$speech, levels = unique(presidents_df$speech))
 
+# Remove two very long speeches to beautify the plot (you can also skipt this)
+presidents_df &lt;- presidents_df[!grepl(&quot;Carter_1981|Truman_1946&quot;, presidents_df$speech), ]
+
+# plot classes of paragraphs for each speech as tile
 require(ggplot2)
-ggplot(presidents_df, aes(x = speech, y = value, fill = category)) + geom_bar(stat = &quot;identity&quot;) + coord_flip()</code></pre>
+ggplot(presidents_df, aes(x = speech, y = paragraph_position, fill = category)) + 
+  geom_tile(stat=&quot;identity&quot;) + coord_flip()</code></pre>
 <p><img src="Tutorial_7_Klassifikation_files/figure-html/finalClassification2-1.png" width="960" /></p>
-<p>Can you see how DOMESTIC affairs related content gets more important over the course of centuries? Actually, also the position of DOMESTIC policy statements changes around the turn from the 19th to 20th century.</p>
+<p>Can you see how DOMESTIC affairs related content gets more important over the course of centuries? Also the position of FOREIGN policy statements changes around the turn from the 19th to 20th century from the begginning of a speech to more dispersed positions thoughout the speech, and finally a tendency to rather place them at the end of speeches.</p>
 </div>
 <div id="optional-exercises" class="section level1">
 <h1><span class="header-section-number">7</span> Optional exercises</h1>
 <ol style="list-style-type: decimal">
-<li>Divide the training data into a 80% training set and 20% test set. Train an SVM on the training set and evaluate the performance on the test set. As performance measure use <strong>Krippendorff’a alpha</strong> and <strong>Cohen’s Kappa</strong> as provided in the <code>irr</code> package for R.</li>
+<li>Divide the training data into a 80% training set and 20% test set. Train a classifier on the training set and evaluate the performance on the test set. As performance measure use <strong>Krippendorff’a alpha</strong> and <strong>Cohen’s Kappa</strong> as provided in the <code>irr</code> package for R.</li>
 <li>Use the <code>proba = T</code> parameter for the <code>predict</code> method during the final classification to evaluate on label probabilities instead of concrete label decisions. Use the output of probabilities for the label “FOREIGN” to classify paragraphs as “FOREIGN” only if the label probability is greater than 60%. Visualize the result. What can you observe compared to the previous plot (decision boundary around 50%)?</li>
 <li>Find a visualization that shows the position of FOREIGN and DOMESTIC paragraphs in each speech.</li>
 </ol>

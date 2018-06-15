@@ -34,13 +34,11 @@ textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
-m <- list(ID = "id", content = "text", DateTimeStamp = "date")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
-corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus <- tm_map(corpus, removeNumbers)
+corpus <- Corpus(DataframeSource(textdata))
 corpus <- tm_map(corpus, content_transformer(tolower))
 corpus <- tm_map(corpus, removeWords, english_stopwords)
+corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+corpus <- tm_map(corpus, removeNumbers)
 
 # Stemming
 require("SnowballC")

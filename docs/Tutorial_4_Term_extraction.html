@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-10-02" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 4: Key term extraction</title>
 
@@ -25,8 +25,8 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +36,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,7 +351,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 4: Key term extraction</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-10-02</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
@@ -370,13 +372,11 @@ textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding
 english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
 # Create corpus object
-m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;, DateTimeStamp = &quot;date&quot;)
-myReader &lt;- readTabular(mapping = m)
-corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
-corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus &lt;- tm_map(corpus, removeNumbers)
+corpus &lt;- Corpus(DataframeSource(textdata))
 corpus &lt;- tm_map(corpus, content_transformer(tolower))
 corpus &lt;- tm_map(corpus, removeWords, english_stopwords)
+corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+corpus &lt;- tm_map(corpus, removeNumbers)
 
 # Stemming
 require(&quot;SnowballC&quot;)
@@ -408,12 +408,12 @@ tf_idf &lt;- tf * idf
 names(tf_idf) &lt;- colnames(DTM)</code></pre>
 <p>The last operation is to append the column names again to the resulting term weight vector. If we now sort the tf-idf weights decreasingly, we get the most important terms for the Obama speech, according to this weight.</p>
 <pre class="r"><code>sort(tf_idf, decreasing = T)[1:20]</code></pre>
-<pre><code>##    -start      dont       job   tonight      lend  recoveri    layoff 
-##  31.40700  27.64286  27.21418  24.28682  23.18042  23.06548  20.55525 
-##    colleg     ensur     crisi    budget  quitters long-term      iraq 
-##  20.18859  18.22675  18.06525  16.66461  15.70350  14.96518  13.83773 
-##     clean  mortgage      auto    global      weve   deficit 
-##  13.78296  13.70350  13.58946  13.40912  13.40912  13.29039</code></pre>
+<pre><code>##      job     lend  tonight recoveri   layoff    ensur   colleg    crisi 
+## 28.38974 25.26619 24.28682 22.20745 20.55525 20.53077 19.93768 17.64204 
+##   budget     iraq  quitter    clean     auto   recess   global  deficit 
+## 16.66461 13.83773 13.70350 13.60072 13.58946 13.42224 13.40912 13.29039 
+##   school  inherit     quit    solar 
+## 12.75800 12.17758 12.13318 12.13318</code></pre>
 <p>If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the tm-package provides a convenient function for computing tf-idf weights of a given DTM: <code>weightTfIdf(DTM)</code>.</p>
 </div>
 <div id="log-likelihood" class="section level1">
@@ -458,7 +458,7 @@ logLikelihood &lt;- 2 * (t1 + t2)
 
 print(logLikelihood)</code></pre>
 <pre><code>##     care 
-## 68.73001</code></pre>
+## 80.87552</code></pre>
 <p>The LL value indicates whether the term occurs significantly more frequently / less frequently in the target counts than we would expect from the observation in the comparative counts. Specific significance thresholds are defined for the LL values:</p>
 <ul>
 <li>95th percentile; 5% level; p &lt; 0.05; critical value = 3.84</li>
@@ -473,10 +473,11 @@ print(logLikelihood)</code></pre>
 uniqueTerms &lt;- setdiff(names(termCountsTarget), names(termCountsComparison))
 # Have a look into a random selection of terms unique in the target corpus
 sample(uniqueTerms, 20)</code></pre>
-<pre><code>##  [1] &quot;creating&quot;    &quot;growing&quot;     &quot;peels&quot;       &quot;republicans&quot; &quot;tragedy&quot;    
-##  [6] &quot;begins&quot;      &quot;promise&quot;     &quot;biden&quot;       &quot;extended&quot;    &quot;working&quot;    
-## [11] &quot;peril&quot;       &quot;prosperity&quot;  &quot;familys&quot;     &quot;surely&quot;      &quot;business&quot;   
-## [16] &quot;jobs&quot;        &quot;equipment&quot;   &quot;places&quot;      &quot;ensure&quot;      &quot;parentteach&quot;</code></pre>
+<pre><code>##  [1] &quot;homework&quot;       &quot;reinvest&quot;       &quot;abess&quot;          &quot;cyber&quot;         
+##  [5] &quot;sleepless&quot;      &quot;tysheoma&quot;       &quot;apprenticeship&quot; &quot;congressmen&quot;   
+##  [9] &quot;mismanag&quot;       &quot;quitter&quot;        &quot;parentteach&quot;    &quot;jumpstart&quot;     
+## [13] &quot;unyield&quot;        &quot;recoverygov&quot;    &quot;peril&quot;          &quot;biden&quot;         
+## [17] &quot;predica&quot;        &quot;greensburg&quot;     &quot;candor&quot;         &quot;equivoc&quot;</code></pre>
 <p>Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the <code>a == 0</code> resp. <code>b == 0</code> expression add 1 to the expression which yields a 0 value after applying the log function.</p>
 <pre class="r"><code># Create vector of zeros to append to comparison counts
 zeroCounts &lt;- rep(0, length(uniqueTerms))
@@ -505,26 +506,26 @@ logLikelihood[relA &lt; relB] &lt;- logLikelihood[relA &lt; relB] * -1</code></p
 <p>Let’s take a look at the results: The 50 more frequently used / less frequently used terms, and then the more frequently used terms compared to their frequency. We also see terms that have comparatively low frequencies are identified by the LL test as statistically significant compared to the reference corpus.</p>
 <pre class="r"><code># top terms (overuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=TRUE)[1:25]</code></pre>
-<pre><code>##  american   economi    health   tonight       job    budget      care 
-## 127.26575  99.12254  86.54447  83.80928  78.68057  72.11434  68.73001 
-##   america     crisi  recoveri      lend   deficit      cost      plan 
-##  67.41958  64.94608  64.94608  61.72404  56.99759  56.62186  53.20404 
-##    reform    afford  congress    invest       tax    energi    -start 
-##  50.15442  47.46049  47.21880  45.13974  39.99798  38.76727  38.46741 
-##      educ      dont long-term    dollar 
-##  37.84352  37.54112  35.80695  35.05019</code></pre>
+<pre><code>##  american   economi    health       job   tonight      care    budget 
+## 128.74537 113.70949  85.67242  84.57403  84.10703  80.87552  71.78604 
+##   america  recoveri     crisi      lend   deficit      cost    afford 
+##  67.88166  65.24051  63.65021  63.41757  57.23941  56.35262  55.28385 
+##      plan    invest    reform    energi  congress       tax      educ 
+##  53.58667  51.75152  50.46648  48.48665  47.48203  45.25444  41.99541 
+##    recess   respons      bank    dollar 
+##  41.32572  37.62451  37.59650  33.86434</code></pre>
 <pre class="r"><code># bottom terms (underuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=FALSE)[1:25]</code></pre>
 <pre><code>##       game       citi    develop       oper      point    general 
-## -4.3425856 -4.3167595 -2.9149729 -1.9059638 -1.8728417 -1.7416719 
-##     design       larg      earli     record        run       book 
-## -1.6340510 -1.6340510 -1.5596799 -1.4031554 -1.3621047 -1.3213579 
-##     includ       left       area     person     number    product 
-## -1.2478227 -1.2408068 -1.2179743 -1.1812503 -1.1290878 -0.9047823 
-##     produc    control      local       show    success       leav 
-## -0.8682676 -0.8592053 -0.8411617 -0.8174538 -0.7266182 -0.6336620 
-##        age 
-## -0.5605558</code></pre>
+## -4.4329156 -4.1910567 -2.8632148 -1.9042090 -1.9042090 -1.6888745 
+##     design       larg      earli     record       book       left 
+## -1.6044280 -1.5834755 -1.5106597 -1.4284608 -1.3373495 -1.2973386 
+##     person     includ       area     number    product     produc 
+## -1.2280644 -1.1840820 -1.1803100 -1.1169618 -0.9797514 -0.9246409 
+##    control     report      local       show    success      level 
+## -0.9155419 -0.9064680 -0.8083611 -0.7964113 -0.6967060 -0.6550922 
+##       leav 
+## -0.6223645</code></pre>
 <pre class="r"><code>llTop100 &lt;- sort(logLikelihood, decreasing=TRUE)[1:100]
 frqTop100 &lt;- termCountsTarget[names(llTop100)]
 frqLLcomparison &lt;- data.frame(llTop100, frqTop100)
@@ -532,8 +533,8 @@ View(frqLLcomparison)
 
 # Number of signficantly overused terms (p &lt; 0.01)
 sum(logLikelihood &gt; 6.63)</code></pre>
-<pre><code>## [1] 329</code></pre>
-<p>The method extracted 329 key terms from the first Obama speech.</p>
+<pre><code>## [1] 216</code></pre>
+<p>The method extracted 216 key terms from the first Obama speech.</p>
 </div>
 <div id="aggregation-and-visualization" class="section level1">
 <h1><span class="header-section-number">3</span> Aggregation and visualization</h1>
@@ -576,17 +577,17 @@ for (president in presidents) {
 <ol style="list-style-type: decimal">
 <li>Create a table (data.frame), which displays the top 25 terms of all speeches by frequency, tf-idf and log likelihood in columns.</li>
 </ol>
-<pre><code>##    word.frq  frq word.tfidf     tfidf   word.ll        ll
-## 1     state 7574    program 1366.6042  congress 2946.2685
-## 2    govern 7209    tonight 1163.5595    govern 2698.1090
-## 3      year 5925        job 1044.7222     state 1844.8106
-## 4    nation 5427     mexico  979.7642    nation 1654.3927
-## 5  congress 4987     budget  828.1032      unit 1229.1613
-## 6      unit 4562       bank  823.9534   countri 1189.2364
-## 7   countri 3930  territori  818.3297       law 1034.0600
-## 8     peopl 3703       gold  760.6911     great 1000.0192
-## 9     great 3628    billion  747.1415 recommend  924.3473
-## 10 american 3341       cent  745.8005  american  898.3763</code></pre>
+<pre><code>##    word.frq  frq word.tfidf     tfidf  word.ll       ll
+## 1     state 8808    program 1451.8011   govern 3229.449
+## 2    govern 8114    tonight 1165.7674 congress 2977.483
+## 3      year 6324        job 1162.4853    state 2445.514
+## 4    nation 6123     mexico  983.2182   nation 2036.595
+## 5      unit 5011  territori  845.2852  countri 1476.786
+## 6  congress 5009     budget  840.9221     unit 1461.258
+## 7   countri 4450       bank  827.3276      law 1102.457
+## 8     peopl 4257       cent  788.2928  citizen 1053.296
+## 9     great 3642       gold  758.6431     peac 1023.260
+## 10 american 3538     island  758.3226    great 1006.705</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Create a wordcloud which compares Obama’s second speech with all his other speeches. <img src="Tutorial_4_Term_extraction_files/figure-html/extra2-1.png" width="672" /></li>
 </ol>

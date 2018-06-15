@@ -25,9 +25,7 @@ textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
-m <- list(ID = "id", content = "text", DateTimeStamp = "date")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus <- Corpus(DataframeSource(textdata))
 ```
 
 # Sentence detection
@@ -109,10 +107,10 @@ Now we are returning to our usual pre-processing chain and apply it on the separ
 
 ```{r preprocessCorpus, cache=TRUE}
 # Preprocessing chain
-sentenceCorpus <- tm_map(sentenceCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-sentenceCorpus <- tm_map(sentenceCorpus, removeNumbers)
 sentenceCorpus <- tm_map(sentenceCorpus, content_transformer(tolower))
 sentenceCorpus <- tm_map(sentenceCorpus, removeWords, english_stopwords)
+sentenceCorpus <- tm_map(sentenceCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+sentenceCorpus <- tm_map(sentenceCorpus, removeNumbers)
 sentenceCorpus <- tm_map(sentenceCorpus, stripWhitespace)
 ```
 
@@ -408,7 +406,7 @@ get_binDTM <- function(mycorpus) {
   return(binDTM1)
 }
 
-vis_cooc_network <- function(binDTM, coocTerm) {
+vis_cooc_network <- function(binDTM, coocTerm, graph_title) {
   
   require(igraph)
   
@@ -483,7 +481,7 @@ vis_cooc_network <- function(binDTM, coocTerm) {
   # Finaler Plot
   plot(graphNetwork,				
        layout = layout.fruchterman.reingold,	# Force Directed Layout 
-       main = paste(coocTerm, ' Graph'),
+       main = graph_title,
        vertex.label.family = "sans",
        vertex.label.cex = 0.8,
        vertex.shape = "circle",
@@ -505,6 +503,6 @@ binDTM1 <- get_binDTM(c1)
 binDTM2 <- get_binDTM(c2)
 
 source("calculateCoocStatistics.R")
-vis_cooc_network(binDTM1, "california")
-vis_cooc_network(binDTM2, "california")
+vis_cooc_network(binDTM1, "california", "California (year < 1950)")
+vis_cooc_network(binDTM2, "california", "California (year >= 1950)")
 ```

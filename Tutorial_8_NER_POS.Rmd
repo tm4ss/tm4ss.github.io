@@ -19,18 +19,17 @@ This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP pack
 
 We extract proper nouns (tag NNP for singular and tag NNPS for plural proper nouns) from paragraphs of president's speeches.
 
-```{r initalisierung, results='hide', message=FALSE, warning=FALSE, cache=T}
+```{r initalisierung, results='hide', message=FALSE, warning=FALSE}
 options(stringsAsFactors = FALSE)
 library(tm)
+library(NLP)
 
 # read suto paragraphs
 textdata <- read.csv("data/sotu_paragraphs.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
-m <- list(ID = "id", content = "text", DateTimeStamp = "date")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus <- Corpus(DataframeSource(textdata))
 
 require(openNLP)
 require(openNLPdata)
@@ -39,27 +38,29 @@ require(openNLPdata)
 sent_token_annotator <- Maxent_Sent_Token_Annotator()
 word_token_annotator <- Maxent_Word_Token_Annotator()
 pos_tag_annotator <- Maxent_POS_Tag_Annotator()
+annotator_pipeline <- Annotator_Pipeline(
+    sent_token_annotator,
+    word_token_annotator,
+    pos_tag_annotator
+)
 
 # function for annotation
 annotateDocuments <- function(doc, pos_filter = NULL) {
   doc <- as.String(doc)
-  doc_with_annotations <- annotate(doc, list(
-    sent_token_annotator,
-    word_token_annotator,
-    pos_tag_annotator
-  ))
+  doc_with_annotations <- annotate(doc, annotator_pipeline)
   tags <- sapply(subset(doc_with_annotations, type=="word")$features, `[[`, "POS")
   tokens <- doc[subset(doc_with_annotations, type=="word")]
-  res <- paste0(tokens, "_", tags)
   if (!is.null(pos_filter)) {
-    res <- res[tags %in% pos_filter]
+    res <- tokens[tags %in% pos_filter]
+  } else {
+    res <- paste0(tokens, "_", tags)
   }
   res <- paste(res, collapse = " ")
   return(res)
 }
 
 # run annotation on a sample of the corpus
-annotated_corpus <- tm_map(corpus[1:10], annotateDocuments)
+annotated_corpus <- lapply(corpus[1:10], annotateDocuments)
 
 # Have a look into the first annotated documents
 annotated_corpus[[1]]
@@ -78,6 +79,7 @@ require(Matrix)
 minimumFrequency <- 2
 filtered_corpus <- Corpus(VectorSource(sample_corpus))
 binDTM <- DocumentTermMatrix(filtered_corpus, control=list(bounds = list(global=c(minimumFrequency, Inf)), weighting = weightBin))
+# colnames(binDTM)
 binDTM <- sparseMatrix(i = binDTM$i, j = binDTM$j, x = binDTM$v, dims = c(binDTM$nrow, binDTM$ncol), dimnames = dimnames(binDTM))
 
 # Matrix multiplication for cooccurrence counts
@@ -86,7 +88,7 @@ coocCounts <- t(binDTM) %*% binDTM
 source("calculateCoocStatistics.R")
 # Definition of a parameter for the representation of the co-occurrences of a concept
 # Determination of the term of which co-competitors are to be measured.
-coocTerm <- "washington_nnp"
+coocTerm <- "indians"
 coocs <- calculateCoocStatistics(coocTerm, binDTM, measure="LOGLIK")
 print(coocs[1:20])
 ```

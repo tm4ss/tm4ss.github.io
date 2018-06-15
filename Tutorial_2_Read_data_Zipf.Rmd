@@ -62,12 +62,10 @@ Now we want to transfer the loaded text source into a corpus object of the `tm`-
 require(tm)
 ```
 
-Then, we crate with *readTabular* a mapping between column names in the data frame and placeholders in the tm corpus object. A corpus object is created with the Corpus command. As parameter, the command gets the data source wrapped by a specific reader function (`DataframeSource`, other reader functions are available, e.g. for simple vectors). The reader control parameter takes the previously defined mapping of metadata as input.
+A corpus object is created with the Corpus command. As parameter, the command gets the data source wrapped by a specific reader function (`DataframeSource`, other reader functions are available, e.g. for simple vectors). The DataframeSource expects to columns to be present in the data frame: `doc_id` containing a unique identifier for each document, and `text` containing the fulltext of the documents (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).
 
 ```{r}
-m <- list(ID = "id", content = "text")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus <- Corpus(DataframeSource(textdata))
 # have a look on the new corpus object
 corpus
 ```

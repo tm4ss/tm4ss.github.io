@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-09-11" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 3: Frequency analysis</title>
 
@@ -25,8 +25,8 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +36,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,7 +351,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 3: Frequency analysis</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-09-11</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
@@ -371,21 +373,19 @@ require(tm)</code></pre>
 # we add some more metadata columns to the data frame
 textdata$year &lt;- substr(textdata$date, 0, 4)
 textdata$decade &lt;- paste0(substr(textdata$date, 0, 3), &quot;0&quot;)</code></pre>
-<p>Then, we create a corpus object again. For metadata we can add a DateTimeStamp to our table mapping of metadata and data.frame fields. Moreover, we apply different preprocessing steps to the corpus text. <code>removePunctuation</code> leaves only alphanumeric characters in the text. <code>removeNumbers</code> removes numeric characters. Then lowercase transformation is performed and an English set of stop-words is removed.</p>
-<pre class="r"><code>m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;, DateTimeStamp = &quot;date&quot;)
-myReader &lt;- readTabular(mapping = m)
-corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
-corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus &lt;- tm_map(corpus, removeNumbers)
+<p>Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text. Lowercase transformation is performed and a set of English stop-words is removed. <code>removePunctuation</code> leaves only alphanumeric characters in the text. <code>removeNumbers</code> removes numeric characters. <code>stripWhitespace</code> collapses sequences of two or more whitespace characters to a single one.</p>
+<pre class="r"><code>corpus &lt;- Corpus(DataframeSource(textdata))
 corpus &lt;- tm_map(corpus, content_transformer(tolower))
 corpus &lt;- tm_map(corpus, removeWords, stopwords(&quot;en&quot;))
+corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+corpus &lt;- tm_map(corpus, removeNumbers)
 corpus &lt;- tm_map(corpus, stripWhitespace)</code></pre>
 <p>Effects of this preprocessing can be printed in the console.</p>
 <pre class="r"><code>as.character(corpus[[1]])</code></pre>
 <p>We see that the text is now a sequence of text features corresponding to the selected methods (other preprocessing steps could include stemming or lemmatization).</p>
 <p>From the preprocessed corpus, we create a new DTM.</p>
 <pre class="r"><code>DTM &lt;- DocumentTermMatrix(corpus)</code></pre>
-<p>The resulting DTM should have 231 rows and 27912 columns.</p>
+<p>The resulting DTM should have 231 rows and 24189 columns.</p>
 </div>
 <div id="time-series" class="section level1">
 <h1><span class="header-section-number">2</span> Time series</h1>
@@ -436,12 +436,12 @@ relative_sentiment_frequencies &lt;- data.frame(
 
 head(sentiments_per_president)</code></pre>
 <pre><code>##           president positive negative
-## 1   Abraham Lincoln   0.0338   0.0141
-## 2    Andrew Jackson   0.0380   0.0164
-## 3    Andrew Johnson   0.0328   0.0161
-## 4      Barack Obama   0.0359   0.0195
-## 5 Benjamin Harrison   0.0288   0.0147
-## 6   Calvin Coolidge   0.0346   0.0142</code></pre>
+## 1   Abraham Lincoln   0.0342   0.0140
+## 2    Andrew Jackson   0.0382   0.0165
+## 3    Andrew Johnson   0.0329   0.0162
+## 4      Barack Obama   0.0359   0.0204
+## 5 Benjamin Harrison   0.0291   0.0149
+## 6   Calvin Coolidge   0.0348   0.0144</code></pre>
 <p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a></p>
 <pre class="r"><code>require(reshape2)
 df &lt;- melt(sentiments_per_president, id.vars = &quot;president&quot;)
@@ -461,11 +461,11 @@ ggplot(data = df, aes(x = reorder(president, df$value, tail, 1), y = value, fill
 <h1><span class="header-section-number">4</span> Heatmaps</h1>
 <p>The overlapping of several time series in a plot can become very confusing. Heatmaps provide an alternative for the visualization of multiple frequencies over time. In this visualization method, a time series is mapped as a row in a matrix grid. Each cell of the grid is filled with a color corresponding to the value from the time series. Thus, several time series can be displayed in parallel.</p>
 <p>In addition, the time series can be sorted by similarity in a heatmap. In this way, similar frequency sequences with parallel shapes (heat activated cells) can be detected more quickly. Dendrograms can be plotted aside to visualize quantities of similarity.</p>
-<pre class="r"><code>terms_to_observe &lt;- c(&quot;war&quot;, &quot;peace&quot;, &quot;civil&quot;, &quot;terror&quot;, &quot;islam&quot;, 
-                      &quot;threat&quot;, &quot;security&quot;, &quot;conflict&quot;, &quot;together&quot;, 
-                      &quot;friend&quot;, &quot;enemy&quot;, &quot;afghanistan&quot;, &quot;muslim&quot;, 
-                      &quot;germany&quot;, &quot;world&quot;, &quot;duty&quot;, &quot;frontier&quot;, &quot;north&quot;,
-                      &quot;south&quot;, &quot;black&quot;, &quot;racism&quot;, &quot;slavery&quot;)
+<pre class="r"><code>terms_to_observe &lt;- c(&quot;war&quot;, &quot;peace&quot;, &quot;health&quot;, &quot;terror&quot;, &quot;islam&quot;, 
+                      &quot;threat&quot;, &quot;security&quot;, &quot;conflict&quot;, &quot;jobs&quot;, 
+                      &quot;economy&quot;, &quot;indian&quot;, &quot;afghanistan&quot;, &quot;muslim&quot;, 
+                      &quot;god&quot;, &quot;world&quot;, &quot;territory&quot;, &quot;frontier&quot;, &quot;north&quot;,
+                      &quot;south&quot;, &quot;black&quot;, &quot;racism&quot;, &quot;slavery&quot;, &quot;iran&quot;)
 DTM_reduced &lt;- as.matrix(DTM[, terms_to_observe])
 rownames(DTM_reduced) &lt;- ifelse(as.integer(textdata$year) %% 2 == 0, textdata$year, &quot;&quot;)
 heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE, margins = c(5, 10))</code></pre>

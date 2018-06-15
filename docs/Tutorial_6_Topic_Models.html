@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-10-02" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 6: Topic Models</title>
 
@@ -25,8 +25,8 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +36,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,7 +351,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 6: Topic Models</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-10-02</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
@@ -371,15 +373,13 @@ require(topicmodels)</code></pre>
 english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
 # Create corpus object
-m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;, DateTimeStamp = &quot;date&quot;)
-myReader &lt;- readTabular(mapping = m)
-corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus &lt;- Corpus(DataframeSource(textdata))
 
 # Preprocessing chain
-processedCorpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
-processedCorpus &lt;- tm_map(processedCorpus, content_transformer(tolower))
+processedCorpus &lt;- tm_map(corpus, content_transformer(tolower))
 processedCorpus &lt;- tm_map(processedCorpus, removeWords, english_stopwords)
+processedCorpus &lt;- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
 processedCorpus &lt;- tm_map(processedCorpus, stemDocument, language = &quot;en&quot;)
 processedCorpus &lt;- tm_map(processedCorpus, stripWhitespace)</code></pre>
 <div id="model-calculation" class="section level1">
@@ -392,7 +392,7 @@ DTM &lt;- DocumentTermMatrix(processedCorpus, control = list(bounds = list(globa
 
 # have a look at the number of documents and terms in the matrix
 dim(DTM)</code></pre>
-<pre><code>## [1]  231 7673</code></pre>
+<pre><code>## [1]  231 5795</code></pre>
 <p>As an unsupervised machine learning method, topic models are suitable for the exploration of data. The calculation of topic models aims to determine the proportionate composition of a fixed number of topics in the documents of a collection. It is useful to experiment with different parameters in order to find the most suitable parameters for your own analysis needs.</p>
 <p>For parameterized models such as Latent Dirichlet Allocation (LDA), the number of topics <code>K</code> is the most important parameter to define in advance. How an optimal <code>K</code> should be selected depends on various factors. If <code>K</code> is too small, the collection is divided into a few very general semantic contexts. If <code>K</code> is too large, the collection is divided into too many topics of which some may overlap and others are hardly interpretable.</p>
 <p>For our first analysis we choose a thematic “resolution” of <code>K = 20</code> topics. In contrast to a resolution of 100 or more, this number of topics can be evaluated qualitatively very easy.</p>
@@ -405,7 +405,7 @@ set.seed(9161)
 # compute the LDA model, inference via 1000 iterations of Gibbs sampling
 topicModel &lt;- LDA(DTM, K, method=&quot;Gibbs&quot;, control=list(iter = 500, verbose = 25))</code></pre>
 <p>Depending on the size of the vocabulary, the collection size and the number K, the inference of topic models can take a very long time. This calculation may take several minutes. If it takes too long, reduce the vocabulary in the DTM by increasing the minimum frequency in the previous step.</p>
-<p>The topic model inference results in two (approximate) posterior probability distributions: a distribution <code>theta</code> over K topics within each document and a distribution <code>beta</code> over V terms within each topic, where V represents the length of the vocabulary of the collection (V = 7673). Let’s take a closer look at these results:</p>
+<p>The topic model inference results in two (approximate) posterior probability distributions: a distribution <code>theta</code> over K topics within each document and a distribution <code>beta</code> over V terms within each topic, where V represents the length of the vocabulary of the collection (V = 5795). Let’s take a closer look at these results:</p>
 <pre class="r"><code># have a look a some of the results (posterior distributions)
 tmResult &lt;- posterior(topicModel)
 # format of the resulting object
@@ -413,11 +413,11 @@ attributes(tmResult)</code></pre>
 <pre><code>## $names
 ## [1] &quot;terms&quot;  &quot;topics&quot;</code></pre>
 <pre class="r"><code>nTerms(DTM)              # lengthOfVocab</code></pre>
-<pre><code>## [1] 7673</code></pre>
+<pre><code>## [1] 5795</code></pre>
 <pre class="r"><code># topics are probability distribtions over the entire vocabulary
 beta &lt;- tmResult$terms   # get beta from results
 dim(beta)                # K distributions over nTerms(DTM) terms</code></pre>
-<pre><code>## [1]   20 7673</code></pre>
+<pre><code>## [1]   20 5795</code></pre>
 <pre class="r"><code>rowSums(beta)            # rows in beta sum to 1</code></pre>
 <pre><code>##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
 ##  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1</code></pre>
@@ -432,28 +432,28 @@ dim(theta)               # nDocs(DTM) distributions over K topics</code></pre>
 ##  1  1  1  1  1  1  1  1  1  1</code></pre>
 <p>Let’s take a look at the 10 most likely terms within the term probabilities <code>beta</code> of the inferred topics (only the first 8 are shown below).</p>
 <pre class="r"><code>terms(topicModel, 10)</code></pre>
-<pre><code>##       Topic 1    Topic 2    Topic 3   Topic 4     Topic 5    Topic 6    
-##  [1,] &quot;war&quot;      &quot;govern&quot;   &quot;nation&quot;  &quot;program&quot;   &quot;world&quot;    &quot;america&quot;  
-##  [2,] &quot;men&quot;      &quot;duti&quot;     &quot;war&quot;     &quot;year&quot;      &quot;nation&quot;   &quot;american&quot; 
-##  [3,] &quot;american&quot; &quot;peopl&quot;    &quot;part&quot;    &quot;nation&quot;    &quot;free&quot;     &quot;freedom&quot;  
-##  [4,] &quot;forc&quot;     &quot;time&quot;     &quot;peac&quot;    &quot;increas&quot;   &quot;freedom&quot;  &quot;nation&quot;   
-##  [5,] &quot;enemi&quot;    &quot;regard&quot;   &quot;forc&quot;    &quot;feder&quot;     &quot;peopl&quot;    &quot;secur&quot;    
-##  [6,] &quot;fight&quot;    &quot;hope&quot;     &quot;author&quot;  &quot;congress&quot;  &quot;defens&quot;   &quot;countri&quot;  
-##  [7,] &quot;unit&quot;     &quot;part&quot;     &quot;million&quot; &quot;state&quot;     &quot;strength&quot; &quot;world&quot;    
-##  [8,] &quot;peac&quot;     &quot;justic&quot;   &quot;unit&quot;    &quot;develop&quot;   &quot;econom&quot;   &quot;terrorist&quot;
-##  [9,] &quot;product&quot;  &quot;question&quot; &quot;debt&quot;    &quot;continu&quot;   &quot;militari&quot; &quot;peopl&quot;    
-## [10,] &quot;part&quot;     &quot;make&quot;     &quot;commerc&quot; &quot;administr&quot; &quot;effort&quot;   &quot;terror&quot;   
-##       Topic 7     Topic 8   
-##  [1,] &quot;state&quot;     &quot;state&quot;   
-##  [2,] &quot;constitut&quot; &quot;unit&quot;    
-##  [3,] &quot;union&quot;     &quot;congress&quot;
-##  [4,] &quot;power&quot;     &quot;govern&quot;  
-##  [5,] &quot;peopl&quot;     &quot;great&quot;   
-##  [6,] &quot;congress&quot;  &quot;year&quot;    
-##  [7,] &quot;territori&quot; &quot;act&quot;     
-##  [8,] &quot;presid&quot;    &quot;treati&quot;  
-##  [9,] &quot;law&quot;       &quot;power&quot;   
-## [10,] &quot;republ&quot;    &quot;duti&quot;</code></pre>
+<pre><code>##       Topic 1    Topic 2    Topic 3    Topic 4     Topic 5   Topic 6   
+##  [1,] &quot;nation&quot;   &quot;state&quot;    &quot;war&quot;      &quot;war&quot;       &quot;world&quot;   &quot;year&quot;    
+##  [2,] &quot;peopl&quot;    &quot;unit&quot;     &quot;govern&quot;   &quot;nation&quot;    &quot;nation&quot;  &quot;american&quot;
+##  [3,] &quot;congress&quot; &quot;congress&quot; &quot;men&quot;      &quot;forc&quot;      &quot;war&quot;     &quot;america&quot; 
+##  [4,] &quot;power&quot;    &quot;govern&quot;   &quot;great&quot;    &quot;establish&quot; &quot;free&quot;    &quot;peopl&quot;   
+##  [5,] &quot;peac&quot;     &quot;treati&quot;   &quot;make&quot;     &quot;author&quot;    &quot;freedom&quot; &quot;world&quot;   
+##  [6,] &quot;great&quot;    &quot;year&quot;     &quot;peopl&quot;    &quot;object&quot;    &quot;forc&quot;    &quot;time&quot;    
+##  [7,] &quot;govern&quot;   &quot;great&quot;    &quot;matter&quot;   &quot;peac&quot;      &quot;peac&quot;    &quot;make&quot;    
+##  [8,] &quot;citizen&quot;  &quot;duti&quot;     &quot;peac&quot;     &quot;debt&quot;      &quot;unit&quot;    &quot;tax&quot;     
+##  [9,] &quot;prosper&quot;  &quot;act&quot;      &quot;labor&quot;    &quot;million&quot;   &quot;peopl&quot;   &quot;congress&quot;
+## [10,] &quot;protect&quot;  &quot;effect&quot;   &quot;industri&quot; &quot;communic&quot;  &quot;defens&quot;  &quot;govern&quot;  
+##       Topic 7      Topic 8   
+##  [1,] &quot;year&quot;       &quot;year&quot;    
+##  [2,] &quot;program&quot;    &quot;govern&quot;  
+##  [3,] &quot;govern&quot;     &quot;gold&quot;    
+##  [4,] &quot;dollar&quot;     &quot;silver&quot;  
+##  [5,] &quot;million&quot;    &quot;present&quot; 
+##  [6,] &quot;war&quot;        &quot;amount&quot;  
+##  [7,] &quot;increas&quot;    &quot;bond&quot;    
+##  [8,] &quot;expenditur&quot; &quot;treasuri&quot;
+##  [9,] &quot;recommend&quot;  &quot;peopl&quot;   
+## [10,] &quot;fiscal&quot;     &quot;condit&quot;</code></pre>
 <p>For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concatenate the five most likely terms of each topic to a string that represents a pseudo-name for each topic.</p>
 <pre class="r"><code>top5termsPerTopic &lt;- terms(topicModel, 5)
 topicNames &lt;- apply(top5termsPerTopic, 2, paste, collapse=&quot; &quot;)</code></pre>
@@ -537,26 +537,26 @@ topicNames &lt;- apply(lda::top.topic.words(beta, 5, by.score = T), 2, paste, co
 topicProportions &lt;- colSums(theta) / nDocs(DTM)  # mean probablities over all documents
 names(topicProportions) &lt;- topicNames     # assign the topic names we created before
 sort(topicProportions, decreasing = TRUE) # show summed proportions in decreased order</code></pre>
-<pre><code>##  [1] &quot;0.22522 : govern state public interest subject&quot; 
-##  [2] &quot;0.10318 : world nation free peac peopl&quot;         
-##  [3] &quot;0.09655 : america work job make year&quot;           
-##  [4] &quot;0.08841 : nation govern congress system work&quot;   
-##  [5] &quot;0.08103 : nation unit object vessel part&quot;       
-##  [6] &quot;0.07425 : state mexico unit war amount&quot;         
-##  [7] &quot;0.05298 : program growth feder energi propos&quot;   
-##  [8] &quot;0.03478 : unit recommend cuba congress nation&quot;  
-##  [9] &quot;0.02809 : govern unit american state treati&quot;    
-## [10] &quot;0.02794 : make men matter ship peac&quot;            
-## [11] &quot;0.02512 : terrorist america iraq terror fight&quot;  
-## [12] &quot;0.0244 : state constitut union right principl&quot;  
-## [13] &quot;0.02263 : program dollar fiscal million billion&quot;
-## [14] &quot;0.02096 : manufactur present price cost tariff&quot; 
-## [15] &quot;0.01866 : public agricultur method board cent&quot;  
-## [16] &quot;0.01798 : year fiscal silver indian report&quot;     
-## [17] &quot;0.01767 : war enemi forc fight victori&quot;         
-## [18] &quot;0.01605 : law man nation corpor work&quot;           
-## [19] &quot;0.0141 : bank gold currenc note circul&quot;         
-## [20] &quot;0.01 : constitut california slaveri peopl slave&quot;</code></pre>
+<pre><code>##  [1] &quot;0.18797 : state govern public subject unit&quot;        
+##  [2] &quot;0.12158 : year congress time present made&quot;         
+##  [3] &quot;0.11753 : nation world peopl great live&quot;           
+##  [4] &quot;0.08658 : job year work america american&quot;          
+##  [5] &quot;0.06485 : nation agricultur govern industri polici&quot;
+##  [6] &quot;0.05647 : program year feder continu develop&quot;      
+##  [7] &quot;0.05252 : peac nation consider fellow militia&quot;     
+##  [8] &quot;0.04001 : spain nation coloni congress unit&quot;       
+##  [9] &quot;0.03386 : govern unit state treati convent&quot;        
+## [10] &quot;0.03371 : industri men war matter make&quot;            
+## [11] &quot;0.02963 : program dollar year price expenditur&quot;    
+## [12] &quot;0.02773 : year indian report state work&quot;           
+## [13] &quot;0.02477 : war communist fight militari world&quot;      
+## [14] &quot;0.02162 : constitut state territori union power&quot;   
+## [15] &quot;0.02121 : great court american cent tariff&quot;        
+## [16] &quot;0.02095 : america terrorist iraq terror countri&quot;   
+## [17] &quot;0.01829 : law man work corpor nation&quot;              
+## [18] &quot;0.01449 : mexico texa mexican war territori&quot;       
+## [19] &quot;0.0135 : bank currenc circul treasuri money&quot;       
+## [20] &quot;0.01272 : gold silver bond amount note&quot;</code></pre>
 <p>We recognize some topics that are way more likely to occur in the corpus than others. These describe rather general thematic coherences. Other topics correspond more to specific contents.</p>
 <p><strong>Approach 2:</strong> We count how often a topic appears as a primary topic within a document. This method is also called Rank-1.</p>
 <pre class="r"><code>countsOfPrimaryTopics &lt;- rep(0, K)
@@ -568,26 +568,26 @@ for (i in 1:nDocs(DTM)) {
   countsOfPrimaryTopics[primaryTopic] &lt;- countsOfPrimaryTopics[primaryTopic] + 1
 }
 sort(countsOfPrimaryTopics, decreasing = TRUE)</code></pre>
-<pre><code>##  [1] &quot;87 : govern state public interest subject&quot;   
-##  [2] &quot;30 : world nation free peac peopl&quot;           
-##  [3] &quot;29 : america work job make year&quot;             
-##  [4] &quot;20 : nation govern congress system work&quot;     
-##  [5] &quot;13 : nation unit object vessel part&quot;         
-##  [6] &quot;10 : govern unit american state treati&quot;      
-##  [7] &quot;8 : terrorist america iraq terror fight&quot;     
-##  [8] &quot;7 : law man nation corpor work&quot;              
-##  [9] &quot;6 : make men matter ship peac&quot;               
-## [10] &quot;6 : program growth feder energi propos&quot;      
-## [11] &quot;3 : state mexico unit war amount&quot;            
-## [12] &quot;3 : year fiscal silver indian report&quot;        
-## [13] &quot;3 : war enemi forc fight victori&quot;            
-## [14] &quot;2 : public agricultur method board cent&quot;     
-## [15] &quot;1 : unit recommend cuba congress nation&quot;     
-## [16] &quot;1 : bank gold currenc note circul&quot;           
-## [17] &quot;1 : manufactur present price cost tariff&quot;    
-## [18] &quot;1 : program dollar fiscal million billion&quot;   
-## [19] &quot;0 : state constitut union right principl&quot;    
-## [20] &quot;0 : constitut california slaveri peopl slave&quot;</code></pre>
+<pre><code>##  [1] &quot;69 : state govern public subject unit&quot;        
+##  [2] &quot;34 : nation world peopl great live&quot;           
+##  [3] &quot;24 : job year work america american&quot;          
+##  [4] &quot;20 : nation agricultur govern industri polici&quot;
+##  [5] &quot;20 : year congress time present made&quot;         
+##  [6] &quot;10 : govern unit state treati convent&quot;        
+##  [7] &quot;8 : america terrorist iraq terror countri&quot;    
+##  [8] &quot;7 : program year feder continu develop&quot;       
+##  [9] &quot;7 : industri men war matter make&quot;             
+## [10] &quot;7 : law man work corpor nation&quot;               
+## [11] &quot;5 : peac nation consider fellow militia&quot;      
+## [12] &quot;4 : war communist fight militari world&quot;       
+## [13] &quot;3 : great court american cent tariff&quot;         
+## [14] &quot;3 : year indian report state work&quot;            
+## [15] &quot;3 : constitut state territori union power&quot;    
+## [16] &quot;2 : program dollar year price expenditur&quot;     
+## [17] &quot;2 : mexico texa mexican war territori&quot;        
+## [18] &quot;2 : spain nation coloni congress unit&quot;        
+## [19] &quot;1 : gold silver bond amount note&quot;             
+## [20] &quot;0 : bank currenc circul treasuri money&quot;</code></pre>
 <p>We see that sorting topics by the Rank-1 method places topics with rather specific thematic coherences in upper ranks of the list.</p>
 <p>This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most important topics or the filtering of the original collection based on specific sub-topics.</p>
 </div>
@@ -604,10 +604,10 @@ filteredCorpus &lt;- corpus[selectedDocumentIndexes]
 
 # show length of filtered corpus
 filteredCorpus</code></pre>
-<pre><code>## &lt;&lt;VCorpus&gt;&gt;
-## Metadata:  corpus specific: 0, document level (indexed): 0
+<pre><code>## &lt;&lt;SimpleCorpus&gt;&gt;
+## Metadata:  corpus specific: 1, document level (indexed): 3
 ## Content:  documents: 8</code></pre>
-<p>Our filtered corpus contains 8 documents related to the topic 2 to at least 20 %.</p>
+<p>Our filtered corpus contains 8 documents related to the topic 12 to at least 20 %.</p>
 </div>
 <div id="topic-proportions-over-time" class="section level1">
 <h1><span class="header-section-number">6</span> Topic proportions over time</h1>

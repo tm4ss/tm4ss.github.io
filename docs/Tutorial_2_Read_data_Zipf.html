@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-10-02" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 2: Processing of textual data</title>
 
@@ -25,8 +25,8 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +36,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,7 +351,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 2: Processing of textual data</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-10-02</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
@@ -375,7 +377,7 @@ dim(textdata)</code></pre>
 <pre><code>## [1] 231   5</code></pre>
 <pre class="r"><code># column names of text and metadata
 colnames(textdata)</code></pre>
-<pre><code>## [1] &quot;id&quot;          &quot;speech_type&quot; &quot;president&quot;   &quot;date&quot;        &quot;text&quot;</code></pre>
+<pre><code>## [1] &quot;doc_id&quot;      &quot;speech_type&quot; &quot;president&quot;   &quot;date&quot;        &quot;text&quot;</code></pre>
 <p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
 <pre class="r"><code>table(textdata[, &quot;president&quot;])</code></pre>
 <pre><code>## 
@@ -389,14 +391,12 @@ colnames(textdata)</code></pre>
 ##                    12                     4                     4</code></pre>
 <p>Now we want to transfer the loaded text source into a corpus object of the <code>tm</code>-package. First we load the package.</p>
 <pre class="r"><code>require(tm)</code></pre>
-<p>Then, we crate with <em>readTabular</em> a mapping between column names in the data frame and placeholders in the tm corpus object. A corpus object is created with the Corpus command. As parameter, the command gets the data source wrapped by a specific reader function (<code>DataframeSource</code>, other reader functions are available, e.g. for simple vectors). The reader control parameter takes the previously defined mapping of metadata as input.</p>
-<pre class="r"><code>m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;)
-myReader &lt;- readTabular(mapping = m)
-corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+<p>A corpus object is created with the Corpus command. As parameter, the command gets the data source wrapped by a specific reader function (<code>DataframeSource</code>, other reader functions are available, e.g. for simple vectors). The DataframeSource expects to columns to be present in the data frame: <code>doc_id</code> containing a unique identifier for each document, and <code>text</code> containing the fulltext of the documents (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).</p>
+<pre class="r"><code>corpus &lt;- Corpus(DataframeSource(textdata))
 # have a look on the new corpus object
 corpus</code></pre>
-<pre><code>## &lt;&lt;VCorpus&gt;&gt;
-## Metadata:  corpus specific: 0, document level (indexed): 0
+<pre><code>## &lt;&lt;SimpleCorpus&gt;&gt;
+## Metadata:  corpus specific: 1, document level (indexed): 3
 ## Content:  documents: 231</code></pre>
 <p>A corpus is an extension of R list objects. With the <code>[[]]</code> brackets, we can access single list elements, here documents, within a corpus.</p>
 <pre class="r"><code># accessing a single document object
@@ -404,7 +404,7 @@ corpus[[1]]
 # getting its text content
 as.character(corpus[[1]])</code></pre>
 <pre><code>## &lt;&lt;PlainTextDocument&gt;&gt;
-## Metadata:  3
+## Metadata:  7
 ## Content:  chars: 6687</code></pre>
 <pre><code>## [1] &quot;Fellow-Citizens of the Senate and House of Representatives:\n\nI embrace with great satisfaction the opportunity which now...&quot;</code></pre>
 <p>Success!!! We now have 231 speeches for further analysis available in a convenient tm corpus object!</p>
@@ -418,15 +418,15 @@ as.character(corpus[[1]])</code></pre>
 DTM &lt;- DocumentTermMatrix(corpus)
 # Show some information
 DTM</code></pre>
-<pre><code>## &lt;&lt;DocumentTermMatrix (documents: 231, terms: 54333)&gt;&gt;
-## Non-/sparse entries: 466743/12084180
-## Sparsity           : 96%
-## Maximal term length: 35
+<pre><code>## &lt;&lt;DocumentTermMatrix (documents: 231, terms: 24743)&gt;&gt;
+## Non-/sparse entries: 388973/5326660
+## Sparsity           : 93%
+## Maximal term length: 20
 ## Weighting          : term frequency (tf)</code></pre>
 <pre class="r"><code># Dimensionality of the DTM
 dim(DTM)</code></pre>
-<pre><code>## [1]   231 54333</code></pre>
-<p>The dimensions of the DTM, 231 rows and 54333 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
+<pre><code>## [1]   231 24743</code></pre>
+<p>The dimensions of the DTM, 231 rows and 24743 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
 <p>A first impression of text statistics we can get from a word list. Such a word list represents the frequency counts of all words in all documents. We can get that information easily from the DTM by summing all of its column vectors.</p>
 <p>A so-called <strong>sparse matrix</strong> data structure is used for the document term matrix in the tm package (tm imports the <code>slam</code> package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The <em>slam</em> package provides arithmetic operations on sparse DTMs.</p>
 <pre class="r"><code>require(slam)</code></pre>
@@ -443,38 +443,38 @@ wordlist &lt;- wordlist[wordIndexes, ]
 # show the most frequent words
 head(wordlist, 25)</code></pre>
 <pre><code>##                 words  freqs
-## the               the 150070
-## and               and  60351
-## that             that  21328
-## for               for  18916
-## our               our  17438
-## with             with  11967
-## have             have  11941
-## which           which  11900
-## this             this  11845
-## will             will   9245
-## has               has   8962
-## are               are   8804
-## not               not   8708
-## been             been   8695
-## their           their   7788
-## from             from   7467
-## all               all   6355
-## its               its   5755
-## was               was   5599
-## but               but   5536
-## government government   5163
-## should         should   5076
-## they             they   4945
-## united         united   4798
-## states         states   4480</code></pre>
+## the               the 150549
+## and               and  61199
+## that             that  22102
+## for               for  19096
+## our               our  17482
+## which           which  12350
+## this             this  12141
+## have             have  12090
+## with             with  12059
+## will             will   9559
+## has               has   9065
+## not               not   9002
+## are               are   8997
+## been             been   8771
+## their           their   7793
+## from             from   7513
+## government government   7097
+## all               all   6847
+## states         states   6477
+## its               its   5763
+## but               but   5689
+## was               was   5670
+## should         should   5162
+## they             they   5079
+## congress     congress   4996</code></pre>
 <p>The words in this sorted list have a ranking depending on the position in this list. If the word ranks are plotted on the x axis and all frequencies on the y axis, then the Zipf distribution is obtained. This is a typical property of language data and its distribution is similar for all languages.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, lwd=2, main = &quot;Rank frequency Plot&quot;, xlab=&quot;Rank&quot;, ylab =&quot;Frequency&quot;)</code></pre>
 <p><img src="Tutorial_2_Read_data_Zipf_files/figure-html/unnamed-chunk-12-1.png" width="768" /></p>
 <p>The distribution follows an extreme power law distribution (very few words occur very often, very many words occur very rare). The Zipf law says that the frequency of a word is reciprocal to its rank (1 / r). To make the plot more readable, the axes can be logarithmized.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, log=&quot;xy&quot;, lwd=2, main = &quot;Rank-Frequency Plot&quot;, xlab=&quot;log-Rank&quot;, ylab =&quot;log-Frequency&quot;)</code></pre>
 <p><img src="Tutorial_2_Read_data_Zipf_files/figure-html/unnamed-chunk-13-1.png" width="768" /></p>
-<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 54333 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
+<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 24743 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
 <p>Hence, ignoring very rare / frequent words has many advantages:</p>
 <ul>
 <li>reducing the dimensionality of the vocabulary (saves memory)</li>
@@ -502,40 +502,40 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 <li>Print out the word list without stop words and low frequent words.</li>
 </ol>
 <pre><code>##                 words freqs
-## will             will  9245
-## government government  5163
-## united         united  4798
-## states         states  4480
-## can               can  4255
-## upon             upon  3893
-## congress     congress  3626
-## may               may  3299
-## must             must  3227
-## great           great  3189
-## public         public  2957
-## new               new  2934
-## people         people  2865
-## made             made  2860
-## now               now  2622
-## american     american  2543
-## one               one  2519
-## year             year  2451
-## time             time  2391
-## last             last  2347
-## every           every  2255
-## national     national  2123
-## country       country  2069
-## present       present  2003
-## war               war  1887</code></pre>
+## will             will  9559
+## government government  7097
+## states         states  6477
+## congress     congress  4996
+## united         united  4819
+## can               can  4456
+## people         people  4067
+## year             year  3991
+## upon             upon  3956
+## country       country  3437
+## may               may  3407
+## must             must  3306
+## great           great  3256
+## made             made  3149
+## public         public  3093
+## now               now  3079
+## new               new  2978
+## 000               000  2939
+## time             time  2900
+## one               one  2860
+## war               war  2820
+## american     american  2679
+## last             last  2625
+## world           world  2522
+## years           years  2309</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>If you look at the result, are there any corpus specific terms that should also be considered as stop word?</li>
 <li>What is the share of terms regarding the entire vocabulary which occur only once in the corpus?</li>
 </ol>
-<pre><code>## [1] 0.4728986</code></pre>
+<pre><code>## [1] 0.2787051</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Compute the type-token ratio (TTR) of the corpus. the TTR is the fraction of the number of tokens divided by the number of types.</li>
 </ol>
-<pre><code>## [1] 0.03876839</code></pre>
+<pre><code>## [1] 0.01759322</code></pre>
 </div>
 
 <p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>

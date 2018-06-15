@@ -36,15 +36,13 @@ textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
-m <- list(ID = "id", content = "text", DateTimeStamp = "date")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus <- Corpus(DataframeSource(textdata))
 
 # Preprocessing chain
-processedCorpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus <- tm_map(processedCorpus, removeNumbers)
-processedCorpus <- tm_map(processedCorpus, content_transformer(tolower))
+processedCorpus <- tm_map(corpus, content_transformer(tolower))
 processedCorpus <- tm_map(processedCorpus, removeWords, english_stopwords)
+processedCorpus <- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+processedCorpus <- tm_map(processedCorpus, removeNumbers)
 processedCorpus <- tm_map(processedCorpus, stemDocument, language = "en")
 processedCorpus <- tm_map(processedCorpus, stripWhitespace)
 ```

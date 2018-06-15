@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-10-02" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 5: Co-occurrence analysis</title>
 
@@ -25,8 +25,8 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +36,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,7 +351,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 5: Co-occurrence analysis</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-10-02</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
@@ -363,9 +365,7 @@ textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding
 english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
 # Create corpus object
-m &lt;- list(ID = &quot;id&quot;, content = &quot;text&quot;, DateTimeStamp = &quot;date&quot;)
-myReader &lt;- readTabular(mapping = m)
-corpus &lt;- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))</code></pre>
+corpus &lt;- Corpus(DataframeSource(textdata))</code></pre>
 <div id="sentence-detection" class="section level1">
 <h1><span class="header-section-number">1</span> Sentence detection</h1>
 <p>The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighboring words. One of the most frequently used context window is the sentence.</p>
@@ -434,10 +434,10 @@ length(sentenceCorpus)</code></pre>
 <p>CAUTION: The newly decomposed corpus has now reached a considerable size of 62517 sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.</p>
 <p>Now we are returning to our usual pre-processing chain and apply it on the separated sentences.</p>
 <pre class="r"><code># Preprocessing chain
-sentenceCorpus &lt;- tm_map(sentenceCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-sentenceCorpus &lt;- tm_map(sentenceCorpus, removeNumbers)
 sentenceCorpus &lt;- tm_map(sentenceCorpus, content_transformer(tolower))
 sentenceCorpus &lt;- tm_map(sentenceCorpus, removeWords, english_stopwords)
+sentenceCorpus &lt;- tm_map(sentenceCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+sentenceCorpus &lt;- tm_map(sentenceCorpus, removeNumbers)
 sentenceCorpus &lt;- tm_map(sentenceCorpus, stripWhitespace)</code></pre>
 <p>Again, we create a document-term-matrix. Only word forms which occur at least 10 times should be taken into account. An upper limit is not set (<code>Inf</code> = infinite).</p>
 <p>Additionally, we are interested in the joint occurrence of words in a sentence. For this, we do not need the exact count of how often the terms occur, but only the information whether they occur together or not. This can be encoded in a binary document-term-matrix. The parameter <code>weighting</code> in the control options calls the <code>weightBin</code> function. This writes a 1 into the DTM if the term is contained in a sentence and 0 if not.</p>
@@ -456,12 +456,12 @@ binDTM &lt;- sparseMatrix(i = binDTM$i, j = binDTM$j, x = binDTM$v, dims = c(bin
 coocCounts &lt;- t(binDTM) %*% binDTM</code></pre>
 <p>Let’s look at a snippet of the result. The matrix has <code>nTerms</code> rows and columns and is symmetric. Each cell contains the number of joint occurrences. In the diagonal, the frequencies of single occurrences of each term are encoded.</p>
 <pre class="r"><code>as.matrix(coocCounts[202:205, 202:205])</code></pre>
-<pre><code>##            advocating affair affairs affect
-## advocating         11      0       0      0
-## affair              0     18       1      0
-## affairs             0      1     515      1
-## affect              0      0       1     99</code></pre>
-<p>Interprete as follows: affairs appears together 1 times with affect in the 62517 sentences of the SUTO addresses. affairs alone occurs 515 times.</p>
+<pre><code>##              home introduction inventions manufactures
+## home          698            5          1           11
+## introduction    5           54          1            1
+## inventions      1            1         18            1
+## manufactures   11            1          1          160</code></pre>
+<p>Interprete as follows: inventions appears together 1 times with manufactures in the 62517 sentences of the SUTO addresses. inventions alone occurs 18 times.</p>
 </div>
 <div id="statistical-significance" class="section level1">
 <h1><span class="header-section-number">3</span> Statistical significance</h1>
@@ -499,27 +499,27 @@ resultOverView &lt;- data.frame(
 colnames(resultOverView) &lt;- c(&quot;Freq-terms&quot;, &quot;Freq&quot;, &quot;MI-terms&quot;, &quot;MI&quot;, &quot;Dice-Terms&quot;, &quot;Dice&quot;, &quot;LL-Terms&quot;, &quot;LL&quot;)
 print(resultOverView)</code></pre>
 <pre><code>##    Freq-terms Freq  MI-terms       MI Dice-Terms       Dice   LL-Terms
-## 1       spain  439     spain 4.958694      spain 1.00000000       cuba
-## 2      states  145   amistad 4.042404       cuba 0.13915416     united
-## 3      united  136  antilles 4.042404    spanish 0.11550152     states
-## 4  government  112    madrid 3.900087     france 0.08205128    spanish
-## 5      treaty   55  catholic 3.893984     island 0.07235890     treaty
-## 6        cuba   51       ton 3.754722     madrid 0.06967213     france
-## 7        made   46    subdue 3.734919     treaty 0.06944444     madrid
-## 8         war   45     queen 3.572400    florida 0.06106870     island
-## 9        part   44    cubans 3.511775   friendly 0.05963303 government
-## 10  relations   39 disavowed 3.492357   colonies 0.05936920    florida
+## 1       spain  443     spain 4.949624      spain 1.00000000       cuba
+## 2      states  146   amistad 4.033333       cuba 0.14073072     united
+## 3      united  137  antilles 4.033333    spanish 0.11711712     states
+## 4  government  113    madrid 3.891017     france 0.08396947    spanish
+## 5      treaty   55  catholic 3.851012     island 0.07449857     treaty
+## 6        cuba   52    subdue 3.725849     madrid 0.06910569     france
+## 7         war   46       ton 3.650341     treaty 0.06900878     madrid
+## 8        made   46  autonomy 3.563330   colonies 0.06250000     island
+## 9        part   44    cubans 3.502705   friendly 0.06164384 government
+## 10  relations   40 disavowed 3.483287    florida 0.06060606  relations
 ##           LL
-## 1  243.67705
-## 2  226.06445
-## 3  195.38370
-## 4  180.45952
-## 5  124.91273
-## 6  111.44823
-## 7  106.42963
-## 8   89.43827
-## 9   86.72616
-## 10  77.98097</code></pre>
+## 1  249.00029
+## 2  227.23210
+## 3  195.73790
+## 4  185.23159
+## 5  123.47575
+## 6  116.03250
+## 7  106.11926
+## 8   94.01976
+## 9   82.59194
+## 10  80.34891</code></pre>
 </div>
 <div id="visualization-of-co-occurrence" class="section level1">
 <h1><span class="header-section-number">4</span> Visualization of co-occurrence</h1>
@@ -537,11 +537,11 @@ coocTerm &lt;- &quot;california&quot;</code></pre>
 <pre class="r"><code># Display the numberOfCoocs main terms
 print(coocs[1:numberOfCoocs])</code></pre>
 <pre><code>##      oregon      mexico       coast       upper     mineral       texas 
-##   262.43281   114.40450    64.35717    52.87705    52.84182    51.69327 
-## acquisition     pacific territories        york   wisconsin     arizona 
-##    43.99069    40.75336    39.47065    36.87249    34.30973    33.98671 
-##       mines        iowa       miles 
-##    33.75958    29.69230    29.15576</code></pre>
+##   260.53173   112.36326    62.88527    52.48691    52.39674    51.03741 
+## acquisition     pacific territories        york    southern     arizona 
+##    43.36975    39.39077    38.77770    36.32582    34.93340    33.71113 
+##       mines   wisconsin     florida 
+##    33.43116    33.23725    29.78051</code></pre>
 <p>To acquire an extended semantic environment of the target term, ‘secondary co-occurrence’ terms can be computed for each co-occurrence term of the target term. This results in a graph that can be visualized with special layout algorithms (e.g. Force Directed Graph).</p>
 <p>Network graphs can be evaluated and visualized in R with the <code>igraph</code>-package. Any graph object can be created from a three-column data-frame. Each row in that data-frame is a triple. Each triple encodes an edge-information of two nodes (source, sink) and an edge-weight value.</p>
 <p>For a term co-occurrence network, each triple consists of the target word, a co-occurring word and the significance of their joint occurrence. We denote the values with <em>from, to, sig</em>.</p>
@@ -586,13 +586,13 @@ for (i in 1:numberOfCoocs){
 <p>As a result, <code>resultGraph</code> now contains all <code>numberOfCoocs * numberOfCoocs</code> edges of a term co-occurrence network.</p>
 <pre class="r"><code># Sample of some examples from resultGraph
 resultGraph[sample(nrow(resultGraph), 6), ]</code></pre>
-<pre><code>##            from          to       sig
-## 102      mexico    boundary 127.80721
-## 74        upper     council  20.20561
-## 56        texas      states 133.45635
-## 412     arizona reservation  22.38981
-## 75      mineral    deposits  23.37492
-## 147 acquisition      wealth  17.47875</code></pre>
+<pre><code>##             from          to      sig
+## 109  territories inhabitants 37.13665
+## 1010        york       rhode 35.43587
+## 7     california acquisition 43.36975
+## 815      florida     georgia 38.30515
+## 75       mineral    accurate 23.36153
+## 141       oregon       texas 34.17574</code></pre>
 <p>The package iGraph offers multiple graph visualizations for graph objects. Graph objects can be created from triple lists, such as those we just generated. In the next step we load the package iGraph and create a visualization of all nodes and edges from the object <code>resultGraph</code>.</p>
 <pre class="r"><code>require(igraph)
 

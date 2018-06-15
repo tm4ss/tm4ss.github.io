@@ -41,14 +41,12 @@ textdata <- read.csv("data/sotu_paragraphs.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
-m <- list(ID = "id", content = "text", DateTimeStamp = "date")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
+corpus <- Corpus(DataframeSource(textdata))
 
 # Preprocessing chain
-processedCorpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+processedCorpus <- tm_map(corpus, content_transformer(tolower))
+processedCorpus <- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
 processedCorpus <- tm_map(processedCorpus, removeNumbers)
-processedCorpus <- tm_map(processedCorpus, content_transformer(tolower))
 processedCorpus <- tm_map(processedCorpus, stripWhitespace)
 ```
 
@@ -95,13 +93,13 @@ dim(DTM)
 
 # Classification
 
-Now we build a linear SVM classification model with the LiblineaR package. SVM is a large margin classification approach which tries to find an optimal seperating hyperplane between data points of two different classes. There are a number of different kernel functions to compute the feature space where this hyperplane is located in (e.g. radial, polynomial, sigmoid kernel). For text classification usually the "linear" kernel is the best choice. The package LiblineaR wraps around the open source library LIBLINEAR which provides a very fast implementation.
+Now we build a linear classification model with the LiblineaR package. The package LiblineaR wraps around the open source library LIBLINEAR which provides a very fast implementations for two text classification algorithms: 1. Logistic Regression, and 2. Support Vector Machines (SVM) with a linear kernel. For both algorithms, different regularization methods exist (e.g. L1, and L2-regularization). The combination of algorithms and regularization can be controlled by the `type` parameter of the `LiblineaR` function. We stick to the default type, L2-regularized logistic regression (LR), since it usually achieves good performance in text classification.
 
-First, we load the packages. Since Liblinear requires a special Sparse Matrix format, we also load the "SparseM" package and a conversion function which allows to convert `slam`-matrices (as used in the tm package) into `SparseM`-matrices. 
+First, we load the packages. Since Liblinear requires a special Sparse Matrix format, we also load the "SparseM" package and a conversion function which allows to convert `slam`-matrices (as used in the `tm` package) into `SparseM`-matrices. 
 
 Then, we split the annotated data into a training set (80%) and a test set (20%) using a boolean selector. The expression assigned to `selector_idx` creates a boolean vector of length `r numberOfDocuments` containing a FALSE value in every fifths position. This selector is used to select to training set. Its inverted vector (!) is used to select the test set.
 
-```{r svmFirst, message=FALSE, warning=FALSE}
+```{r classificationFirst, message=FALSE, warning=FALSE}
 require(LiblineaR)
 require(SparseM)
 source("utils.R")
@@ -117,7 +115,7 @@ trainingLabels <- annotatedLabels[selector_idx]
 testDTM <- annotatedDTM[!selector_idx, ]
 testLabels <- annotatedLabels[!selector_idx]
 
-# create SVM model
+# create LR classification model
 model <- LiblineaR(trainingDTM, trainingLabels)
 summary(model)
 ```
@@ -142,7 +140,7 @@ We further employ a function called `F.measure` which gives more differentiated 
 pseudoLabelsDOM <- factor(rep("DOMESTIC", length(testLabels)), levels(testLabels))
 pseudoLabelsFOR <- factor(rep("FOREIGN", length(testLabels)), levels(testLabels))
 
-# Evaluation of former SVM classification with F-measures
+# Evaluation of former LR classification with F-measures
 F.measure(predictedLabels, testLabels, positiveClassName = "DOMESTIC")
 F.measure(predictedLabels, testLabels, positiveClassName = "FOREIGN")
 
@@ -220,7 +218,7 @@ print(colMeans(evalMeasures))
 
 ```
 
-Accuracy is around 70%, F-measure is around 0.60. Let's try some approaches to optimize the automatic classification.
+Accuracy is around `r round(colMeans(evalMeasures)[5], digits = 0)`%, F-measure is around `r round(colMeans(evalMeasures)[4], digits = 0)`%. Let's try some approaches to optimize the automatic classification.
 
 # Optimization
 
@@ -228,7 +226,7 @@ These first tries have clarified how to utilize and evaluate machine learning fu
 
 ## C-Parameter
 
-For a linear SVM the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function).  The **C-parameter** determines the cost of classifications on the training data during SVM training. 
+For a linear classification model, the cost parameter (C-parameter) is the most important parameter to tweak (for other SVM kernels such as the radial or polynomial kernel there are other important parameters which influence the shape of the kernel function).  The **C-parameter** determines the cost of classifications on the training data during training. 
 
 High values of C lead to a high costs of misclassification. The decision boundary which the classifier learns, will try to avoid any misclassification. But, values too high can lead to an overfitting of the model. This means, it adapts well to the training data, but classification will more likely fail on new test data.
 
@@ -252,21 +250,21 @@ print(paste0("Best C value: ", bestC, ", F1 = ", max(fValues)))
 
 ```
 
-From the empirical test, we can obtain C = `r bestC` as optimal choice for the SVM cost parameter. On the current training data set with the current features it achieves `r max(fValues)` F-score.
+From the empirical test, we can obtain C = `r bestC` as optimal choice for the cost parameter. On the current training data set with the current features it achieves `r max(fValues)` F-score.
 
 ## Optimized Preprocessing
 
-Not only the SVM has parameters which can be optimized to improve the results. More important are the features used for classification. In our preprocessing chain above, we extracted single types and transformed them into lower case. We now add different preprocessing steps and check on the results. To get an optimal cost parameter for each new feature set, we wrapped the code for C-parameter optimization into the `optimize_C` function.
+Not only the classification model has parameters which can be optimized to improve the results. More important are the features used for classification. In our preprocessing chain above, we extracted single types and transformed them into lower case. We now add different preprocessing steps and check on the results. To get an optimal cost parameter for each new feature set, we wrapped the code for C-parameter optimization into the `optimize_C` function.
 
 **Stop word removal**
 
 Stop words often do not contribute to the meaning of a text. For the decision between DOMESTIC and FOREIGN affairs, we do not expect any useful information from them. So let's remove them and if it improves the classifier.
 
 ```{r, optimizePreprocessing1, cache = T, message=FALSE, warning=FALSE}
-processedCorpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus <- tm_map(processedCorpus, removeNumbers)
-processedCorpus <- tm_map(processedCorpus, content_transformer(tolower))
+processedCorpus <- tm_map(corpus, content_transformer(tolower))
 processedCorpus <- tm_map(processedCorpus, removeWords, english_stopwords)
+processedCorpus <- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+processedCorpus <- tm_map(processedCorpus, removeNumbers)
 processedCorpus <- tm_map(processedCorpus, stripWhitespace)
 
 as.character(processedCorpus[[4963]])
@@ -327,18 +325,21 @@ best_C <- optimize_C(annotatedDTM, annotatedLabels)
 k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)
 ```
 
-While each individual approach to optimize our text features for classification did not improve the result greatly, some combinations indeed have a significant effect. Especially the combination of stemming and bigrams appears to be useful to improve the results. 
+Each individual approach to optimize our text features for classification has some effect on the results. Best results could be obtained from a combination of bigram features with minimum frequency 2 and stop word removal. Stemming did not have a positive effect on the performance.
 
-CAUTION: Testing different features must be done for each new task / language individually, since there is no "one-size fits all" approach to this.
+But, testing different features must be done for each new task / language individually, since there is no "one-size fits all" approach to this.
 
-GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead investing time into feature optimization it will probably be also a good idea to invest into generation of more training data.
+GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead of spending too much time on feature optimization, it will probably be a better idea to invest into generation of more training data first.
 
 # Final classification
 
-We now apply our final classification model to the entire data set, to determine the occurrence of FORGEIN/DOMESTIC affairs related content in each single speech.
+We now apply our best classification model to the entire data set, to determine the occurrence of FORGEIN/DOMESTIC affairs related content in each single speech.
 
-```{r finalClassification, message=FALSE, warning=FALSE, fig.height=12, fig.width=10}
+```{r finalClassification, cache = T, message=FALSE, warning=FALSE, fig.height=12, fig.width=10}
 # Final classification
+DTM <- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(2, Inf))))
+annotatedDTM <- convertSlamToSparseM(DTM[trainingData[, "ID"], ])
+best_C <- optimize_C(annotatedDTM, annotatedLabels)
 final_model <- LiblineaR(annotatedDTM, annotatedLabels, cost = best_C)
 final_labels <- predict(final_model, convertSlamToSparseM(DTM))$predictions
 table(final_labels) / sum(table(final_labels))
@@ -346,25 +347,32 @@ table(final_labels) / sum(table(final_labels))
 
 We see that the classifier puts the majority of the around 21,000 paragraphs into the DOMESTIC category. We can visualize the result as a bar chart with `ggplot2`. For better readability
 
-```{r finalClassification2, message=FALSE, warning=FALSE, fig.height=25, fig.width=10}
+```{r finalClassification2, cache = T, message=FALSE, warning=FALSE, fig.height=25, fig.width=10}
 speech_year <- substr(textdata$date, 0, 4)
+speech_id <- textdata$speech_doc_id
+paragraph_position <- unlist(sapply(table(speech_id), FUN = function(x) {1:x}))
 presidents_df <- data.frame(
-  speech = paste0(textdata$president, "_", speech_year),
-  category = final_labels,
-  value = 1
+  paragraph_position = paragraph_position,
+  speech = paste0(speech_id, ": ", textdata$president, "_", speech_year),
+  category = final_labels
 )
 
 # preserve speech order in chart by using factors
 presidents_df$speech <- factor(presidents_df$speech, levels = unique(presidents_df$speech))
 
+# Remove two very long speeches to beautify the plot (you can also skipt this)
+presidents_df <- presidents_df[!grepl("Carter_1981|Truman_1946", presidents_df$speech), ]
+
+# plot classes of paragraphs for each speech as tile
 require(ggplot2)
-ggplot(presidents_df, aes(x = speech, y = value, fill = category)) + geom_bar(stat = "identity") + coord_flip()
+ggplot(presidents_df, aes(x = speech, y = paragraph_position, fill = category)) + 
+  geom_tile(stat="identity") + coord_flip()
 ```
 
-Can you see how DOMESTIC affairs related content gets more important over the course of centuries? Actually, also the position of DOMESTIC policy statements changes around the turn from the 19th to 20th century.
+Can you see how DOMESTIC affairs related content gets more important over the course of centuries? Also the position of FOREIGN policy statements changes around the turn from the 19th to 20th century from the begginning of a speech to more dispersed positions thoughout the speech, and finally a tendency to rather place them at the end of speeches.
 
 # Optional exercises
 
-1. Divide the training data into a 80% training set and 20% test set. Train an SVM on the training set and evaluate the performance on the test set. As performance measure use **Krippendorff'a alpha** and **Cohen's Kappa** as provided in the `irr` package for R.
+1. Divide the training data into a 80% training set and 20% test set. Train a classifier on the training set and evaluate the performance on the test set. As performance measure use **Krippendorff'a alpha** and **Cohen's Kappa** as provided in the `irr` package for R.
 2. Use the `proba = T` parameter for the `predict` method during the final classification to evaluate on label probabilities instead of concrete label decisions. Use the output of probabilities for the label "FOREIGN" to classify paragraphs as "FOREIGN" only if the label probability is greater than 60%. Visualize the result. What can you observe compared to the previous plot (decision boundary around 50%)?
 3. Find a visualization that shows the position of FOREIGN and DOMESTIC paragraphs in each speech.

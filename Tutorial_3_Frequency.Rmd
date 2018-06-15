@@ -41,16 +41,14 @@ textdata$year <- substr(textdata$date, 0, 4)
 textdata$decade <- paste0(substr(textdata$date, 0, 3), "0")
 ```
 
-Then, we create a corpus object again. For metadata we can add a DateTimeStamp to our table mapping of metadata and data.frame fields. Moreover, we apply different preprocessing steps to the corpus text. `removePunctuation` leaves only alphanumeric characters in the text. `removeNumbers` removes numeric characters. Then lowercase transformation is performed and an English set of stop-words is removed.
+Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text. Lowercase transformation is performed and a set of English stop-words is removed. `removePunctuation` leaves only alphanumeric characters in the text. `removeNumbers` removes numeric characters. `stripWhitespace` collapses sequences of two or more whitespace characters to a single one.
 
 ```{r preprocesscorpus, cache=TRUE}
-m <- list(ID = "id", content = "text", DateTimeStamp = "date")
-myReader <- readTabular(mapping = m)
-corpus <- Corpus(DataframeSource(textdata), readerControl = list(reader = myReader))
-corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus <- tm_map(corpus, removeNumbers)
+corpus <- Corpus(DataframeSource(textdata))
 corpus <- tm_map(corpus, content_transformer(tolower))
 corpus <- tm_map(corpus, removeWords, stopwords("en"))
+corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
+corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, stripWhitespace)
 ```
 
@@ -174,11 +172,11 @@ The overlapping of several time series in a plot can become very confusing. Heat
 In addition, the time series can be sorted by similarity in a heatmap. In this way, similar frequency sequences with parallel shapes (heat activated cells) can be detected more quickly. Dendrograms can be plotted aside to visualize quantities of similarity.
 
 ```{r HM1, fig.width=9, fig.height=8, warning=F}
-terms_to_observe <- c("war", "peace", "civil", "terror", "islam", 
-                      "threat", "security", "conflict", "together", 
-                      "friend", "enemy", "afghanistan", "muslim", 
-                      "germany", "world", "duty", "frontier", "north",
-                      "south", "black", "racism", "slavery")
+terms_to_observe <- c("war", "peace", "health", "terror", "islam", 
+                      "threat", "security", "conflict", "jobs", 
+                      "economy", "indian", "afghanistan", "muslim", 
+                      "god", "world", "territory", "frontier", "north",
+                      "south", "black", "racism", "slavery", "iran")
 DTM_reduced <- as.matrix(DTM[, terms_to_observe])
 rownames(DTM_reduced) <- ifelse(as.integer(textdata$year) %% 2 == 0, textdata$year, "")
 heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE, margins = c(5, 10))

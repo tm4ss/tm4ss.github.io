@@ -12,8 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 In this tutorial we show the use of supervised machine learning for text classification. The basic idea is to compute a model based on training data. Training data usually are hand-coded documents or text snippets associated with a specific category (class). From these texts, features (e.g. words) are extracted and associated with categories in the model. The model then can be utilized to categorize new texts.
 
 We cover basic principles of the process such as cross-validation and feature engineering in the following steps:
@@ -33,7 +34,7 @@ As data, again we use the "State of the Union"-addresses. But this time, we oper
 
 As already known, we read the text source (21334 paragraphs from 231 speeches). For the moment, we apply very basic preprocessing.
 
-```{r initalisierung, message=FALSE, warning=FALSE, results='hide'}
+```{r initalisierung, message=FALSE, warning=FALSE, results='hide', cache=T}
 options(stringsAsFactors = FALSE)
 library(tm)
 
@@ -99,7 +100,7 @@ First, we load the packages. Since Liblinear requires a special Sparse Matrix fo
 
 Then, we split the annotated data into a training set (80%) and a test set (20%) using a boolean selector. The expression assigned to `selector_idx` creates a boolean vector of length `r numberOfDocuments` containing a FALSE value in every fifths position. This selector is used to select to training set. Its inverted vector (!) is used to select the test set.
 
-```{r classificationFirst, message=FALSE, warning=FALSE}
+```{r classificationFirst, message=FALSE, warning=FALSE, cache=T}
 require(LiblineaR)
 require(SparseM)
 source("utils.R")
@@ -183,7 +184,7 @@ get_k_fold_logical_indexes(3, k = 10, n = 12)
 
 Now we run 1) splitting of the annotated data, 2) model computation and testing in one for-loop.
 
-```{r tenFoldCV}
+```{r tenFoldCV, cache=T}
 k <- 10
 evalMeasures <- NULL
 for (j in 1:k) {
@@ -233,7 +234,7 @@ High values of C lead to a high costs of misclassification. The decision boundar
 Low values of C lead to less strict decision boundaries, which accepts some misclassifications. Such a model might generalize better on unseen data. But in the end, there is now exact method to determine a good C-value beforehand. It rather is an empirical question. To choose an optimal C-value, we simply try from a range of values, run k-fold-cross-validation for each single value and decide for the C which resulted in the best classification accuracy / F-measure. This is realized in the following for-loop, which utilizes the function `k_fold_cross_validation`. The function (have a look into `F.measure.R`) simply wraps the code for cross-validation, we used above.
 
 
-```{r optimizeC}
+```{r optimizeC, cache=T}
 cParameterValues <- c(0.003, 0.01, 0.03, 0.1, 0.3, 1, 3 , 10, 30, 100)
 fValues <- NULL
 

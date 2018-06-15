@@ -27,6 +27,10 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -356,7 +360,10 @@ div.tocify {
 </div>
 
 
-<p>This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package.</p>
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package.</p>
 <div id="annotate-pos" class="section level1">
 <h1><span class="header-section-number">1</span> Annotate POS</h1>
 <p>We extract proper nouns (tag NNP for singular and tag NNPS for plural proper nouns) from paragraphs of president’s speeches.</p>
@@ -448,6 +455,7 @@ print(coocs[1:20])</code></pre>
 <ol style="list-style-type: decimal">
 <li>Plot a co-occurrence graph for the term “califoria_nnp” and its collocates, such as in tutorial 5</li>
 <li>Merging tokens by identical consecutive POS-tags can be a useful approach to identification of multi-word-units (MWU). Modify the function <code>annotateDocuments</code> in a way, that consecutive POS-tags get merged into a single token (e.g. “United_NNP States_NNP” becomes “United_States_NNP”).</li>
+<li>Bring it all together: Create a topic model visualiazation (topic distribution per decade, Tutorial: Topic Models) based only on paragraphs related to Foreign Policy (Tutorial: Text Classification). Just use nouns (NN, NNS) and proper nouns (NNP, NNPS) for the model (Tutorial: POS-tagging).</li>
 </ol>
 </div>
 

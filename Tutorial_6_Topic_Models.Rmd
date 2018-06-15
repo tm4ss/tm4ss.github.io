@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 This exercise demonstrates the use of topic models on a text corpus for the extraction of latent semantic contexts in the documents. In this exercise we will:
 
 1. Read in and preprocess text data,
@@ -283,8 +285,8 @@ In the following, we will select documents based on their topic content and disp
 
 ``` {r}
 topicToFilter <- 6  # you can set this manually ...
-# ... or have it selected by a term in the topic name (e.g. 'iraq')
-topicToFilter <- grep('iraq', topicNames)[1] 
+# ... or have it selected by a term in the topic name (e.g. 'children')
+topicToFilter <- grep('children', topicNames)[1] 
 topicThreshold <- 0.2
 selectedDocumentIndexes <- which(theta[, topicToFilter] >= topicThreshold)
 filteredCorpus <- corpus[selectedDocumentIndexes]

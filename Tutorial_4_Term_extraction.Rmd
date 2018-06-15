@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus.
 
 1. TF-IDF
@@ -217,9 +219,10 @@ The method extracted `r sum(logLikelihood > 6.63)` key terms from the first Obam
 Finally, visualize the result of the 50 most significant terms as Wordcloud. This can be realized simply by function of the package wordcloud. Additionally to the words and their weights (here we use likelihood values), we override default scaling and color parameters. Feel free to try different parameters to modify the wordcloud rendering.
 
 ```{r message=FALSE, warning=FALSE, fig.width=5, fig.height=5, fig.align='center'}
-require(wordcloud)
+require(wordcloud2)
 top50 <- sort(logLikelihood, decreasing = TRUE)[1:50]
-wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, "Dark2"), random.order = F)
+top50_df <- data.frame(word = names(top50), count = top50)
+wordcloud2(top50_df, shuffle = F)
 ```
 
 Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a Wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.

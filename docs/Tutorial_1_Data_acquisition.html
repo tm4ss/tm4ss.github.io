@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2017-10-02" />
+<meta name="date" content="2018-06-15" />
 
 <title>Tutorial 1: Data import and web scraping</title>
 
@@ -25,8 +25,12 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -36,10 +40,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -349,12 +355,15 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 1: Data import and web scraping</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2017-10-02</em></h4>
+<h4 class="date"><em>2018-06-15</em></h4>
 
 </div>
 
 
-<p>This tutorial covers how to extract and process text data from web pages or other documents for later analysis. The automated download of HTML pages is called <strong>Crawling</strong>. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called <strong>Scraping</strong>. For these tasks, we use the package “rvest”. In a third exercise, we will extract text data from various formats such as PDF, DOC, DOCX and TXT files with the “readtext” package.</p>
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> This tutorial covers how to extract and process text data from web pages or other documents for later analysis. The automated download of HTML pages is called <strong>Crawling</strong>. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called <strong>Scraping</strong>. For these tasks, we use the package “rvest”. In a third exercise, we will extract text data from various formats such as PDF, DOC, DOCX and TXT files with the “readtext” package.</p>
 <ol style="list-style-type: decimal">
 <li>Download a single web page and extract its content</li>
 <li>Extract links from a overview page and extract articles</li>
@@ -424,9 +433,9 @@ html_document &lt;- read_html(url)</code></pre>
   html_attr(name = &quot;href&quot;)</code></pre>
 <p>Now, <code>links</code> contains a list of 20 hyperlinks to single articles tagged with Angela Merkel.</p>
 <pre class="r"><code>head(links, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/world/2017/oct/01/first-same-sex-couple-to-marry-in-germany-celebrate-karl-kreile-bodo-mende&quot;
-## [2] &quot;https://www.theguardian.com/commentisfree/2017/sep/28/far-right-rightwing-nationalism-populist&quot;                          
-## [3] &quot;https://www.theguardian.com/world/2017/sep/28/is-germanys-election-result-the-revenge-of-the-east&quot;</code></pre>
+<pre><code>## [1] &quot;https://www.theguardian.com/world/2018/jun/15/angela-merkel-precarious-as-germany-refugee-row-intensifies&quot;
+## [2] &quot;https://www.theguardian.com/world/2018/jun/14/merkel-coalition-at-risk-as-talks-on-refugee-policy-falter&quot; 
+## [3] &quot;https://www.theguardian.com/world/2018/jun/13/german-interior-minister-pulls-out-of-integration-summit&quot;</code></pre>
 <p>But stop! There is not only one page of links to tagged articles. If you have a look on the page in your browser, the tag overview page has several more than 60 sub pages, accessible via a paging navigator at the bottom. By clicking on the second page, we see a different URL-structure, which now contains a link to a specific paging number. We can use that format to create links to all sub pages by combining the base URL with the page numbers.</p>
 <pre class="r"><code>page_numbers &lt;- 1:3
 base_url &lt;- &quot;https://www.theguardian.com/world/angela-merkel?page=&quot;
@@ -496,9 +505,9 @@ for (i in 1:length(all_links)) {
   # Append current article data.frame to the data.frame of all articles
   all_articles &lt;- rbind(all_articles, article)
 }</code></pre>
-<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2017/oct/01/first-same-sex-couple-to-marry-in-germany-celebrate-karl-kreile-bodo-mende 
-## Downloading 2 of 60 URL: https://www.theguardian.com/commentisfree/2017/sep/28/far-right-rightwing-nationalism-populist 
-## Downloading 3 of 60 URL: https://www.theguardian.com/world/2017/sep/28/is-germanys-election-result-the-revenge-of-the-east</code></pre>
+<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2018/jun/15/angela-merkel-precarious-as-germany-refugee-row-intensifies 
+## Downloading 2 of 60 URL: https://www.theguardian.com/world/2018/jun/14/merkel-coalition-at-risk-as-talks-on-refugee-policy-falter 
+## Downloading 3 of 60 URL: https://www.theguardian.com/world/2018/jun/13/german-interior-minister-pulls-out-of-integration-summit</code></pre>
 <pre class="r"><code># View first articles
 head(all_articles, 3)
 

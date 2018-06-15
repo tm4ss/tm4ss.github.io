@@ -27,6 +27,10 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -356,7 +360,10 @@ div.tocify {
 </div>
 
 
-<p>This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the R package.</p>
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the R package.</p>
 <ol style="list-style-type: decimal">
 <li>Text preprocessing</li>
 <li>Time series</li>
@@ -413,9 +420,9 @@ legend(&#39;topleft&#39;, legend = terms_to_observe, col=1:l, text.col = 1:l, lt
 <div id="grouping-of-sentiments" class="section level1">
 <h1><span class="header-section-number">3</span> Grouping of sentiments</h1>
 <p>Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple <strong>Sentiment analysis</strong> approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.</p>
-<p>We provide a selection of very positive / negative English words extracted from SentiWordNet 3.0 (see <span class="citation">[1]</span>). Have a look in the text files to see, what they consist of.</p>
-<pre class="r"><code>positive_terms_all &lt;- readLines(&quot;data/senti_words_positive.txt&quot;)
-negative_terms_all &lt;- readLines(&quot;data/senti_words_negative.txt&quot;)</code></pre>
+<p>We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by <strong>???</strong>. Have a look in the text files to see, what they consist of.</p>
+<pre class="r"><code>positive_terms_all &lt;- readLines(&quot;data/positive-words.txt&quot;)
+negative_terms_all &lt;- readLines(&quot;data/negative-words.txt&quot;)</code></pre>
 <p>To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple <code>row_sums</code> command.</p>
 <pre class="r"><code>require(slam)
 
@@ -436,12 +443,12 @@ relative_sentiment_frequencies &lt;- data.frame(
 
 head(sentiments_per_president)</code></pre>
 <pre><code>##           president positive negative
-## 1   Abraham Lincoln   0.0342   0.0140
-## 2    Andrew Jackson   0.0382   0.0165
-## 3    Andrew Johnson   0.0329   0.0162
-## 4      Barack Obama   0.0359   0.0204
-## 5 Benjamin Harrison   0.0291   0.0149
-## 6   Calvin Coolidge   0.0348   0.0144</code></pre>
+## 1   Abraham Lincoln   0.0771   0.0456
+## 2    Andrew Jackson   0.0893   0.0494
+## 3    Andrew Johnson   0.0820   0.0470
+## 4      Barack Obama   0.0835   0.0446
+## 5 Benjamin Harrison   0.0789   0.0400
+## 6   Calvin Coolidge   0.0878   0.0395</code></pre>
 <p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a></p>
 <pre class="r"><code>require(reshape2)
 df &lt;- melt(sentiments_per_president, id.vars = &quot;president&quot;)
@@ -479,13 +486,8 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 <li>Draw a heatmap of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way!</li>
 </ol>
 </div>
-<div id="references" class="section level1 unnumbered">
-<h1>References</h1>
-<div id="refs" class="references">
-<div id="ref-BACCIANELLA10.769">
-<p>1. Baccianella, S., Esuli, A., Sebastiani, F.: SentiWordNet 3.0: An enhanced lexical resource for sentiment analysis and opinion mining. In: Proceedings of the seventh international conference on language resources and evaluation (lrec ’10). European Language Resources Association (ELRA), Valletta, Malta (2010).</p>
-</div>
-</div>
+<div id="references" class="section level1">
+<h1><span class="header-section-number">6</span> References</h1>
 </div>
 
 <p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>

@@ -27,6 +27,15 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
+<script src="site_libs/htmlwidgets-1.2/htmlwidgets.js"></script>
+<link href="site_libs/wordcloud2-0.0.1/wordcloud.css" rel="stylesheet" />
+<script src="site_libs/wordcloud2-0.0.1/wordcloud2-all.js"></script>
+<script src="site_libs/wordcloud2-0.0.1/hover.js"></script>
+<script src="site_libs/wordcloud2-binding-0.2.1/wordcloud2.js"></script>
 <link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -356,7 +365,10 @@ div.tocify {
 </div>
 
 
-<p>This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus.</p>
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus.</p>
 <ol style="list-style-type: decimal">
 <li>TF-IDF</li>
 <li>Log-likelihood ratio test</li>
@@ -473,11 +485,11 @@ print(logLikelihood)</code></pre>
 uniqueTerms &lt;- setdiff(names(termCountsTarget), names(termCountsComparison))
 # Have a look into a random selection of terms unique in the target corpus
 sample(uniqueTerms, 20)</code></pre>
-<pre><code>##  [1] &quot;homework&quot;       &quot;reinvest&quot;       &quot;abess&quot;          &quot;cyber&quot;         
-##  [5] &quot;sleepless&quot;      &quot;tysheoma&quot;       &quot;apprenticeship&quot; &quot;congressmen&quot;   
-##  [9] &quot;mismanag&quot;       &quot;quitter&quot;        &quot;parentteach&quot;    &quot;jumpstart&quot;     
-## [13] &quot;unyield&quot;        &quot;recoverygov&quot;    &quot;peril&quot;          &quot;biden&quot;         
-## [17] &quot;predica&quot;        &quot;greensburg&quot;     &quot;candor&quot;         &quot;equivoc&quot;</code></pre>
+<pre><code>##  [1] &quot;decenc&quot;         &quot;homework&quot;       &quot;sleepless&quot;      &quot;jumpstart&quot;     
+##  [5] &quot;medicar&quot;        &quot;mismanag&quot;       &quot;equivoc&quot;        &quot;predica&quot;       
+##  [9] &quot;peril&quot;          &quot;agribusi&quot;       &quot;biden&quot;          &quot;abess&quot;         
+## [13] &quot;cyber&quot;          &quot;reinvest&quot;       &quot;congressmen&quot;    &quot;unyield&quot;       
+## [17] &quot;apprenticeship&quot; &quot;lifeblood&quot;      &quot;greensburg&quot;     &quot;recoverygov&quot;</code></pre>
 <p>Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the <code>a == 0</code> resp. <code>b == 0</code> expression add 1 to the expression which yields a 0 value after applying the log function.</p>
 <pre class="r"><code># Create vector of zeros to append to comparison counts
 zeroCounts &lt;- rep(0, length(uniqueTerms))
@@ -539,10 +551,12 @@ sum(logLikelihood &gt; 6.63)</code></pre>
 <div id="aggregation-and-visualization" class="section level1">
 <h1><span class="header-section-number">3</span> Aggregation and visualization</h1>
 <p>Finally, visualize the result of the 50 most significant terms as Wordcloud. This can be realized simply by function of the package wordcloud. Additionally to the words and their weights (here we use likelihood values), we override default scaling and color parameters. Feel free to try different parameters to modify the wordcloud rendering.</p>
-<pre class="r"><code>require(wordcloud)
+<pre class="r"><code>require(wordcloud2)
 top50 &lt;- sort(logLikelihood, decreasing = TRUE)[1:50]
-wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, &quot;Dark2&quot;), random.order = F)</code></pre>
-<p><img src="Tutorial_4_Term_extraction_files/figure-html/unnamed-chunk-2-1.png" width="480" style="display: block; margin: auto;" /></p>
+top50_df &lt;- data.frame(word = names(top50), count = top50)
+wordcloud2(top50_df, shuffle = F)</code></pre>
+<div id="htmlwidget-3ba79eb70ee6efc516a5" style="width:480px;height:480px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3ba79eb70ee6efc516a5">{"x":{"word":["american","economi","health","job","tonight","care","budget","america","recoveri","crisi","lend","deficit","cost","afford","plan","invest","reform","energi","congress","tax","educ","recess","respons","bank","dollar","ensur","loan","confid","busi","peopl","debt","futur","medicar","renew","nation","save","clean","countri","taxpay","spend","layoff","money","prosper","wast","colleg","buy","econom","credit","quitter","paycheck"],"freq":[128.745374272211,113.709489262148,85.6724228221729,84.5740334745093,84.1070288339289,80.8755231644744,71.7860363746488,67.8816611406238,65.2405057779143,63.6502117344363,63.4175720196395,57.2394071541107,56.3526227366008,55.2838462871228,53.586670152505,51.7515200650828,50.4664794964234,48.4866509705767,47.4820336683326,45.2544407604159,41.9954138063833,41.3257242066027,37.6245070375685,37.5964989831473,33.8643365955691,33.5355507657865,33.3702061693035,32.9327854959618,30.6014808786579,30.0855036210602,29.5996140625376,29.220970045714,28.9321298156988,27.8061116134811,27.4026286745562,27.029981291963,26.2629854888692,25.2612282783855,25.2129366560571,24.9076827676634,24.449614810189,24.0520246490239,23.9638497128344,21.2487287203335,21.1824754152309,20.7492535219949,20.1797487058352,19.5345505377969,19.2880865437992,19.2880865437992],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":1.39810848364478,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <p>Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a Wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.</p>
 <p>For this, we iterate over all different president names using a for-loop. Within the loop, we utilize a logical vector (Boolean TRUE/FALSE values), to split the DTM into two sub matrices: rows of the currently selected president and rows of all other presidents. From these matrices our counts of target and comparison frequencies are created. The statistical computation of the log-likelihood measure from above, we outsourced into the function <code>calculateLogLikelihood</code> which we load with the <code>source</code> command at the beginning of the block. The function just takes both frequency vectors as input parameters and outputs a LL-value for each term of the target vector.</p>
 <p>Results of the LL key term extraction are visualized again as a wordcloud. Instead of plotting the wordcloud into RStudio, this time we write the visualization as a PDF-file to disk into the <code>wordclouds</code> folder. After the for-loop is completed, the folder should contain 42 wordcloud PDFs, one for each president.</p>

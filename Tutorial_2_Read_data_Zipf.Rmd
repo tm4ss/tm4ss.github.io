@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 In this tutorial, we demonstrate how to read text data in R, tokenize texts and create a document-term matrix.
 
 1. Reading CSV data into a corpus,

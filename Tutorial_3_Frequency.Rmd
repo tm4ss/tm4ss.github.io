@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the R package.
 
 1. Text preprocessing
@@ -107,11 +109,11 @@ Among other things, we can observe peaks in reference to `war` around the US civ
 
 Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple **Sentiment analysis** approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.
 
-We provide a selection of very positive / negative English words extracted from SentiWordNet 3.0 (see @BACCIANELLA10.769). Have a look in the text files to see, what they consist of.
+We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by @Hu.2014. Have a look in the text files to see, what they consist of.
 
 ```{r buildTS1, warning=F}
-positive_terms_all <- readLines("data/senti_words_positive.txt")
-negative_terms_all <- readLines("data/senti_words_negative.txt")
+positive_terms_all <- readLines("data/positive-words.txt")
+negative_terms_all <- readLines("data/negative-words.txt")
 ```
 
 To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple `row_sums` command.

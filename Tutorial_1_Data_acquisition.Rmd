@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 This tutorial covers how to extract and process text data from web pages or other documents for later analysis.
 The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called **Scraping**. For these tasks, we use the package "rvest".
 In a third exercise, we will extract text data from various formats such as PDF, DOC, DOCX and TXT files with the "readtext" package.

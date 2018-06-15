@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 This exercise will demonstrate how to perform co-occurrence analysis with **R** and the tm-package. It is shown how different significance measures can be used to extract semantic links between words. 
 
 Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.

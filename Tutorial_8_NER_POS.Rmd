@@ -12,7 +12,9 @@ highlight: tango
 bibliography: references.bib
 csl: springer.csl
 ---
-
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
 This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package.
 
 # Annotate POS
@@ -107,4 +109,4 @@ For German language support run
 
 1. Plot a co-occurrence graph for the term "califoria_nnp" and its collocates, such as in tutorial 5
 2. Merging tokens by identical consecutive POS-tags can be a useful approach to identification of multi-word-units (MWU). Modify the function `annotateDocuments` in a way, that consecutive POS-tags get merged into a single token (e.g. "United_NNP States_NNP" becomes "United_States_NNP"). 
-
+3. Bring it all together: Create a topic model visualiazation (topic distribution per decade, Tutorial: Topic Models) based only on paragraphs related to Foreign Policy (Tutorial: Text Classification). Just use nouns (NN, NNS) and proper nouns (NNP, NNPS) for the model (Tutorial: POS-tagging).

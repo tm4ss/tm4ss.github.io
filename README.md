@@ -24,7 +24,7 @@ Click **[here for the rendered tutorials](https://tm4ss.github.io/docs)**.
 This course was created by Gregor Wiedemann and Andreas Niekler. It was freely released under GPLv3 in September 2017. If you use (parts of) it for your own teaching or analysis, please cite
 
 ```
-Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: a five day text mining course for humanists and social scientists in R. Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH), GSCL 2017, Berlin.
+Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: a five day text mining course for humanists and social scientists in R. Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH@GSCL 2017), Berlin.
 ```
 
 Bibtex
@@ -34,7 +34,7 @@ Bibtex
   author    = {Gregor Wiedemann and Andreas Niekler},
   title     = {Hands-On: {A} Five Day Text Mining Course for Humanists and Social Scientists in {R}},
   booktitle = {Proceedings of the Workshop on Teaching {NLP} for Digital Humanities
-               (Teach4DH) 2017, Berlin, Germany, September 12, 2017.},
+               ({Teach4DH@GSCL 2017}), Berlin, Germany, September 12, 2017.},
   pages     = {57--65},
   year      = {2017},
   crossref  = {DBLP:conf/gldv/2017teach4dh},

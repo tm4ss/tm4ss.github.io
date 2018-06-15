@@ -29,10 +29,15 @@ library(tm)
 require(topicmodels)
 ```
 
+
+The 231 SOTU addresses are rather long documents. Documents lengths clearly affects the results of topic modeling. For very short texts (e.g. Twitter posts) or very long texts (e.g. books), it can make sense to concatenate/split single documents to receive longer/shorter textual units for modeling.
+
+For the SOTU speeches for instance, we infer the model based on paragraphs instead of entire speeches. By manual inspection / qualitative inspection of the results you can check if this procedure yields better (interpretable) topics. In `sotu_paragraphs.csv`, we provide a paragraph separated version of the speeches.
+
 For text preprocessing, we remove stopwords, since they tend to occur as "noise" in the estimated topics of the LDA model.
 
 ```{r initalisierung, results='hide', message=FALSE, warning=FALSE, cache = T}
-textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
+textdata <- read.csv("data/sotu_paragraphs.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
@@ -60,6 +65,13 @@ DTM <- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global =
 
 # have a look at the number of documents and terms in the matrix
 dim(DTM)
+
+# due to vocabulary pruning, we have empty rows in our DTM
+# LDA does not like this. So we remove those docs from the
+# DTM and the metadata
+sel_idx <- slam::row_sums(DTM) > 0
+DTM <- DTM[sel_idx, ]
+textdata <- textdata[sel_idx, ]
 ``` 
 
 As an unsupervised machine learning method, topic models are suitable for the exploration of data. The calculation of topic models aims to determine the proportionate composition of a fixed number of topics in the documents of a collection. It is useful to experiment with different parameters in order to find the most suitable parameters for your own analysis needs.
@@ -147,12 +159,12 @@ Let us now look more closely at the distribution of topics within individual doc
 Let us first take a look at the contents of three sample documents:
 
 ``` {r eval=FALSE}
-exampleIds <- c(1, 100, 200)
+exampleIds <- c(2, 100, 200)
 lapply(corpus[exampleIds], as.character)
 ```
 
 ``` {r echo=FALSE}
-exampleIds <- c(1, 100, 200)
+exampleIds <- c(2, 100, 200)
 print(paste0(exampleIds[1], ": ", substr(content(corpus[[exampleIds[1]]]), 0, 400), '...'))
 print(paste0(exampleIds[2], ": ", substr(content(corpus[[exampleIds[2]]]), 0, 400), '...'))
 print(paste0(exampleIds[3], ": ", substr(content(corpus[[exampleIds[3]]]), 0, 400), '...'))
@@ -230,7 +242,7 @@ What are the defining topics within a collection? There are different approaches
 
 ``` {r, results='hide'}
 # What are the most probable topics in the entire collection?
-topicProportions <- colSums(theta) / nDocs(DTM)  # mean probablities over all documents
+topicProportions <- colSums(theta) / nDocs(DTM)  # mean probablities over all paragraphs
 names(topicProportions) <- topicNames     # assign the topic names we created before
 sort(topicProportions, decreasing = TRUE) # show summed proportions in decreased order
 ```
@@ -241,7 +253,7 @@ paste(round(soP, 5), ":", names(soP))
 
 We recognize some topics that are way more likely to occur in the corpus than others. These describe rather general thematic coherences. Other topics correspond more to specific contents. 
 
-**Approach 2:** We count how often a topic appears as a primary topic within a document. This method is also called Rank-1.
+**Approach 2:** We count how often a topic appears as a primary topic within a paragraph This method is also called Rank-1.
 
 ``` {r rank1, results='hide'}
 countsOfPrimaryTopics <- rep(0, K)
@@ -265,7 +277,7 @@ This sorting of topics can be used for further analysis steps such as the semant
 
 # Filtering documents
 
-The fact that a topic model conveys of topic probabilities for each document makes it possible to use it for thematic filtering of a collection. AS filter we select only those documents which exceed a certain threshold of their probability value for certain topics (for example, each document which contains topic `X` to more than 20 percent).
+The fact that a topic model conveys of topic probabilities for each document, resp. paragraph in our case, makes it possible to use it for thematic filtering of a collection. AS filter we select only those documents which exceed a certain threshold of their probability value for certain topics (for example, each document which contains topic `X` to more than 20 percent).
 
 In the following, we will select documents based on their topic content and display the resulting document quantity over time.
 
@@ -307,12 +319,6 @@ ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) +
 ```
 
 The visualization shows that topics around the relation between the federal government and the states as well as inner conflicts clearly dominate the first decades. Security issues and the economy are the most important topics of recent SOTU addresses.
-
-# Remark
-
-The 231 SOTU addresses are rather long documents. Documents lengths clearly affects the results of topic modeling. For very short texts (e.g. Twitter posts) or very long texts (e.g. books), it can make sense to concatenate/split single documents to receive longer/shorter textual units for modeling.
-
-For the SOTU speeches for instance, it may be beneficial to model on paragraphs instead of entire speeches. By manual inspection / qualitative inspection of the results you can check if this procedure yields better (interpretable) topics.
 
 # Optional exercises
 

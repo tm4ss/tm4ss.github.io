@@ -395,11 +395,11 @@ corpus &lt;- tm_map(corpus, stripWhitespace)</code></pre>
 DTM_reduced &lt;- as.matrix(DTM[, terms_to_observe])</code></pre>
 <p>The reduced DTM contains counts for each of our 5 terms and in each of the 231 documents (rows of the reduced DTM). Since our corpus covers a time span of more than 200 years, we could aggregate frequencies in single documents per decade to get a meaningful representation of term frequencies over time.</p>
 <p>Information of each decade per document we added in the beginning to the <code>textdata</code> variable. There are ten speeches per decade mostly (you can check with <code>table(textdata$decade</code>). We use <code>textdata$decade</code> as a grouping parameter for the <code>aggregate</code> function. This function sub-selects rows from the input data (<code>DTM_reduced</code>) for all different decade values given in the <code>by</code>-parameter. Each sub-selection is processed column-wise using the function provided in the third parameter (<code>sum</code>).</p>
-<pre class="r"><code>counts_per_year &lt;- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)</code></pre>
-<p><code>counts_per_year</code> now contains sums of term frequencies per decade. Time series for single terms can be plotted either by the simple <code>plot</code> function. Additional time series could be added by the <code>lines</code>-function (Tutorial 2). A more simple way is to use the matplot-function which can draw multiple lines in one command.</p>
+<pre class="r"><code>counts_per_decade &lt;- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)</code></pre>
+<p><code>counts_per_decade</code> now contains sums of term frequencies per decade. Time series for single terms can be plotted either by the simple <code>plot</code> function. Additional time series could be added by the <code>lines</code>-function (Tutorial 2). A more simple way is to use the matplot-function which can draw multiple lines in one command.</p>
 <pre class="r"><code># give x and y values beautiful names
-decades &lt;- counts_per_year$decade
-frequencies &lt;- counts_per_year[, terms_to_observe]
+decades &lt;- counts_per_decade$decade
+frequencies &lt;- counts_per_decade[, terms_to_observe]
 
 # plot multiple frequencies
 matplot(decades, frequencies, type = &quot;l&quot;)

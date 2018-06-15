@@ -83,15 +83,15 @@ The reduced DTM contains counts for each of our `r length(terms_to_observe)` ter
 Information of each decade per document we added in the beginning to the `textdata` variable. There are ten speeches per decade mostly (you can check with `table(textdata$decade`). We use `textdata$decade` as a grouping parameter for the `aggregate` function. This function sub-selects rows from the input data (`DTM_reduced`) for all different decade values given in the `by`-parameter. Each sub-selection is processed column-wise using the function provided in the third parameter (`sum`).
 
 ```{r reduceDTM2, results='hide', message=FALSE, warning=FALSE}
-counts_per_year <- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)
+counts_per_decade <- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)
 ```
 
-`counts_per_year` now contains sums of term frequencies per decade. Time series for single terms can be plotted either by the simple `plot` function. Additional time series could be added by the `lines`-function (Tutorial 2). A more simple way is to use the matplot-function which can draw multiple lines in one command.
+`counts_per_decade` now contains sums of term frequencies per decade. Time series for single terms can be plotted either by the simple `plot` function. Additional time series could be added by the `lines`-function (Tutorial 2). A more simple way is to use the matplot-function which can draw multiple lines in one command.
 
 ```{r plotMat, results='hide', message=FALSE, warning=FALSE}
 # give x and y values beautiful names
-decades <- counts_per_year$decade
-frequencies <- counts_per_year[, terms_to_observe]
+decades <- counts_per_decade$decade
+frequencies <- counts_per_decade[, terms_to_observe]
 
 # plot multiple frequencies
 matplot(decades, frequencies, type = "l")

@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-06-15" />
+<meta name="date" content="2018-07-04" />
 
 <title>Tutorial 4: Key term extraction</title>
 
@@ -360,7 +360,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 4: Key term extraction</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-06-15</em></h4>
+<h4 class="date"><em>2018-07-04</em></h4>
 
 </div>
 
@@ -374,41 +374,43 @@ div.tocify {
 <li>Log-likelihood ratio test</li>
 <li>Aggregations and visualization</li>
 </ol>
-<p>Like in the previous tutorial we read the CSV data file containing the State of the union addresses and preprocess the corpus object with a sequence of <code>tm_map</code> functions.</p>
-<p>This time, we also apply <strong>stemming</strong> to the corpus. Stemming reduces (potentially) inflected word forms to its word stem to unify similar semantic forms to the same text representation. For instance, ‘presidents’ becomes ‘president’ and ‘singing’ becomes ‘sing’.</p>
+<p>Like in the previous tutorial we read the CSV data file containing the State of the union addresses and preprocess the corpus object with a sequence of <code>quanteda</code> functions.</p>
+<p>This time, we also apply <strong>lemmatization</strong> to the corpus. Lemmatization reduces (potentially) inflected word forms to its lexical baseform to unify similar semantic forms to the same text representation. For instance, ‘presidents’ becomes ‘president’ and ‘singing’ becomes ‘sing’.</p>
 <p>Finally, we create a Document-Term-Matrix.</p>
 <pre class="r"><code>options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 
 textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)
-english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
-# Create corpus object
-corpus &lt;- Corpus(DataframeSource(textdata))
-corpus &lt;- tm_map(corpus, content_transformer(tolower))
-corpus &lt;- tm_map(corpus, removeWords, english_stopwords)
-corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus &lt;- tm_map(corpus, removeNumbers)
+corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
 
-# Stemming
-require(&quot;SnowballC&quot;)
-corpus &lt;- tm_map(corpus, stemDocument, language = &quot;en&quot;)
-corpus &lt;- tm_map(corpus, stripWhitespace)
+#Build a dictionary of lemmas
+lemmaData &lt;- read.csv2(&quot;resources/baseform_en.tsv&quot;, sep=&quot;\t&quot;, header=FALSE, encoding = &quot;UTF-8&quot;, stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
+  tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())
 
 # View first document
-substr(as.character(corpus[[1]]), 0, 250)
+substr(paste(as.character(corpus_edit[1]),collapse = &quot; &quot;), 0, 250)
 
 # Create DTM
-DTM &lt;- DocumentTermMatrix(corpus)</code></pre>
+DTM &lt;- corpus_edit %&gt;% dfm() 
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)</code></pre>
 <div id="tf-idf" class="section level1">
 <h1><span class="header-section-number">1</span> TF-IDF</h1>
 <p>A widely used method to weight terms according to their semantic contribution to a document is the <strong>term frequency–inverse document frequency</strong> measure (TF-IDF). The idea is, the more a term occurs in a document, the more contributing it is. At the same time, in the more documents a term occurs, the less informative it is for a single document. The product of both measures is the resulting weight.</p>
 <p>Let us compute TF-IDF weights for all terms in the first speech of Barack Obama.</p>
-<pre class="r"><code>require(slam)
-
-# Compute IDF: log(N / n_i)
+<pre class="r"><code># Compute IDF: log(N / n_i)
 number_of_docs &lt;- nrow(DTM)
-term_in_docs &lt;- col_sums(DTM &gt; 0)
+term_in_docs &lt;- colSums(DTM &gt; 0)
 idf &lt;- log2(number_of_docs / term_in_docs)
 
 # Compute TF
@@ -420,18 +422,20 @@ tf_idf &lt;- tf * idf
 names(tf_idf) &lt;- colnames(DTM)</code></pre>
 <p>The last operation is to append the column names again to the resulting term weight vector. If we now sort the tf-idf weights decreasingly, we get the most important terms for the Obama speech, according to this weight.</p>
 <pre class="r"><code>sort(tf_idf, decreasing = T)[1:20]</code></pre>
-<pre><code>##      job     lend  tonight recoveri   layoff    ensur   colleg    crisi 
-## 28.38974 25.26619 24.28682 22.20745 20.55525 20.53077 19.93768 17.64204 
-##   budget     iraq  quitter    clean     auto   recess   global  deficit 
-## 16.66461 13.83773 13.70350 13.60072 13.58946 13.42224 13.40912 13.29039 
-##   school  inherit     quit    solar 
-## 12.75800 12.17758 12.13318 12.13318</code></pre>
-<p>If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the tm-package provides a convenient function for computing tf-idf weights of a given DTM: <code>weightTfIdf(DTM)</code>.</p>
+<pre><code>##     lending     restart         job     tonight    recovery      layoff 
+##    34.13429    31.33393    28.72608    24.28682    22.20745    20.55525 
+##      ensure     college   renewable      budget   recession      crisis 
+##    20.53077    19.93768    18.11928    16.66461    16.33480    16.05375 
+##     inherit    longterm accountable        iraq     quitter        auto 
+##    15.40700    14.96518    14.11928    14.11928    13.70350    13.58946 
+##        help         buy 
+##    13.56748    13.45459</code></pre>
+<p>If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the quanteda-package provides a convenient function for computing tf-idf weights of a given DTM: <code>dfm_tfidf(DTM)</code>.</p>
 </div>
 <div id="log-likelihood" class="section level1">
 <h1><span class="header-section-number">2</span> Log likelihood</h1>
 <p>We now use a more sophisticated method with a comparison corpus and the log likelihood statistic.</p>
-<pre class="r"><code>targetDTM &lt;- DocumentTermMatrix(corpus)
+<pre class="r"><code>targetDTM &lt;- DTM
 
 termCountsTarget &lt;- as.vector(targetDTM[first_obama_speech, ])
 names(termCountsTarget) &lt;- colnames(targetDTM)
@@ -440,16 +444,24 @@ termCountsTarget &lt;- termCountsTarget[termCountsTarget &gt; 0]</code></pre>
 <p>In <em>termCountsTarget</em> we have the tf for the first Obama speech again.</p>
 <p>As a comparison corpus, we select a corpus from the Leipzig Corpora Collection (<a href="http://corpora.uni-leipzig.de" class="uri">http://corpora.uni-leipzig.de</a>): 30.000 randomly selected sentences from the Wikipedia of 2010. <strong>CAUTION:</strong> The preprocessing of the comparison corpus must be identical to the preprocessing Of the target corpus to achieve meaningful results!</p>
 <pre class="r"><code>lines &lt;- readLines(&quot;resources/eng_wikipedia_2010_30K-sentences.txt&quot;, encoding = &quot;UTF-8&quot;)
-comparisonCorpus &lt;- Corpus(VectorSource(lines))
-comparisonCorpus &lt;- tm_map(comparisonCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-comparisonCorpus &lt;- tm_map(comparisonCorpus, removeNumbers)
-comparisonCorpus &lt;- tm_map(comparisonCorpus, content_transformer(tolower))
-comparisonCorpus &lt;- tm_map(comparisonCorpus, removeWords, english_stopwords)
-comparisonCorpus &lt;- tm_map(comparisonCorpus, stemDocument, language = &quot;en&quot;)
-comparisonCorpus &lt;- tm_map(comparisonCorpus, stripWhitespace)</code></pre>
+corpus_compare &lt;- corpus(lines)</code></pre>
 <p>From the comparison corpus, we also create a count of all terms.</p>
-<pre class="r"><code>comparisonDTM &lt;- DocumentTermMatrix(comparisonCorpus)
-termCountsComparison &lt;- col_sums(comparisonDTM)</code></pre>
+<pre class="r"><code># Create a DTM (may take a while)
+corpus_compare_edit &lt;- corpus_compare %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
+  tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())
+
+# Create DTM
+comparisonDTM &lt;- corpus_compare_edit %&gt;% dfm() 
+
+comparisonDTM  &lt;- comparisonDTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(comparisonDTM) &lt;- colnames(comparisonDTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+comparisonDTM &lt;- dfm_compress(comparisonDTM, &quot;features&quot;)
+
+termCountsComparison &lt;- colSums(comparisonDTM)</code></pre>
 <p>In <em>termCountsComparison</em> we now have the frequencies of all (target) terms in the comparison corpus.</p>
 <p>Let us now calculate the log-likelihood ratio test by comparing frequencies of a term in both corpora, taking the size of both corpora into account. First for a single term:</p>
 <pre class="r"><code># Loglikelihood for a single term
@@ -470,7 +482,7 @@ logLikelihood &lt;- 2 * (t1 + t2)
 
 print(logLikelihood)</code></pre>
 <pre><code>##     care 
-## 80.87552</code></pre>
+## 79.15537</code></pre>
 <p>The LL value indicates whether the term occurs significantly more frequently / less frequently in the target counts than we would expect from the observation in the comparative counts. Specific significance thresholds are defined for the LL values:</p>
 <ul>
 <li>95th percentile; 5% level; p &lt; 0.05; critical value = 3.84</li>
@@ -485,11 +497,11 @@ print(logLikelihood)</code></pre>
 uniqueTerms &lt;- setdiff(names(termCountsTarget), names(termCountsComparison))
 # Have a look into a random selection of terms unique in the target corpus
 sample(uniqueTerms, 20)</code></pre>
-<pre><code>##  [1] &quot;decenc&quot;         &quot;homework&quot;       &quot;sleepless&quot;      &quot;jumpstart&quot;     
-##  [5] &quot;medicar&quot;        &quot;mismanag&quot;       &quot;equivoc&quot;        &quot;predica&quot;       
-##  [9] &quot;peril&quot;          &quot;agribusi&quot;       &quot;biden&quot;          &quot;abess&quot;         
-## [13] &quot;cyber&quot;          &quot;reinvest&quot;       &quot;congressmen&quot;    &quot;unyield&quot;       
-## [17] &quot;apprenticeship&quot; &quot;lifeblood&quot;      &quot;greensburg&quot;     &quot;recoverygov&quot;</code></pre>
+<pre><code>##  [1] &quot;payroll&quot;        &quot;nobid&quot;          &quot;marketbased&quot;    &quot;fastestgrowing&quot;
+##  [5] &quot;bethea&quot;         &quot;wisely&quot;         &quot;equivocation&quot;   &quot;refinances&quot;    
+##  [9] &quot;jumpstart&quot;      &quot;recoverygov&quot;    &quot;warera&quot;         &quot;hardestworking&quot;
+## [13] &quot;downpayment&quot;    &quot;shortcuts&quot;      &quot;reinvestment&quot;   &quot;outcompete&quot;    
+## [17] &quot;speculator&quot;     &quot;apprenticeship&quot; &quot;flawlessly&quot;     &quot;lifeblood&quot;</code></pre>
 <p>Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the <code>a == 0</code> resp. <code>b == 0</code> expression add 1 to the expression which yields a 0 value after applying the log function.</p>
 <pre class="r"><code># Create vector of zeros to append to comparison counts
 zeroCounts &lt;- rep(0, length(uniqueTerms))
@@ -518,26 +530,28 @@ logLikelihood[relA &lt; relB] &lt;- logLikelihood[relA &lt; relB] * -1</code></p
 <p>Let’s take a look at the results: The 50 more frequently used / less frequently used terms, and then the more frequently used terms compared to their frequency. We also see terms that have comparatively low frequencies are identified by the LL test as statistically significant compared to the reference corpus.</p>
 <pre class="r"><code># top terms (overuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=TRUE)[1:25]</code></pre>
-<pre><code>##  american   economi    health       job   tonight      care    budget 
-## 128.74537 113.70949  85.67242  84.57403  84.10703  80.87552  71.78604 
-##   america  recoveri     crisi      lend   deficit      cost    afford 
-##  67.88166  65.24051  63.65021  63.41757  57.23941  56.35262  55.28385 
-##      plan    invest    reform    energi  congress       tax      educ 
-##  53.58667  51.75152  50.46648  48.48665  47.48203  45.25444  41.99541 
-##    recess   respons      bank    dollar 
-##  41.32572  37.62451  37.59650  33.86434</code></pre>
+<pre><code>##       american        economy         health            job        tonight 
+##      129.15828      110.57008       84.74734       83.12147       82.78302 
+##           care         budget       recovery        lending         crisis 
+##       79.15537       70.92038       63.93168       63.34560       63.12238 
+##        america          every        deficit              u         reform 
+##       62.73226       61.27566       56.16432       53.73242       52.61875 
+##           plan           cost responsibility         energy       congress 
+##       51.46321       50.94292       50.89968       47.78282       46.31234 
+##         nation            can            tax         afford           know 
+##       44.17992       43.14956       41.00938       40.98734       40.72669</code></pre>
 <pre class="r"><code># bottom terms (underuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=FALSE)[1:25]</code></pre>
-<pre><code>##       game       citi    develop       oper      point    general 
-## -4.4329156 -4.1910567 -2.8632148 -1.9042090 -1.9042090 -1.6888745 
-##     design       larg      earli     record       book       left 
-## -1.6044280 -1.5834755 -1.5106597 -1.4284608 -1.3373495 -1.2973386 
-##     person     includ       area     number    product     produc 
-## -1.2280644 -1.1840820 -1.1803100 -1.1169618 -0.9797514 -0.9246409 
-##    control     report      local       show    success      level 
-## -0.9155419 -0.9064680 -0.8083611 -0.7964113 -0.6967060 -0.6550922 
-##       leav 
-## -0.6223645</code></pre>
+<pre><code>##        use        two       name       game       city      early 
+##  -8.161819  -7.177684  -5.062116  -4.417187  -4.281739  -3.173227 
+##     follow     become    several        win      point      leave 
+##  -3.083550  -2.602124  -2.372409  -2.323925  -2.120225  -2.109607 
+##      since      three       show       much    include       book 
+##  -1.990570  -1.921295  -1.709441  -1.568443  -1.491123  -1.436734 
+##       area     record     number      allow university         go 
+##  -1.423277  -1.382691  -1.316731  -1.286725  -1.090082  -1.085749 
+##       type 
+##  -1.049789</code></pre>
 <pre class="r"><code>llTop100 &lt;- sort(logLikelihood, decreasing=TRUE)[1:100]
 frqTop100 &lt;- termCountsTarget[names(llTop100)]
 frqLLcomparison &lt;- data.frame(llTop100, frqTop100)
@@ -545,8 +559,8 @@ View(frqLLcomparison)
 
 # Number of signficantly overused terms (p &lt; 0.01)
 sum(logLikelihood &gt; 6.63)</code></pre>
-<pre><code>## [1] 216</code></pre>
-<p>The method extracted 216 key terms from the first Obama speech.</p>
+<pre><code>## [1] 272</code></pre>
+<p>The method extracted 272 key terms from the first Obama speech.</p>
 </div>
 <div id="aggregation-and-visualization" class="section level1">
 <h1><span class="header-section-number">3</span> Aggregation and visualization</h1>
@@ -555,8 +569,8 @@ sum(logLikelihood &gt; 6.63)</code></pre>
 top50 &lt;- sort(logLikelihood, decreasing = TRUE)[1:50]
 top50_df &lt;- data.frame(word = names(top50), count = top50)
 wordcloud2(top50_df, shuffle = F)</code></pre>
-<div id="htmlwidget-3ba79eb70ee6efc516a5" style="width:480px;height:480px;" class="wordcloud2 html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3ba79eb70ee6efc516a5">{"x":{"word":["american","economi","health","job","tonight","care","budget","america","recoveri","crisi","lend","deficit","cost","afford","plan","invest","reform","energi","congress","tax","educ","recess","respons","bank","dollar","ensur","loan","confid","busi","peopl","debt","futur","medicar","renew","nation","save","clean","countri","taxpay","spend","layoff","money","prosper","wast","colleg","buy","econom","credit","quitter","paycheck"],"freq":[128.745374272211,113.709489262148,85.6724228221729,84.5740334745093,84.1070288339289,80.8755231644744,71.7860363746488,67.8816611406238,65.2405057779143,63.6502117344363,63.4175720196395,57.2394071541107,56.3526227366008,55.2838462871228,53.586670152505,51.7515200650828,50.4664794964234,48.4866509705767,47.4820336683326,45.2544407604159,41.9954138063833,41.3257242066027,37.6245070375685,37.5964989831473,33.8643365955691,33.5355507657865,33.3702061693035,32.9327854959618,30.6014808786579,30.0855036210602,29.5996140625376,29.220970045714,28.9321298156988,27.8061116134811,27.4026286745562,27.029981291963,26.2629854888692,25.2612282783855,25.2129366560571,24.9076827676634,24.449614810189,24.0520246490239,23.9638497128344,21.2487287203335,21.1824754152309,20.7492535219949,20.1797487058352,19.5345505377969,19.2880865437992,19.2880865437992],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":1.39810848364478,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div id="htmlwidget-4bae1256ebe3ebef1e58" style="width:480px;height:480px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4bae1256ebe3ebef1e58">{"x":{"word":["american","economy","health","job","tonight","care","budget","recovery","lending","crisis","america","every","deficit","u","reform","plan","cost","responsibility","energy","congress","nation","can","tax","afford","know","recession","education","confidence","accountable","bank","longterm","dollar","invest","must","loan","ensure","restart","now","business","prosperity","people","debt","medicare","future","bad","country","taxpayer","renewable","layoff","clean"],"freq":[129.158275164338,110.570081389949,84.7473372916763,83.1214710510235,82.7830246837932,79.1553732587583,70.920375916768,63.9316795433673,63.3455951071429,63.1223818416241,62.7322593546711,61.2756584169844,56.1643179069535,53.7324156815909,52.6187513588509,51.4632114290877,50.9429245025866,50.899684133428,47.7828214829636,46.3123368703439,44.1799211606755,43.1495645716191,41.009377172983,40.9873399391868,40.7266936102073,40.6062997457266,40.2284896804159,38.6695868037183,38.0925093361907,36.4422154809933,35.2532780759542,34.3303874757027,33.6631938829363,33.6141542153781,33.0027826699143,32.6117332876586,32.5605014986312,31.3116759005889,31.1641826102564,30.4298212672958,29.568318684395,28.8953675172501,28.569382002143,28.1241272425509,27.2872030152183,25.0881304703745,24.7353440708848,24.7353440708848,24.0878788576724,23.6025629063241],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":1.39363892689781,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <p>Key term extraction cannot be done for single documents, but for entire (sub-)corpora. Depending on the comparison corpora, the results may vary. Instead of comparing a single document to a Wikipedia corpus, we now compare collections of speeches of a single president, to speeches of all other presidents.</p>
 <p>For this, we iterate over all different president names using a for-loop. Within the loop, we utilize a logical vector (Boolean TRUE/FALSE values), to split the DTM into two sub matrices: rows of the currently selected president and rows of all other presidents. From these matrices our counts of target and comparison frequencies are created. The statistical computation of the log-likelihood measure from above, we outsourced into the function <code>calculateLogLikelihood</code> which we load with the <code>source</code> command at the beginning of the block. The function just takes both frequency vectors as input parameters and outputs a LL-value for each term of the target vector.</p>
 <p>Results of the LL key term extraction are visualized again as a wordcloud. Instead of plotting the wordcloud into RStudio, this time we write the visualization as a PDF-file to disk into the <code>wordclouds</code> folder. After the for-loop is completed, the folder should contain 42 wordcloud PDFs, one for each president.</p>
@@ -570,10 +584,10 @@ for (president in presidents) {
   selector_logical_idx &lt;- textdata$president == president
   
   presidentDTM &lt;- targetDTM[selector_logical_idx, ]
-  termCountsTarget &lt;- col_sums(presidentDTM)
+  termCountsTarget &lt;- colSums(presidentDTM)
   
   otherDTM &lt;- targetDTM[!selector_logical_idx, ]
-  termCountsComparison &lt;- col_sums(otherDTM)
+  termCountsComparison &lt;- colSums(otherDTM)
   
   loglik_terms &lt;- calculateLogLikelihood(termCountsTarget, termCountsComparison)
   
@@ -581,7 +595,7 @@ for (president in presidents) {
   
   fileName &lt;- paste0(&quot;wordclouds/&quot;, president, &quot;.pdf&quot;)
   pdf(fileName, width = 9, height = 7)
-  wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, &quot;Dark2&quot;), random.order = F)
+  wordcloud::wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = RColorBrewer::brewer.pal(8, &quot;Dark2&quot;), random.order = F)
   dev.off()
   
 }</code></pre>
@@ -591,17 +605,17 @@ for (president in presidents) {
 <ol style="list-style-type: decimal">
 <li>Create a table (data.frame), which displays the top 25 terms of all speeches by frequency, tf-idf and log likelihood in columns.</li>
 </ol>
-<pre><code>##    word.frq  frq word.tfidf     tfidf  word.ll       ll
-## 1     state 8808    program 1451.8011   govern 3229.449
-## 2    govern 8114    tonight 1165.7674 congress 2977.483
-## 3      year 6324        job 1162.4853    state 2445.514
-## 4    nation 6123     mexico  983.2182   nation 2036.595
-## 5      unit 5011  territori  845.2852  countri 1476.786
-## 6  congress 5009     budget  840.9221     unit 1461.258
-## 7   countri 4450       bank  827.3276      law 1102.457
-## 8     peopl 4257       cent  788.2928  citizen 1053.296
-## 9     great 3642       gold  758.6431     peac 1023.260
-## 10 american 3538     island  758.3226    great 1006.705</code></pre>
+<pre><code>##      word.frq  frq word.tfidf     tfidf    word.ll       ll
+## 1       state 8796    program 1451.8011 government 3136.683
+## 2  government 7738    tonight 1167.9753   congress 2937.958
+## 3        year 6168        job 1155.0909      state 2438.900
+## 4    congress 5013       upon 1085.2108      unite 1867.777
+## 5       unite 4906       help 1084.4296     nation 1719.175
+## 6         can 4786     mexico  979.7642       upon 1659.111
+## 7     country 4388   economic  889.9731    country 1460.531
+## 8      people 4181     budget  834.5126      great 1093.911
+## 9       great 4164       bank  827.9140        law 1060.417
+## 10       upon 3956  territory  802.1587       must 1047.854</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Create a wordcloud which compares Obama’s second speech with all his other speeches. <img src="Tutorial_4_Term_extraction_files/figure-html/extra2-1.png" width="672" /></li>
 </ol>

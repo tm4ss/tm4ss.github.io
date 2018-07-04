@@ -1,21 +1,23 @@
 ---
-title: "Tutorial 3: Frequency analysis"
+title: 'Tutorial 3: Frequency analysis'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    theme: united
-    toc_float: true
     number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
 highlight: tango
-bibliography: references.bib
 csl: springer.csl
+bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
 ```
-This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the R package.
+This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the `quanteda` package.
 
 1. Text preprocessing
 2. Time series
@@ -24,11 +26,13 @@ This tutorial introduces frequency analysis with basic R functions. We further i
 
 ```{r init, results='hide', eval=FALSE, message=FALSE, warning=FALSE}
 options(stringsAsFactors = FALSE)
-require(tm)
+require(quanteda)
+library(dplyr)
 ```
 ```{r init2, message=F, echo=F, warning=FALSE}
 options(stringsAsFactors = FALSE, digits = 3)
-library(tm)
+library(quanteda)
+library(dplyr)
 ```
 
 # Text preprocessing
@@ -43,29 +47,39 @@ textdata$year <- substr(textdata$date, 0, 4)
 textdata$decade <- paste0(substr(textdata$date, 0, 3), "0")
 ```
 
-Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text. Lowercase transformation is performed and a set of English stop-words is removed. `removePunctuation` leaves only alphanumeric characters in the text. `removeNumbers` removes numeric characters. `stripWhitespace` collapses sequences of two or more whitespace characters to a single one.
+Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text.  `remove_punct` leaves only alphanumeric characters in the text. `remove_numbers` removes numeric characters and `remove_symbols` removes all characters in the Unicode "Symbol" [S] class. Lowercase transformation is performed and a set of English stop-words is removed. Note, the lowercase operation is applied twice because of some non-correct mappings in the lemmatization list. In the reference some mappings are are starting with an uppercase letter.
 
 ```{r preprocesscorpus, cache=TRUE}
-corpus <- Corpus(DataframeSource(textdata))
-corpus <- tm_map(corpus, content_transformer(tolower))
-corpus <- tm_map(corpus, removeWords, stopwords("en"))
-corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus <- tm_map(corpus, removeNumbers)
-corpus <- tm_map(corpus, stripWhitespace)
+corpus <- corpus(textdata$text, docnames = textdata$doc_id)
+
+#Build a dictionary of lemmas
+lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
 ```
 
 Effects of this preprocessing can be printed in the console. 
 
 ```{r results='hide'}
-as.character(corpus[[1]])
+as.character(corpus_edit[1])
 ```
 
-We see that the text is now a sequence of text features corresponding to the selected methods (other preprocessing steps could include stemming or lemmatization).
+We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).
 
-From the preprocessed corpus, we create a new DTM.
+From the preprocessed corpus, we create a new DTM. With some functions like `dfm_select` and `dfm_compress` we further shape the word features contained in the data object. `dfm_select` reduces the DTM-Object to words, which contain one alphabetic letter at least. `stri_replace_all_regex` deletes any character different to letters or the "_". Finally, `dfm_compress` collapses features which are equal after tose transformations.
 
 ```{r generateDTM}
-DTM <- DocumentTermMatrix(corpus)
+DTM <- corpus_edit %>% dfm() 
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")
 ```
 
 The resulting DTM should have `r nrow(DTM)` rows and `r ncol(DTM)` columns.
@@ -119,19 +133,17 @@ negative_terms_all <- readLines("data/negative-words.txt")
 To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple `row_sums` command.
 
 ```{r buildTS2, warning=F, message=F}
-require(slam)
-
 positive_terms_in_suto <- intersect(colnames(DTM), positive_terms_all)
-counts_positive <- row_sums(DTM[, positive_terms_in_suto])
+counts_positive <- rowSums(DTM[, positive_terms_in_suto])
 
 negative_terms_in_suto <- intersect(colnames(DTM), negative_terms_all)
-counts_negative <- row_sums(DTM[, negative_terms_in_suto])
+counts_negative <- rowSums(DTM[, negative_terms_in_suto])
 ```
 
 Since lengths of speeches tend to vary greatly, we do want to measure relative frequencies of sentiment terms. This can be achieved by dividing counts of sentiment terms by the number of all terms in each document. The relative frequencies we store in a dataframe for subsequent aggregation and visualization.
 
 ```{r buildTS3, warning=F}
-counts_all_terms <- row_sums(DTM)
+counts_all_terms <- rowSums(DTM)
 
 relative_sentiment_frequencies <- data.frame(
   positive = counts_positive / counts_all_terms,
@@ -175,7 +187,7 @@ In addition, the time series can be sorted by similarity in a heatmap. In this w
 
 ```{r HM1, fig.width=9, fig.height=8, warning=F}
 terms_to_observe <- c("war", "peace", "health", "terror", "islam", 
-                      "threat", "security", "conflict", "jobs", 
+                      "threat", "security", "conflict", "job", 
                       "economy", "indian", "afghanistan", "muslim", 
                       "god", "world", "territory", "frontier", "north",
                       "south", "black", "racism", "slavery", "iran")

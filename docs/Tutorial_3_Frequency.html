@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-06-15" />
+<meta name="date" content="2018-07-04" />
 
 <title>Tutorial 3: Frequency analysis</title>
 
@@ -355,7 +355,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 3: Frequency analysis</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-06-15</em></h4>
+<h4 class="date"><em>2018-07-04</em></h4>
 
 </div>
 
@@ -363,7 +363,7 @@ div.tocify {
 <p><script>
   addClassKlippyTo("pre.r, pre.markdown");
   addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
-</script> This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the R package.</p>
+</script> This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the <code>quanteda</code> package.</p>
 <ol style="list-style-type: decimal">
 <li>Text preprocessing</li>
 <li>Time series</li>
@@ -371,7 +371,8 @@ div.tocify {
 <li>Heatmaps</li>
 </ol>
 <pre class="r"><code>options(stringsAsFactors = FALSE)
-require(tm)</code></pre>
+require(quanteda)
+library(dplyr)</code></pre>
 <div id="text-preprocessing" class="section level1">
 <h1><span class="header-section-number">1</span> Text preprocessing</h1>
 <p>Like in the previous tutorial we read the CSV data file containing the State of the union addresses. This time, we add two more columns for the year and the decade. For the year we select a sub string of the four first characters from the <code>date</code> column of the data frame (e.g. extracting “1990” from “1990-02-12”). For the decade we select a sub string of the first three characters and paste a 0 to it. In later parts of the exercise we can use these columns for grouping data.</p>
@@ -380,19 +381,29 @@ require(tm)</code></pre>
 # we add some more metadata columns to the data frame
 textdata$year &lt;- substr(textdata$date, 0, 4)
 textdata$decade &lt;- paste0(substr(textdata$date, 0, 3), &quot;0&quot;)</code></pre>
-<p>Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text. Lowercase transformation is performed and a set of English stop-words is removed. <code>removePunctuation</code> leaves only alphanumeric characters in the text. <code>removeNumbers</code> removes numeric characters. <code>stripWhitespace</code> collapses sequences of two or more whitespace characters to a single one.</p>
-<pre class="r"><code>corpus &lt;- Corpus(DataframeSource(textdata))
-corpus &lt;- tm_map(corpus, content_transformer(tolower))
-corpus &lt;- tm_map(corpus, removeWords, stopwords(&quot;en&quot;))
-corpus &lt;- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus &lt;- tm_map(corpus, removeNumbers)
-corpus &lt;- tm_map(corpus, stripWhitespace)</code></pre>
+<p>Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text. <code>remove_punct</code> leaves only alphanumeric characters in the text. <code>remove_numbers</code> removes numeric characters and <code>remove_symbols</code> removes all characters in the Unicode “Symbol” [S] class. Lowercase transformation is performed and a set of English stop-words is removed. Note, the lowercase operation is applied twice because of some non-correct mappings in the lemmatization list. In the reference some mappings are are starting with an uppercase letter.</p>
+<pre class="r"><code>corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
+
+#Build a dictionary of lemmas
+lemmaData &lt;- read.csv2(&quot;resources/baseform_en.tsv&quot;, sep=&quot;\t&quot;, header=FALSE, encoding = &quot;UTF-8&quot;, stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
+  tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())</code></pre>
 <p>Effects of this preprocessing can be printed in the console.</p>
-<pre class="r"><code>as.character(corpus[[1]])</code></pre>
-<p>We see that the text is now a sequence of text features corresponding to the selected methods (other preprocessing steps could include stemming or lemmatization).</p>
+<pre class="r"><code>as.character(corpus_edit[1])</code></pre>
+<p>We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).</p>
 <p>From the preprocessed corpus, we create a new DTM.</p>
-<pre class="r"><code>DTM &lt;- DocumentTermMatrix(corpus)</code></pre>
-<p>The resulting DTM should have 231 rows and 24189 columns.</p>
+<pre class="r"><code>DTM &lt;- corpus_edit %&gt;% dfm() 
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)</code></pre>
+<p>The resulting DTM should have 231 rows and 17688 columns.</p>
 </div>
 <div id="time-series" class="section level1">
 <h1><span class="header-section-number">2</span> Time series</h1>
@@ -424,15 +435,13 @@ legend(&#39;topleft&#39;, legend = terms_to_observe, col=1:l, text.col = 1:l, lt
 <pre class="r"><code>positive_terms_all &lt;- readLines(&quot;data/positive-words.txt&quot;)
 negative_terms_all &lt;- readLines(&quot;data/negative-words.txt&quot;)</code></pre>
 <p>To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple <code>row_sums</code> command.</p>
-<pre class="r"><code>require(slam)
-
-positive_terms_in_suto &lt;- intersect(colnames(DTM), positive_terms_all)
-counts_positive &lt;- row_sums(DTM[, positive_terms_in_suto])
+<pre class="r"><code>positive_terms_in_suto &lt;- intersect(colnames(DTM), positive_terms_all)
+counts_positive &lt;- rowSums(DTM[, positive_terms_in_suto])
 
 negative_terms_in_suto &lt;- intersect(colnames(DTM), negative_terms_all)
-counts_negative &lt;- row_sums(DTM[, negative_terms_in_suto])</code></pre>
+counts_negative &lt;- rowSums(DTM[, negative_terms_in_suto])</code></pre>
 <p>Since lengths of speeches tend to vary greatly, we do want to measure relative frequencies of sentiment terms. This can be achieved by dividing counts of sentiment terms by the number of all terms in each document. The relative frequencies we store in a dataframe for subsequent aggregation and visualization.</p>
-<pre class="r"><code>counts_all_terms &lt;- row_sums(DTM)
+<pre class="r"><code>counts_all_terms &lt;- rowSums(DTM)
 
 relative_sentiment_frequencies &lt;- data.frame(
   positive = counts_positive / counts_all_terms,
@@ -443,12 +452,12 @@ relative_sentiment_frequencies &lt;- data.frame(
 
 head(sentiments_per_president)</code></pre>
 <pre><code>##           president positive negative
-## 1   Abraham Lincoln   0.0771   0.0456
-## 2    Andrew Jackson   0.0893   0.0494
-## 3    Andrew Johnson   0.0820   0.0470
-## 4      Barack Obama   0.0835   0.0446
-## 5 Benjamin Harrison   0.0789   0.0400
-## 6   Calvin Coolidge   0.0878   0.0395</code></pre>
+## 1   Abraham Lincoln   0.0827   0.0530
+## 2    Andrew Jackson   0.0956   0.0603
+## 3    Andrew Johnson   0.0870   0.0576
+## 4      Barack Obama   0.0890   0.0497
+## 5 Benjamin Harrison   0.0842   0.0471
+## 6   Calvin Coolidge   0.0964   0.0456</code></pre>
 <p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a></p>
 <pre class="r"><code>require(reshape2)
 df &lt;- melt(sentiments_per_president, id.vars = &quot;president&quot;)
@@ -469,7 +478,7 @@ ggplot(data = df, aes(x = reorder(president, df$value, tail, 1), y = value, fill
 <p>The overlapping of several time series in a plot can become very confusing. Heatmaps provide an alternative for the visualization of multiple frequencies over time. In this visualization method, a time series is mapped as a row in a matrix grid. Each cell of the grid is filled with a color corresponding to the value from the time series. Thus, several time series can be displayed in parallel.</p>
 <p>In addition, the time series can be sorted by similarity in a heatmap. In this way, similar frequency sequences with parallel shapes (heat activated cells) can be detected more quickly. Dendrograms can be plotted aside to visualize quantities of similarity.</p>
 <pre class="r"><code>terms_to_observe &lt;- c(&quot;war&quot;, &quot;peace&quot;, &quot;health&quot;, &quot;terror&quot;, &quot;islam&quot;, 
-                      &quot;threat&quot;, &quot;security&quot;, &quot;conflict&quot;, &quot;jobs&quot;, 
+                      &quot;threat&quot;, &quot;security&quot;, &quot;conflict&quot;, &quot;job&quot;, 
                       &quot;economy&quot;, &quot;indian&quot;, &quot;afghanistan&quot;, &quot;muslim&quot;, 
                       &quot;god&quot;, &quot;world&quot;, &quot;territory&quot;, &quot;frontier&quot;, &quot;north&quot;,
                       &quot;south&quot;, &quot;black&quot;, &quot;racism&quot;, &quot;slavery&quot;, &quot;iran&quot;)

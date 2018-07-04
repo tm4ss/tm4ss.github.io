@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-06-15" />
+<meta name="date" content="2018-07-03" />
 
 <title>Tutorial 2: Processing of textual data</title>
 
@@ -355,7 +355,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 2: Processing of textual data</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-06-15</em></h4>
+<h4 class="date"><em>2018-07-03</em></h4>
 
 </div>
 
@@ -396,50 +396,143 @@ colnames(textdata)</code></pre>
 ##                     4                     1                     9 
 ## Franklin D. Roosevelt       Franklin Pierce      George H.W. Bush 
 ##                    12                     4                     4</code></pre>
-<p>Now we want to transfer the loaded text source into a corpus object of the <code>tm</code>-package. First we load the package.</p>
-<pre class="r"><code>require(tm)</code></pre>
-<p>A corpus object is created with the Corpus command. As parameter, the command gets the data source wrapped by a specific reader function (<code>DataframeSource</code>, other reader functions are available, e.g. for simple vectors). The DataframeSource expects to columns to be present in the data frame: <code>doc_id</code> containing a unique identifier for each document, and <code>text</code> containing the fulltext of the documents (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).</p>
-<pre class="r"><code>corpus &lt;- Corpus(DataframeSource(textdata))
+<p>Now we want to transfer the loaded text source into a corpus object of the <code>quanteda</code>-package. First we load the package.</p>
+<pre class="r"><code>require(quanteda)</code></pre>
+<p>A corpus object is created with the <code>corpus</code> command. As parameter, the command gets the fulltext of the documents. In our case, this is the <code>text</code>-column of the <code>textdata</code>-data.frame. The docnames-parameter of the corpus function defines which unique identifier is given to each text example in the input (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).</p>
+<pre class="r"><code>corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
 # have a look on the new corpus object
-corpus</code></pre>
-<pre><code>## &lt;&lt;SimpleCorpus&gt;&gt;
-## Metadata:  corpus specific: 1, document level (indexed): 3
-## Content:  documents: 231</code></pre>
+summary(corpus)</code></pre>
+<pre><code>## Corpus consisting of 231 documents, showing 100 documents:
+## 
+##  Text Types Tokens Sentences
+##     1   460   1170        24
+##     2   593   1504        40
+##     3   816   2477        60
+##     4   772   2288        61
+##     5   803   2122        56
+##     6  1137   3198        79
+##     7   821   2155        53
+##     8  1005   3096        78
+##     9   732   2239        58
+##    10   833   2368        54
+##    11   597   1624        35
+##    12   562   1489        40
+##    13  1098   3493        90
+##    14   823   2398        62
+##    15   837   2463        48
+##    16   746   2287        50
+##    17   984   3171        78
+##    18   969   3114        76
+##    19   858   2606        62
+##    20   956   2922        72
+##    21   699   1950        40
+##    22   893   2615        61
+##    23   829   2439        46
+##    24  1126   3496        87
+##    25  1074   3521        67
+##    26   831   2282        50
+##    27  1050   3390        59
+##    28  1086   3615        72
+##    29  1222   4815       122
+##    30  1243   4729       114
+##    31  1196   5091       131
+##    32  1070   3767        84
+##    33  1319   6323       149
+##    34  1265   5145       117
+##    35  1593   6927       184
+##    36  1750   9179       247
+##    37  2147   9809       212
+##    38  1817   8409       172
+##    39  1818   7586       165
+##    40  1830   7945       195
+##    41  2356  11418       299
+##    42  2767  16297       391
+##    43  1792   7719       165
+##    44  1916   8480       199
+##    45  1741   8497       181
+##    46  2581  14463       318
+##    47  2240  11573       239
+##    48  2421  13223       294
+##    49  2368  12355       281
+##    50  2388  12439       264
+##    51  2638  14512       341
+##    52  2153   9715       182
+##    53  2002   8837       197
+##    54  2037   9035       205
+##    55  1958   8645       193
+##    56  2115  10026       267
+##    57  2689  17529       446
+##    58  2782  19861       476
+##    59  2687  17790       440
+##    60  3289  23296       597
+##    61  1863   8223       210
+##    62  2061   9008       232
+##    63  2696  14332       351
+##    64  2379  10712       284
+##    65  2292  10379       231
+##    66  2427  10990       267
+##    67  2458  12583       274
+##    68  2325  11392       255
+##    69  2575  14932       406
+##    70  2912  17830       518
+##    71  2453  13598       396
+##    72  2638  15376       484
+##    73  1872   7661       213
+##    74  2061   9390       319
+##    75  1719   6645       200
+##    76  1755   6587       207
+##    77  2153  10090       276
+##    78  1871   7797       202
+##    79  2668  13177       381
+##    80  2352  10863       281
+##    81  1924   8488       247
+##    82  2173   9587       266
+##    83  1758   7020       211
+##    84  1162   4338       112
+##    85  2377  11013       292
+##    86  2143  10100       273
+##    87  2574  13408       347
+##    88  1787   7438       192
+##    89  1965   8707       218
+##    90  2040   8643       237
+##    91  2443  12647       313
+##    92  1768   7215       191
+##    93  1351   4098       118
+##    94  1062   3299        92
+##    95  1315   4082       108
+##    96  2355   9670       288
+##    97  3812  21381       559
+##    98  3110  16359       416
+##    99  1394   5723       123
+##   100  2402   9798       239
+## 
+## Source: C:/Users/aniekler/Desktop/tm4ss.github.io/* on x86-64 by aniekler
+## Created: Tue Jul 03 16:13:53 2018
+## Notes:</code></pre>
 <p>A corpus is an extension of R list objects. With the <code>[[]]</code> brackets, we can access single list elements, here documents, within a corpus.</p>
-<pre class="r"><code># accessing a single document object
-corpus[[1]]
-# getting its text content
-as.character(corpus[[1]])</code></pre>
-<pre><code>## &lt;&lt;PlainTextDocument&gt;&gt;
-## Metadata:  7
-## Content:  chars: 6687</code></pre>
+<pre class="r"><code># getting a single text documents content
+as.character(texts(corpus)[1])</code></pre>
 <pre><code>## [1] &quot;Fellow-Citizens of the Senate and House of Representatives:\n\nI embrace with great satisfaction the opportunity which now...&quot;</code></pre>
 <p>Success!!! We now have 231 speeches for further analysis available in a convenient tm corpus object!</p>
 </div>
 <div id="text-statistics" class="section level1">
 <h1><span class="header-section-number">2</span> Text statistics</h1>
 <p>A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be <strong>tokenized</strong>. This means that all the words in the texts need to be identified and separated. Only in this way is it possible to count the frequency of individual word forms. A word form is also called <strong>“type”</strong>. The occurrence of a type in a text is a <strong>“token”</strong>.</p>
-<p>For text mining, text are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpsu forms the <strong>vocabulary</strong> of a corpus. For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term frequency vector for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called <strong>document-term matrix</strong> (DTM).</p>
-<p>The function <code>DocumentTermMatrix</code> of the tm package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the “space” as the word separator.</p>
+<p>For text mining, text are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpus forms the <strong>vocabulary</strong> of a corpus. For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term frequency vector for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called <strong>document-term matrix</strong> (DTM).</p>
+<p>The function <code>dfm</code> (Document-Feature-Matrix; Quanteda treats words as features of a text based dataset) of the <code>quanteda</code> package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the tokenizer of quanteda as the word separator. Quanteda has 3 differnent word separation methods. The standard and smartest way uses word boudaries and punctuations to separate the text sources. The other methods rely on whitespace information an work significantly faster but not as accurate.</p>
 <pre class="r"><code># Create a DTM (may take a while)
-DTM &lt;- DocumentTermMatrix(corpus)
+DTM &lt;- dfm(corpus)
 # Show some information
 DTM</code></pre>
-<pre><code>## &lt;&lt;DocumentTermMatrix (documents: 231, terms: 24743)&gt;&gt;
-## Non-/sparse entries: 388973/5326660
-## Sparsity           : 93%
-## Maximal term length: 20
-## Weighting          : term frequency (tf)</code></pre>
+<pre><code>## Document-feature matrix of: 231 documents, 30,112 features (94.2% sparse).</code></pre>
 <pre class="r"><code># Dimensionality of the DTM
 dim(DTM)</code></pre>
-<pre><code>## [1]   231 24743</code></pre>
-<p>The dimensions of the DTM, 231 rows and 24743 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
+<pre><code>## [1]   231 30112</code></pre>
+<p>The dimensions of the DTM, 231 rows and 30112 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
 <p>A first impression of text statistics we can get from a word list. Such a word list represents the frequency counts of all words in all documents. We can get that information easily from the DTM by summing all of its column vectors.</p>
-<p>A so-called <strong>sparse matrix</strong> data structure is used for the document term matrix in the tm package (tm imports the <code>slam</code> package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The <em>slam</em> package provides arithmetic operations on sparse DTMs.</p>
-<pre class="r"><code>require(slam)</code></pre>
-<pre><code>## Loading required package: slam</code></pre>
+<p>A so-called <strong>sparse matrix</strong> data structure is used for the document term matrix in the quanteda package (quanteda inherits the <code>Matrix</code> package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The <em>Matrix</em> package provides arithmetic operations on sparse DTMs.</p>
 <pre class="r"><code># sum columns for word counts
-freqs &lt;- col_sums(DTM)
+freqs &lt;- colSums(DTM)
 # get vocabulary vector
 words &lt;- colnames(DTM)
 # combine words and their frequencies in a data frame
@@ -449,39 +542,39 @@ wordIndexes &lt;- order(wordlist[, &quot;freqs&quot;], decreasing = TRUE)
 wordlist &lt;- wordlist[wordIndexes, ]
 # show the most frequent words
 head(wordlist, 25)</code></pre>
-<pre><code>##                 words  freqs
-## the               the 150549
-## and               and  61199
-## that             that  22102
-## for               for  19096
-## our               our  17482
-## which           which  12350
-## this             this  12141
-## have             have  12090
-## with             with  12059
-## will             will   9559
-## has               has   9065
-## not               not   9002
-## are               are   8997
-## been             been   8771
-## their           their   7793
-## from             from   7513
-## government government   7097
-## all               all   6847
-## states         states   6477
-## its               its   5763
-## but               but   5689
-## was               was   5670
-## should         should   5162
-## they             they   5079
-## congress     congress   4996</code></pre>
+<pre><code>##       words  freqs
+## the     the 150528
+## of       of  97139
+## ,         ,  84764
+## .         .  63198
+## and     and  61182
+## to       to  60968
+## in       in  38782
+## a         a  28184
+## that   that  21848
+## for     for  19083
+## be       be  18740
+## our     our  17479
+## is       is  17075
+## it       it  15271
+## by       by  15034
+## which which  12349
+## as       as  12222
+## we       we  12144
+## this   this  12141
+## have   have  12088
+## with   with  12058
+## will   will   9551
+## on       on   9453
+## i         i   9304
+## has     has   9065</code></pre>
 <p>The words in this sorted list have a ranking depending on the position in this list. If the word ranks are plotted on the x axis and all frequencies on the y axis, then the Zipf distribution is obtained. This is a typical property of language data and its distribution is similar for all languages.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, lwd=2, main = &quot;Rank frequency Plot&quot;, xlab=&quot;Rank&quot;, ylab =&quot;Frequency&quot;)</code></pre>
 <p><img src="Tutorial_2_Read_data_Zipf_files/figure-html/unnamed-chunk-12-1.png" width="768" /></p>
 <p>The distribution follows an extreme power law distribution (very few words occur very often, very many words occur very rare). The Zipf law says that the frequency of a word is reciprocal to its rank (1 / r). To make the plot more readable, the axes can be logarithmized.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, log=&quot;xy&quot;, lwd=2, main = &quot;Rank-Frequency Plot&quot;, xlab=&quot;log-Rank&quot;, ylab =&quot;log-Frequency&quot;)</code></pre>
 <p><img src="Tutorial_2_Read_data_Zipf_files/figure-html/unnamed-chunk-13-1.png" width="768" /></p>
-<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 24743 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
+<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 30112 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
 <p>Hence, ignoring very rare / frequent words has many advantages:</p>
 <ul>
 <li>reducing the dimensionality of the vocabulary (saves memory)</li>
@@ -509,40 +602,40 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 <li>Print out the word list without stop words and low frequent words.</li>
 </ol>
 <pre><code>##                 words freqs
-## will             will  9559
-## government government  7097
-## states         states  6477
+## ,                   , 84764
+## .                   . 63198
+## -                   -  7812
+## government government  6877
+## states         states  6475
 ## congress     congress  4996
 ## united         united  4819
-## can               can  4456
-## people         people  4067
-## year             year  3991
+## ;                   ;  4471
+## can               can  4345
+## people         people  3979
 ## upon             upon  3956
-## country       country  3437
+## year             year  3823
+## $                   $  3644
 ## may               may  3407
-## must             must  3306
+## country       country  3360
+## must             must  3305
 ## great           great  3256
-## made             made  3149
-## public         public  3093
+## made             made  3143
 ## now               now  3079
-## new               new  2978
-## 000               000  2939
-## time             time  2900
-## one               one  2860
-## war               war  2820
-## american     american  2679
-## last             last  2625
-## world           world  2522
-## years           years  2309</code></pre>
+## public         public  3073
+## new               new  2976
+## time             time  2846
+## war               war  2759
+## one               one  2668
+## last             last  2614</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>If you look at the result, are there any corpus specific terms that should also be considered as stop word?</li>
 <li>What is the share of terms regarding the entire vocabulary which occur only once in the corpus?</li>
 </ol>
-<pre><code>## [1] 0.2787051</code></pre>
+<pre><code>## [1] 0.393564</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Compute the type-token ratio (TTR) of the corpus. the TTR is the fraction of the number of tokens divided by the number of types.</li>
 </ol>
-<pre><code>## [1] 0.01759322</code></pre>
+<pre><code>## [1] 0.0154557</code></pre>
 </div>
 
 <p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>

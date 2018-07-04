@@ -1,16 +1,18 @@
 ---
-title: "Tutorial 2: Processing of textual data"
+title: 'Tutorial 2: Processing of textual data'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    theme: united
-    toc_float: true
     number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
 highlight: tango
-bibliography: references.bib
 csl: springer.csl
+bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
@@ -58,47 +60,44 @@ table(textdata[, "president"])
 head(table(textdata[, "president"]), 12)
 ```
 
-Now we want to transfer the loaded text source into a corpus object of the `tm`-package. First we load the package.
+Now we want to transfer the loaded text source into a corpus object of the `quanteda`-package. First we load the package.
 
 ```{r results='hide', message=FALSE, warning=FALSE}
-require(tm)
+require(quanteda)
 ```
 
-A corpus object is created with the Corpus command. As parameter, the command gets the data source wrapped by a specific reader function (`DataframeSource`, other reader functions are available, e.g. for simple vectors). The DataframeSource expects to columns to be present in the data frame: `doc_id` containing a unique identifier for each document, and `text` containing the fulltext of the documents (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).
+A corpus object is created with the `corpus` command. As parameter, the command gets the fulltext of the documents. In our case, this is the `text`-column of the `textdata`-data.frame. The docnames-parameter of the corpus function defines which unique identifier is given to each text example in the input (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).
 
 ```{r}
-corpus <- Corpus(DataframeSource(textdata))
+corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 # have a look on the new corpus object
-corpus
+summary(corpus)
 ```
 
 A corpus is an extension of R list objects. With the `[[]]` brackets, we can access single list elements, here documents, within a corpus.
 
 ```{r eval=F, echo=T}
-# accessing a single document object
-corpus[[1]]
-# getting its text content
-as.character(corpus[[1]])
+# getting a single text documents content
+as.character(texts(corpus)[1])
 ```
 ```{r eval=T, echo=F}
-corpus[[1]]
-paste0(substring(as.character(corpus[[1]]), 0, 120), "...")
+paste0(substring(as.character(texts(corpus)[1]), 0, 120), "...")
 ```
 
-Success!!! We now have `r length(corpus)` speeches for further analysis available in a convenient tm corpus object!
+Success!!! We now have `r ndoc(corpus)` speeches for further analysis available in a convenient tm corpus object!
 
 # Text statistics
 
 
 A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be __tokenized__. This means that all the words in the texts need to be identified and separated. Only in this way is it possible to count the frequency of individual word forms. A word form is also called **"type"**. The occurrence of a type in a text is a **"token"**.
 
-For text mining, text are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpsu forms the **vocabulary** of a corpus. For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term frequency vector for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called **document-term matrix** (DTM).
+For text mining, text are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpus forms the **vocabulary** of a corpus. For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term frequency vector for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called **document-term matrix** (DTM).
 
-The function `DocumentTermMatrix` of the tm package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the "space" as the word separator.
+The function `dfm` (Document-Feature-Matrix; Quanteda treats words as features of a text based dataset) of the `quanteda` package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the tokenizer of quanteda as the word separator. Quanteda has 3 differnent word separation methods. The standard and smartest way uses word boudaries and punctuations to separate the text sources. The other methods rely on whitespace information an work significantly faster but not as accurate.
 
 ```{r}
 # Create a DTM (may take a while)
-DTM <- DocumentTermMatrix(corpus)
+DTM <- dfm(corpus)
 # Show some information
 DTM
 # Dimensionality of the DTM
@@ -109,12 +108,11 @@ The dimensions of the DTM, `r nrow(DTM)` rows and `r ncol(DTM)` columns, match t
 
 A first impression of text statistics we can get from a word list. Such a word list represents the frequency counts of all words in all documents. We can get that information easily from the DTM by summing all of its column vectors.
 
-A so-called **sparse matrix** data structure is used for the document term matrix in the tm package (tm imports the `slam` package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The *slam* package provides arithmetic operations on sparse DTMs.
+A so-called **sparse matrix** data structure is used for the document term matrix in the quanteda package (quanteda inherits the `Matrix` package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The *Matrix* package provides arithmetic operations on sparse DTMs.
 
 ```{r}
-require(slam)
 # sum columns for word counts
-freqs <- col_sums(DTM)
+freqs <- colSums(DTM)
 # get vocabulary vector
 words <- colnames(DTM)
 # combine words and their frequencies in a data frame

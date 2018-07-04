@@ -1,16 +1,18 @@
 ---
-title: "Tutorial 4: Key term extraction"
+title: 'Tutorial 4: Key term extraction'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    theme: united
-    toc_float: true
     number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
 highlight: tango
-bibliography: references.bib
 csl: springer.csl
+bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
@@ -21,37 +23,41 @@ This tutorial shows how to extract key terms from document and (sub-)collections
 2. Log-likelihood ratio test
 3. Aggregations and visualization
 
-Like in the previous tutorial we read the CSV data file containing the State of the union addresses and preprocess the corpus object with a sequence of `tm_map` functions.
+Like in the previous tutorial we read the CSV data file containing the State of the union addresses and preprocess the corpus object with a sequence of `quanteda` functions.
 
-This time, we also apply **stemming** to the corpus. Stemming reduces (potentially) inflected word forms to its word stem to unify similar semantic forms to the same text representation. For instance, 'presidents' becomes 'president' and 'singing' becomes 'sing'.
+This time, we also apply **lemmatization** to the corpus. Lemmatization reduces (potentially) inflected word forms to its lexical baseform to unify similar semantic forms to the same text representation. For instance, 'presidents' becomes 'president' and 'singing' becomes 'sing'.
 
 Finally, we create a Document-Term-Matrix.
 
 
 ```{r initalisierung, results='hide', message=FALSE, warning=FALSE, cache=T}
 options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 
 textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
-english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
-# Create corpus object
-corpus <- Corpus(DataframeSource(textdata))
-corpus <- tm_map(corpus, content_transformer(tolower))
-corpus <- tm_map(corpus, removeWords, english_stopwords)
-corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-corpus <- tm_map(corpus, removeNumbers)
+corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 
-# Stemming
-require("SnowballC")
-corpus <- tm_map(corpus, stemDocument, language = "en")
-corpus <- tm_map(corpus, stripWhitespace)
+#Build a dictionary of lemmas
+lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
 
 # View first document
-substr(as.character(corpus[[1]]), 0, 250)
+substr(paste(as.character(corpus_edit[1]),collapse = " "), 0, 250)
 
 # Create DTM
-DTM <- DocumentTermMatrix(corpus)
+DTM <- corpus_edit %>% dfm() 
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")
 ```
 
 # TF-IDF
@@ -62,11 +68,9 @@ Let us compute TF-IDF weights for all terms in the first speech of Barack Obama.
 
 
 ```{r TF-IDF, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
-require(slam)
-
 # Compute IDF: log(N / n_i)
 number_of_docs <- nrow(DTM)
-term_in_docs <- col_sums(DTM > 0)
+term_in_docs <- colSums(DTM > 0)
 idf <- log2(number_of_docs / term_in_docs)
 
 # Compute TF
@@ -84,14 +88,14 @@ The last operation is to append the column names again to the resulting term wei
 sort(tf_idf, decreasing = T)[1:20]
 ```
 
-If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the tm-package provides a convenient function for computing tf-idf weights of a given DTM: `weightTfIdf(DTM)`.
+If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the quanteda-package provides a convenient function for computing tf-idf weights of a given DTM: `dfm_tfidf(DTM)`.
 
 # Log likelihood
 
 We now use a more sophisticated method with a comparison corpus and the log likelihood statistic.
 
 ```{r targetDTM, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
-targetDTM <- DocumentTermMatrix(corpus)
+targetDTM <- DTM
 
 termCountsTarget <- as.vector(targetDTM[first_obama_speech, ])
 names(termCountsTarget) <- colnames(targetDTM)
@@ -106,20 +110,28 @@ As a comparison corpus, we select a corpus from the Leipzig Corpora Collection (
 
 ```{r comparisonCorpus, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
 lines <- readLines("resources/eng_wikipedia_2010_30K-sentences.txt", encoding = "UTF-8")
-comparisonCorpus <- Corpus(VectorSource(lines))
-comparisonCorpus <- tm_map(comparisonCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-comparisonCorpus <- tm_map(comparisonCorpus, removeNumbers)
-comparisonCorpus <- tm_map(comparisonCorpus, content_transformer(tolower))
-comparisonCorpus <- tm_map(comparisonCorpus, removeWords, english_stopwords)
-comparisonCorpus <- tm_map(comparisonCorpus, stemDocument, language = "en")
-comparisonCorpus <- tm_map(comparisonCorpus, stripWhitespace)
+corpus_compare <- corpus(lines)
 ```
 
 From the comparison corpus, we also create a count of all terms. 
 
 ```{r comparisonDTM, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
-comparisonDTM <- DocumentTermMatrix(comparisonCorpus)
-termCountsComparison <- col_sums(comparisonDTM)
+# Create a DTM (may take a while)
+corpus_compare_edit <- corpus_compare %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
+
+# Create DTM
+comparisonDTM <- corpus_compare_edit %>% dfm() 
+
+comparisonDTM  <- comparisonDTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(comparisonDTM) <- colnames(comparisonDTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+comparisonDTM <- dfm_compress(comparisonDTM, "features")
+
+termCountsComparison <- colSums(comparisonDTM)
 ```
 
 In *termCountsComparison* we now have the frequencies of all (target) terms in the comparison corpus.
@@ -242,10 +254,10 @@ for (president in presidents) {
   selector_logical_idx <- textdata$president == president
   
   presidentDTM <- targetDTM[selector_logical_idx, ]
-  termCountsTarget <- col_sums(presidentDTM)
+  termCountsTarget <- colSums(presidentDTM)
   
   otherDTM <- targetDTM[!selector_logical_idx, ]
-  termCountsComparison <- col_sums(otherDTM)
+  termCountsComparison <- colSums(otherDTM)
   
   loglik_terms <- calculateLogLikelihood(termCountsTarget, termCountsComparison)
   
@@ -253,7 +265,7 @@ for (president in presidents) {
   
   fileName <- paste0("wordclouds/", president, ".pdf")
   pdf(fileName, width = 9, height = 7)
-  wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, "Dark2"), random.order = F)
+  wordcloud::wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = RColorBrewer::brewer.pal(8, "Dark2"), random.order = F)
   dev.off()
   
 }
@@ -266,9 +278,9 @@ for (president in presidents) {
 ```{r extra1, message=FALSE, cache=T, error=F, warning=F, echo=F}
 source("calculateLogLikelihood.R")
 
-frq <- sort(col_sums(targetDTM), decreasing = T)[1:25]
-tfidf <- sort(col_sums(targetDTM) * log2(nrow(targetDTM) / col_sums(targetDTM > 0)), decreasing = T)[1:25]
-ll <- sort(calculateLogLikelihood(col_sums(targetDTM), col_sums(comparisonDTM)), decreasing = T)[1:25]
+frq <- sort(colSums(targetDTM), decreasing = T)[1:25]
+tfidf <- sort(colSums(targetDTM) * log2(nrow(targetDTM) / colSums(targetDTM > 0)), decreasing = T)[1:25]
+ll <- sort(calculateLogLikelihood(colSums(targetDTM), colSums(comparisonDTM)), decreasing = T)[1:25]
 
 df <- data.frame(
   word.frq = names(frq),
@@ -285,11 +297,11 @@ head(df, 10)
 ```{r extra2, message=FALSE, cache=T, error=F, warning=F, echo=F}
 obama_speeches <- which(textdata$president == "Barack Obama")
 
-termCountsTarget <- col_sums(DTM[obama_speeches[2], ])
+termCountsTarget <- colSums(DTM[obama_speeches[2], ])
 termCountsTarget <- termCountsTarget[termCountsTarget > 0]
-termCountsComparison <- col_sums(DTM[obama_speeches[-2], ])
+termCountsComparison <- colSums(DTM[obama_speeches[-2], ])
 loglik_terms <- calculateLogLikelihood(termCountsTarget, termCountsComparison, minSignificance = 3.84)
   
 top50 <- sort(loglik_terms, decreasing = TRUE)[1:50]
-wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = brewer.pal(8, "Dark2"), random.order = F)
+wordcloud::wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = RColorBrewer::brewer.pal(8, "Dark2"), random.order = F)
 ```

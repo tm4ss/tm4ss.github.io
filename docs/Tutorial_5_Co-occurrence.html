@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-06-15" />
+<meta name="date" content="2018-07-06" />
 
 <title>Tutorial 5: Co-occurrence analysis</title>
 
@@ -355,7 +355,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 5: Co-occurrence analysis</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-06-15</em></h4>
+<h4 class="date"><em>2018-07-06</em></h4>
 
 </div>
 
@@ -366,109 +366,72 @@ div.tocify {
 </script> This exercise will demonstrate how to perform co-occurrence analysis with <strong>R</strong> and the tm-package. It is shown how different significance measures can be used to extract semantic links between words.</p>
 <p>Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.</p>
 <pre class="r"><code>options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 
 textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)
-english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
-# Create corpus object
-corpus &lt;- Corpus(DataframeSource(textdata))</code></pre>
+corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id, docvars = data.frame(year = substr(textdata$date, 0, 4)))</code></pre>
 <div id="sentence-detection" class="section level1">
 <h1><span class="header-section-number">1</span> Sentence detection</h1>
 <p>The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighboring words. One of the most frequently used context window is the sentence.</p>
 <p>Documents are decomposed into sentences. Sentences are defined as a separate (quasi-)documents in a new corpus object of the tm-package. The further application of the tm-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.</p>
 <p>Important: The sentence segmentation must take place <em>before</em> the other preprocessing steps because the sentence-segmentation-model relies on intact word forms and punctuation marks.</p>
-<p>The following code defines two functions. One selects documents, the other decomposes a given document text into sentences with the help of a probabilistic model.</p>
-<pre class="r"><code>require(openNLP)
-
-# Function to convert a document in a vector of sentences
-convert_text_to_sentences &lt;- function(text, lang = &quot;en&quot;, SentModel = &quot;resources/en-sent.bin&quot;) {
-  
-  # Calculate sentenve boundaries as annotation with Apache OpenNLP Maxent-sentence-detector.
-  sentence_token_annotator &lt;- Maxent_Sent_Token_Annotator(language = lang, model = SentModel)
-  
-  # Convert text to NLP string
-  text &lt;- NLP::as.String(text)
-  
-  # Annotate the sentence boundaries
-  sentenceBoundaries &lt;- NLP::annotate(text, sentence_token_annotator)
-  
-  # Select sentences as rows of a new matrix
-  sentences &lt;- text[sentenceBoundaries]
-  
-  # return the sentences
-  return(sentences)
-}</code></pre>
-<pre class="r"><code># Function to convert a corpus of documents into a corpus of single sentences from documents
-reshape_corpus &lt;- function(currentCorpus, ...) {
-  
-  # Extraction of all sentences from the corpus as a list
-  text &lt;- lapply(currentCorpus, as.character)
-  
-  # convert the text
-  pb &lt;- txtProgressBar(min=0, max=length(text))
-  i &lt;- 0
-  docs &lt;- lapply(text, FUN=function(x){
-    i &lt;&lt;- i + 1
-    setTxtProgressBar(pb, i)
-    convert_text_to_sentences(x)
-  }, ...)
-  close(pb)
-  
-  docs &lt;- as.vector(unlist(docs))
-  
-  # Create a new corpus of the segmented sentences
-  newCorpus &lt;- Corpus(VectorSource(docs))
-  
-  return(newCorpus)
-}</code></pre>
-<p>We apply the function <code>reshape_corpus</code> on our corpus of full speeches to receive a corpus of sentences.</p>
+<p>The following code uses a quanteda function to <strong>reshape</strong> the corpus into sentences.</p>
 <pre class="r"><code># original corpus length and its first document
-length(corpus)</code></pre>
+ndoc(corpus)</code></pre>
 <pre><code>## [1] 231</code></pre>
-<pre class="r"><code>substr(as.character(corpus[[1]]), 0, 200)</code></pre>
-<pre><code>## [1] &quot;Fellow-Citizens of the Senate and House of Representatives:\n\nI embrace with great satisfaction the opportunity which now presents itself\nof congratulating you on the present favorable prospects of our&quot;</code></pre>
-<pre class="r"><code># reshape into sentences
-sentenceCorpus &lt;- reshape_corpus(corpus)</code></pre>
-<pre><code>## ===========================================================================</code></pre>
-<pre class="r"><code># reshaped corpus length and its first &#39;document&#39;
-length(sentenceCorpus)</code></pre>
-<pre><code>## [1] 62517</code></pre>
-<pre class="r"><code>as.character(sentenceCorpus[[1]])</code></pre>
-<pre><code>## [1] &quot;Fellow-Citizens of the Senate and House of Representatives:\n\nI embrace with great satisfaction the opportunity which now presents itself\nof congratulating you on the present favorable prospects of our public\naffairs.&quot;</code></pre>
-<pre class="r"><code>as.character(sentenceCorpus[[2]])</code></pre>
-<pre><code>## [1] &quot;The recent accession of the important state of North Carolina to\nthe Constitution of the United States (of which official information has\nbeen received), the rising credit and respectability of our country, the\ngeneral and increasing good will toward the government of the Union, and\nthe concord, peace, and plenty with which we are blessed are circumstances\nauspicious in an eminent degree to our national prosperity.&quot;</code></pre>
-<p>CAUTION: The newly decomposed corpus has now reached a considerable size of 62517 sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.</p>
+<pre class="r"><code>substr(texts(corpus)[1], 0, 200)</code></pre>
+<pre><code>##                                                                                                                                                                                                             1 
+## &quot;Fellow-Citizens of the Senate and House of Representatives:\n\nI embrace with great satisfaction the opportunity which now presents itself\nof congratulating you on the present favorable prospects of our&quot;</code></pre>
+<pre class="r"><code>corpus_sentences &lt;- corpus_reshape(corpus, to = &quot;sentences&quot;)
+
+ndoc(corpus_sentences)</code></pre>
+<pre><code>## [1] 62127</code></pre>
+<pre class="r"><code>texts(corpus_sentences)[1]</code></pre>
+<pre><code>##                                                                                                                                                                                                                        1.1 
+## &quot;Fellow-Citizens of the Senate and House of Representatives:  I embrace with great satisfaction the opportunity which now presents itself of congratulating you on the present favorable prospects of our public affairs.&quot;</code></pre>
+<pre class="r"><code>texts(corpus_sentences)[2]</code></pre>
+<pre><code>##                                                                                                                                                                                                                                                                                                                                                                                                                                  1.2 
+## &quot;The recent accession of the important state of North Carolina to the Constitution of the United States (of which official information has been received), the rising credit and respectability of our country, the general and increasing good will toward the government of the Union, and the concord, peace, and plenty with which we are blessed are circumstances auspicious in an eminent degree to our national prosperity.&quot;</code></pre>
+<p>CAUTION: The newly decomposed corpus has now reached a considerable size of 62127 sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.</p>
 <p>Now we are returning to our usual pre-processing chain and apply it on the separated sentences.</p>
 <pre class="r"><code># Preprocessing chain
-sentenceCorpus &lt;- tm_map(sentenceCorpus, content_transformer(tolower))
-sentenceCorpus &lt;- tm_map(sentenceCorpus, removeWords, english_stopwords)
-sentenceCorpus &lt;- tm_map(sentenceCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-sentenceCorpus &lt;- tm_map(sentenceCorpus, removeNumbers)
-sentenceCorpus &lt;- tm_map(sentenceCorpus, stripWhitespace)</code></pre>
+#Build a dictionary of lemmas
+lemmaData &lt;- read.csv2(&quot;resources/baseform_en.tsv&quot;, sep=&quot;\t&quot;, header=FALSE, encoding = &quot;UTF-8&quot;, stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit &lt;- corpus_sentences %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
+  tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())</code></pre>
 <p>Again, we create a document-term-matrix. Only word forms which occur at least 10 times should be taken into account. An upper limit is not set (<code>Inf</code> = infinite).</p>
 <p>Additionally, we are interested in the joint occurrence of words in a sentence. For this, we do not need the exact count of how often the terms occur, but only the information whether they occur together or not. This can be encoded in a binary document-term-matrix. The parameter <code>weighting</code> in the control options calls the <code>weightBin</code> function. This writes a 1 into the DTM if the term is contained in a sentence and 0 if not.</p>
 <pre class="r"><code>minimumFrequency &lt;- 10
-binDTM &lt;- DocumentTermMatrix(sentenceCorpus, control=list(bounds = list(global=c(minimumFrequency, Inf)), weighting = weightBin))</code></pre>
+
+# Create DTM
+binDTM &lt;- corpus_edit %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf) %&gt;% 
+  dfm_weight(&quot;boolean&quot;)
+
+binDTM  &lt;- binDTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(binDTM) &lt;- colnames(binDTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+binDTM &lt;- dfm_compress(binDTM, &quot;features&quot;)</code></pre>
 </div>
 <div id="counting-co-occurrences" class="section level1">
 <h1><span class="header-section-number">2</span> Counting co-occurrences</h1>
 <p>The counting of the joint word occurrence is easily possible via a matrix multiplication (<a href="https://en.wikipedia.org/wiki/Matrix_multiplication" class="uri">https://en.wikipedia.org/wiki/Matrix_multiplication</a>) on the binary DTM. For this purpose, the transposed matrix (dimensions: nTypes x nDocs) is multiplied by the original matrix (nDocs x nTypes), which as a result encodes a term-term matrix (dimensions: nTypes x nTypes).</p>
-<p>However, since we are working on very large matrices and the sparse matrix format (<code>slam</code>) which is used by the tm-package does not fully support the matrix multiplication, we first have to convert the <code>binDTM</code> into the format of the Matrix package which is more convenient to use.</p>
-<pre class="r"><code># Convert to sparseMatrix matrix
-require(Matrix)
-binDTM &lt;- sparseMatrix(i = binDTM$i, j = binDTM$j, x = binDTM$v, dims = c(binDTM$nrow, binDTM$ncol), dimnames = dimnames(binDTM))
-
-# Matrix multiplication for cooccurrence counts
+<pre class="r"><code># Matrix multiplication for cooccurrence counts
 coocCounts &lt;- t(binDTM) %*% binDTM</code></pre>
 <p>Let’s look at a snippet of the result. The matrix has <code>nTerms</code> rows and columns and is symmetric. Each cell contains the number of joint occurrences. In the diagonal, the frequencies of single occurrences of each term are encoded.</p>
 <pre class="r"><code>as.matrix(coocCounts[202:205, 202:205])</code></pre>
-<pre><code>##              home introduction inventions manufactures
-## home          698            5          1           11
-## introduction    5           54          1            1
-## inventions      1            1         18            1
-## manufactures   11            1          1          160</code></pre>
-<p>Interprete as follows: inventions appears together 1 times with manufactures in the 62517 sentences of the SUTO addresses. inventions alone occurs 18 times.</p>
+<pre><code>##             frontier council depredation perceive
+## frontier         236       1           7        2
+## council            1     130           0        0
+## depredation        7       0          62        2
+## perceive           2       0           2       69</code></pre>
+<p>Interprete as follows: depredation appears together 2 times with perceive in the 62127 sentences of the SUTO addresses. depredation alone occurs 62 times.</p>
 </div>
 <div id="statistical-significance" class="section level1">
 <h1><span class="header-section-number">3</span> Statistical significance</h1>
@@ -505,28 +468,28 @@ resultOverView &lt;- data.frame(
   row.names = NULL)
 colnames(resultOverView) &lt;- c(&quot;Freq-terms&quot;, &quot;Freq&quot;, &quot;MI-terms&quot;, &quot;MI&quot;, &quot;Dice-Terms&quot;, &quot;Dice&quot;, &quot;LL-Terms&quot;, &quot;LL&quot;)
 print(resultOverView)</code></pre>
-<pre><code>##    Freq-terms Freq  MI-terms       MI Dice-Terms       Dice   LL-Terms
-## 1       spain  443     spain 4.949624      spain 1.00000000       cuba
-## 2      states  146   amistad 4.033333       cuba 0.14073072     united
-## 3      united  137  antilles 4.033333    spanish 0.11711712     states
-## 4  government  113    madrid 3.891017     france 0.08396947    spanish
-## 5      treaty   55  catholic 3.851012     island 0.07449857     treaty
-## 6        cuba   52    subdue 3.725849     madrid 0.06910569     france
-## 7         war   46       ton 3.650341     treaty 0.06900878     madrid
-## 8        made   46  autonomy 3.563330   colonies 0.06250000     island
-## 9        part   44    cubans 3.502705   friendly 0.06164384 government
-## 10  relations   40 disavowed 3.483287    florida 0.06060606  relations
+<pre><code>##    Freq-terms Freq    MI-terms       MI Dice-Terms       Dice   LL-Terms
+## 1       spain  443       spain 4.943366      spain 1.00000000       cuba
+## 2       state  160     amistad 4.027075       cuba 0.14363144      unite
+## 3       unite  138    antilles 4.027075    spanish 0.12084592    spanish
+## 4  government  133      madrid 3.884759     france 0.08396947      state
+## 5      treaty   59    catholic 3.878655     colony 0.07355517     treaty
+## 6        cuba   53       queen 3.844754    florida 0.07116105     france
+## 7         war   49    autonomy 3.557072     island 0.07081340 government
+## 8        part   49        cede 3.538024     madrid 0.06910569      claim
+## 9       claim   47  adventurer 3.508282      claim 0.06695157     madrid
+## 10    country   46 spoliations 3.402921     treaty 0.06320300     island
 ##           LL
-## 1  249.00029
-## 2  227.23210
-## 3  195.73790
-## 4  185.23159
-## 5  123.47575
-## 6  116.03250
-## 7  106.11926
-## 8   94.01976
-## 9   82.59194
-## 10  80.34891</code></pre>
+## 1  255.79943
+## 2  225.19124
+## 3  193.28492
+## 4  172.71865
+## 5  117.42891
+## 6  115.64522
+## 7  115.13650
+## 8  106.26017
+## 9  105.90923
+## 10  98.32547</code></pre>
 </div>
 <div id="visualization-of-co-occurrence" class="section level1">
 <h1><span class="header-section-number">4</span> Visualization of co-occurrence</h1>
@@ -540,15 +503,15 @@ numberOfCoocs &lt;- 15
 coocTerm &lt;- &quot;california&quot;</code></pre>
 <p>We use the imported function <code>calculateCoocStatistics</code> to calculate the co-occurrences for the target term <em>“california”</em>.</p>
 <pre class="r"><code>coocs &lt;- calculateCoocStatistics(coocTerm, binDTM, measure=&quot;LOGLIK&quot;)</code></pre>
-<pre><code>## Loading required package: slam</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
 <pre class="r"><code># Display the numberOfCoocs main terms
 print(coocs[1:numberOfCoocs])</code></pre>
-<pre><code>##      oregon      mexico       coast       upper     mineral       texas 
-##   260.53173   112.36326    62.88527    52.48691    52.39674    51.03741 
-## acquisition     pacific territories        york    southern     arizona 
-##    43.36975    39.39077    38.77770    36.32582    34.93340    33.71113 
-##       mines   wisconsin     florida 
-##    33.43116    33.23725    29.78051</code></pre>
+<pre><code>##      oregon      mexico         new       coast     mineral       upper 
+##   256.95430   159.30802   109.03211    61.89125    54.72099    51.74274 
+##     pacific       texas   territory acquisition  possession        mine 
+##    49.84362    49.79159    47.98054    40.83657    36.92670    36.07117 
+##      grande        york    southern 
+##    35.92939    35.49987    34.11077</code></pre>
 <p>To acquire an extended semantic environment of the target term, ‘secondary co-occurrence’ terms can be computed for each co-occurrence term of the target term. This results in a graph that can be visualized with special layout algorithms (e.g. Force Directed Graph).</p>
 <p>Network graphs can be evaluated and visualized in R with the <code>igraph</code>-package. Any graph object can be created from a three-column data-frame. Each row in that data-frame is a triple. Each triple encodes an edge-information of two nodes (source, sink) and an edge-weight value.</p>
 <p>For a term co-occurrence network, each triple consists of the target word, a co-occurring word and the significance of their joint occurrence. We denote the values with <em>from, to, sig</em>.</p>
@@ -593,13 +556,13 @@ for (i in 1:numberOfCoocs){
 <p>As a result, <code>resultGraph</code> now contains all <code>numberOfCoocs * numberOfCoocs</code> edges of a term co-occurrence network.</p>
 <pre class="r"><code># Sample of some examples from resultGraph
 resultGraph[sample(nrow(resultGraph), 6), ]</code></pre>
-<pre><code>##           from         to       sig
-## 1315   florida   catholic  29.50231
-## 814  wisconsin   kentucky  33.58131
-## 53       coast    vessels 118.21999
-## 91      oregon compromise  36.22330
-## 31      oregon    pacific  49.42589
-## 68     pacific   commerce 114.00382</code></pre>
+<pre><code>##            from         to      sig
+## 151      oregon       mile 33.09524
+## 128       texas   boundary 63.58773
+## 36        upper     canada 35.93441
+## 1111 possession california 36.92670
+## 415    southern     africa 41.58765
+## 148       texas      annex 56.67878</code></pre>
 <p>The package iGraph offers multiple graph visualizations for graph objects. Graph objects can be created from triple lists, such as those we just generated. In the next step we load the package iGraph and create a visualization of all nodes and edges from the object <code>resultGraph</code>.</p>
 <pre class="r"><code>require(igraph)
 
@@ -646,18 +609,15 @@ plot(graphNetwork,
      vertex.label = V(graphNetwork)$name,       # node names
      vertex.label.cex = 1 # font size of node names 
 )</code></pre>
-<p><img src="Tutorial_5_Co-occurrence_files/figure-html/unnamed-chunk-13-1.png" width="960" /></p>
+<p><img src="Tutorial_5_Co-occurrence_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
 </div>
 <div id="optional-exercises" class="section level1">
 <h1><span class="header-section-number">5</span> Optional exercises</h1>
 <ol style="list-style-type: decimal">
 <li>Create term networks for “civil”, “germany”, “tax”</li>
 <li><p>For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx2-1.png" width="960" /> The plot may get very messy. Try lower values for <code>numberOfCoocs</code> to create a less dense network plot.</p></li>
-<li><p>Separate the DTM into two time periods (year &lt; 1950; year &gt; = 1950). Represent the graphs for the term “california” for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (<code>get_binDTM &lt;- function(mycorpus)</code>) and for visualizing a co-occurrence network (<code>vis_cooc_network &lt;- function(binDTM, coocTerm)</code>).</p></li>
+<li><p>Separate the DTM into two time periods (year &lt; 1950; year &gt; = 1950). Represent the graphs for the term “california” for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (<code>get_binDTM &lt;- function(mycorpus)</code>) and for visualizing a co-occurrence network (<code>vis_cooc_network &lt;- function(binDTM, coocTerm)</code>). <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-1.png" width="960" /><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-2.png" width="960" /></p></li>
 </ol>
-<pre><code>## ===========================================================================</code></pre>
-<pre><code>## ===========================================================================</code></pre>
-<p><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-1.png" width="960" /><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-2.png" width="960" /></p>
 </div>
 
 <p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>

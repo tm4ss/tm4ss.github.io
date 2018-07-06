@@ -3,11 +3,7 @@ calculateCoocStatistics <- function(coocTerm, binDTM, measure = "DICE") {
   
   # Ensure Matrix (SparseM} or matrix {base} format
   require(Matrix)
-  require(slam)
-  if (is.simple_triplet_matrix(binDTM)) {
-    binDTM <- sparseMatrix(i=binDTM$i, j=binDTM$j, x=binDTM$v, dims=c(binDTM$nrow, binDTM$ncol), dimnames = dimnames(binDTM))
-  }
-  
+ 
   # Ensure binary DTM
   if (any(binDTM > 1)) {
     binDTM[binDTM > 1] <- 1

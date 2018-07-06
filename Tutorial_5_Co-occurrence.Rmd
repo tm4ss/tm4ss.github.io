@@ -1,119 +1,74 @@
 ---
-title: "Tutorial 5: Co-occurrence analysis"
+title: 'Tutorial 5: Co-occurrence analysis'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    theme: united
-    toc_float: true
     number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
 highlight: tango
-bibliography: references.bib
 csl: springer.csl
+bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
 ```
-This exercise will demonstrate how to perform co-occurrence analysis with **R** and the tm-package. It is shown how different significance measures can be used to extract semantic links between words. 
+This exercise will demonstrate how to perform co-occurrence analysis with **R** and the quanteda-package. It is shown how different significance measures can be used to extract semantic links between words. 
 
-Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.
+Change to your working directory, create a new R script, load the quanteda-package and define a few already known default variables.
 
 ```{r initalisierung, results='hide', message=FALSE, warning=FALSE}
 options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 
 textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
-english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
-# Create corpus object
-corpus <- Corpus(DataframeSource(textdata))
+corpus <- corpus(textdata$text, docnames = textdata$doc_id, docvars = data.frame(year = substr(textdata$date, 0, 4)))
 ```
 
 # Sentence detection
 
 The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighboring words. One of the most frequently used context window is the sentence. 
 
-Documents are decomposed into sentences. Sentences are defined as a separate (quasi-)documents in a new corpus object of the tm-package. The further application of the tm-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.
+Documents are decomposed into sentences. Sentences are defined as a separate (quasi-)documents in a new corpus object of the quanteda-package. The further application of the quanteda-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.
 
 Important: The sentence segmentation must take place *before* the other preprocessing steps because the sentence-segmentation-model relies on intact word forms and punctuation marks.
 
-The following code defines two functions. One selects documents, the other decomposes a given document text into sentences with the help of a probabilistic model.
+The following code uses a quanteda function to **reshape** the corpus into sentences. 
 
 
 ```{r warning=F, message=F}
-require(openNLP)
-
-# Function to convert a document in a vector of sentences
-convert_text_to_sentences <- function(text, lang = "en", SentModel = "resources/en-sent.bin") {
-  
-  # Calculate sentenve boundaries as annotation with Apache OpenNLP Maxent-sentence-detector.
-  sentence_token_annotator <- Maxent_Sent_Token_Annotator(language = lang, model = SentModel)
-  
-  # Convert text to NLP string
-  text <- NLP::as.String(text)
-  
-  # Annotate the sentence boundaries
-  sentenceBoundaries <- NLP::annotate(text, sentence_token_annotator)
-  
-  # Select sentences as rows of a new matrix
-  sentences <- text[sentenceBoundaries]
-  
-  # return the sentences
-  return(sentences)
-}
-```
-```{r warning=F, message=F}
-# Function to convert a corpus of documents into a corpus of single sentences from documents
-reshape_corpus <- function(currentCorpus, ...) {
-  
-  # Extraction of all sentences from the corpus as a list
-  text <- lapply(currentCorpus, as.character)
-  
-  # convert the text
-  pb <- txtProgressBar(min=0, max=length(text))
-  i <- 0
-  docs <- lapply(text, FUN=function(x){
-    i <<- i + 1
-    setTxtProgressBar(pb, i)
-    convert_text_to_sentences(x)
-  }, ...)
-  close(pb)
-  
-  docs <- as.vector(unlist(docs))
-  
-  # Create a new corpus of the segmented sentences
-  newCorpus <- Corpus(VectorSource(docs))
-  
-  return(newCorpus)
-}
-```
-
-We apply the function `reshape_corpus` on our corpus of full speeches to receive a corpus of sentences.
-
-```{r reshapeCorpus, cache=TRUE}
 # original corpus length and its first document
-length(corpus)
-substr(as.character(corpus[[1]]), 0, 200)
-# reshape into sentences
-sentenceCorpus <- reshape_corpus(corpus)
-# reshaped corpus length and its first 'document'
-length(sentenceCorpus)
-as.character(sentenceCorpus[[1]])
-as.character(sentenceCorpus[[2]])
+ndoc(corpus)
+
+substr(texts(corpus)[1], 0, 200)
+
+corpus_sentences <- corpus_reshape(corpus, to = "sentences")
+
+ndoc(corpus_sentences)
+
+texts(corpus_sentences)[1]
+texts(corpus_sentences)[2]
+
 ```
 
-CAUTION: The newly decomposed corpus has now reached a considerable size of `r length(sentenceCorpus)` sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.
+CAUTION: The newly decomposed corpus has now reached a considerable size of `r ndoc(corpus_sentences)` sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.
 
 Now we are returning to our usual pre-processing chain and apply it on the separated sentences.
 
 ```{r preprocessCorpus, cache=TRUE}
 # Preprocessing chain
-sentenceCorpus <- tm_map(sentenceCorpus, content_transformer(tolower))
-sentenceCorpus <- tm_map(sentenceCorpus, removeWords, english_stopwords)
-sentenceCorpus <- tm_map(sentenceCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-sentenceCorpus <- tm_map(sentenceCorpus, removeNumbers)
-sentenceCorpus <- tm_map(sentenceCorpus, stripWhitespace)
+#Build a dictionary of lemmas
+lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit <- corpus_sentences %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
 ```
 
 Again, we create a document-term-matrix. Only word forms which occur at least 10 times should be taken into account. An upper limit is not set (`Inf` = infinite).
@@ -122,20 +77,25 @@ Additionally, we are interested in the joint occurrence of words in a sentence. 
  
 ```{r binDTM, cache=TRUE}
 minimumFrequency <- 10
-binDTM <- DocumentTermMatrix(sentenceCorpus, control=list(bounds = list(global=c(minimumFrequency, Inf)), weighting = weightBin))
+
+# Create DTM
+binDTM <- corpus_edit %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf) %>% 
+  dfm_weight("boolean")
+
+binDTM  <- binDTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(binDTM) <- colnames(binDTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+binDTM <- dfm_compress(binDTM, "features")
 ```
 
 # Counting co-occurrences
 
 The counting of the joint word occurrence is easily possible via a matrix multiplication (https://en.wikipedia.org/wiki/Matrix_multiplication) on the binary DTM. For this purpose, the transposed matrix (dimensions: nTypes x nDocs) is multiplied by the original matrix (nDocs x nTypes), which as a result encodes a term-term matrix (dimensions: nTypes x nTypes).
 
-However, since we are working on very large matrices and the sparse matrix format (`slam`) which is used by the tm-package does not fully support the matrix multiplication, we first have to convert the `binDTM` into the format of the Matrix package which is more convenient to use.
-
 ```{r message=FALSE}
-# Convert to sparseMatrix matrix
-require(Matrix)
-binDTM <- sparseMatrix(i = binDTM$i, j = binDTM$j, x = binDTM$v, dims = c(binDTM$nrow, binDTM$ncol), dimnames = dimnames(binDTM))
-
 # Matrix multiplication for cooccurrence counts
 coocCounts <- t(binDTM) %*% binDTM
 ```
@@ -390,24 +350,6 @@ The plot may get very messy. Try lower values for `numberOfCoocs` to create a le
 
 3. Separate the DTM into two time periods (year < 1950; year > = 1950). Represent the graphs for the term "california" for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (`get_binDTM <- function(mycorpus)`) and for visualizing a co-occurrence network (`vis_cooc_network <- function(binDTM, coocTerm)`).
 ```{r optionalEx, eval=T,cache=T,message=F,warning=F,echo=F,fig.width=10,fig.height=8}
-
-get_binDTM <- function(mycorpus) {
-  require(Matrix)
-  
-  mycorpus <- reshape_corpus(mycorpus)
-  mycorpus <- tm_map(mycorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-  mycorpus <- tm_map(mycorpus, removeNumbers)
-  mycorpus <- tm_map(mycorpus, content_transformer(tolower))
-  mycorpus <- tm_map(mycorpus, removeWords, english_stopwords)
-  mycorpus <- tm_map(mycorpus, stripWhitespace)
-  
-  
-  binDTM1 <- DocumentTermMatrix(mycorpus, control=list(bounds = list(global=c(minimumFrequency, Inf)), weighting = weightBin))
-  binDTM1 <- sparseMatrix(i = binDTM1$i, j = binDTM1$j, x = binDTM1$v, dims = c(binDTM1$nrow, binDTM1$ncol), dimnames = dimnames(binDTM1))
-  
-  return(binDTM1)
-}
-
 vis_cooc_network <- function(binDTM, coocTerm, graph_title) {
   
   require(igraph)
@@ -498,11 +440,9 @@ vis_cooc_network <- function(binDTM, coocTerm, graph_title) {
 
 numberOfCoocs <- 15
 minimumFrequency <- 10
-c1 <- Corpus(VectorSource(textdata$text[as.integer(substr(textdata$date, 0, 4)) < 1950]))
-c2 <- Corpus(VectorSource(textdata$text[as.integer(substr(textdata$date, 0, 4)) >= 1950]))
 
-binDTM1 <- get_binDTM(c1)
-binDTM2 <- get_binDTM(c2)
+binDTM1 <- binDTM[docvars(corpus_sentences)$year < "1950", ]
+binDTM2 <- binDTM[docvars(corpus_sentences)$year >= "1950", ]
 
 source("calculateCoocStatistics.R")
 vis_cooc_network(binDTM1, "california", "California (year < 1950)")

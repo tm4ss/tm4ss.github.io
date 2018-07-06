@@ -1,16 +1,18 @@
 ---
-title: "Tutorial 6: Topic Models"
+title: 'Tutorial 6: Topic Models'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    theme: united
-    toc_float: true
     number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
 highlight: tango
-bibliography: references.bib
 csl: springer.csl
+bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
@@ -22,12 +24,12 @@ This exercise demonstrates the use of topic models on a text corpus for the extr
 3. Visualize the results from the calculated model and
 4. Select documents based on their topic composition.
 
-The process starts as usual with the reading of the corpus data. Change to your working directory, create a new R script, load the tm-package and define a few already known default variables.
+The process starts as usual with the reading of the corpus data. Change to your working directory, create a new R script, load the quanteda-package and define a few already known default variables.
 
 ```{r setup, results='hide', message=FALSE, warning=FALSE}
 # setwd("Your work directory")
 options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 require(topicmodels)
 ```
 
@@ -39,19 +41,17 @@ For the SOTU speeches for instance, we infer the model based on paragraphs inste
 For text preprocessing, we remove stopwords, since they tend to occur as "noise" in the estimated topics of the LDA model.
 
 ```{r initalisierung, results='hide', message=FALSE, warning=FALSE, cache = T}
-textdata <- read.csv("data/sotu_paragraphs.csv", sep = ";", encoding = "UTF-8")
-english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
+textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
 
-# Create corpus object
-corpus <- Corpus(DataframeSource(textdata))
+corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 
-# Preprocessing chain
-processedCorpus <- tm_map(corpus, content_transformer(tolower))
-processedCorpus <- tm_map(processedCorpus, removeWords, english_stopwords)
-processedCorpus <- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus <- tm_map(processedCorpus, removeNumbers)
-processedCorpus <- tm_map(processedCorpus, stemDocument, language = "en")
-processedCorpus <- tm_map(processedCorpus, stripWhitespace)
+#Build a dictionary of lemmas
+lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
 ```
 
 # Model calculation
@@ -63,7 +63,16 @@ We now calculate a topic model on the `processedCorpus`. For this purpose, a DTM
 ``` {r DTM, cache=TRUE}
 # compute document term matrix with terms >= minimumFrequency
 minimumFrequency <- 5
-DTM <- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+# Create DTM
+DTM <- corpus_edit %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")
 
 # have a look at the number of documents and terms in the matrix
 dim(DTM)
@@ -71,7 +80,7 @@ dim(DTM)
 # due to vocabulary pruning, we have empty rows in our DTM
 # LDA does not like this. So we remove those docs from the
 # DTM and the metadata
-sel_idx <- slam::row_sums(DTM) > 0
+sel_idx <- rowSums(DTM) > 0
 DTM <- DTM[sel_idx, ]
 textdata <- textdata[sel_idx, ]
 ``` 
@@ -95,7 +104,7 @@ topicModel <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, verbose = 25)
 
 Depending on the size of the vocabulary, the collection size and the number K, the inference of topic models can take a very long time. This calculation may take several minutes. If it takes too long, reduce the vocabulary in the DTM by increasing the minimum frequency in the previous step.
 
-The topic model inference results in two (approximate) posterior probability distributions: a distribution `theta` over K topics within each document and a distribution `beta` over V terms within each topic, where V represents the length of the vocabulary of the collection (V = `r nTerms(DTM)`). Let's take a closer look at these results:
+The topic model inference results in two (approximate) posterior probability distributions: a distribution `theta` over K topics within each document and a distribution `beta` over V terms within each topic, where V represents the length of the vocabulary of the collection (V = `r ncol(DTM)`). Let's take a closer look at these results:
 
 
 ```{r}
@@ -104,13 +113,13 @@ tmResult <- posterior(topicModel)
 # format of the resulting object
 attributes(tmResult)
 
-nTerms(DTM)              # lengthOfVocab
+ncol(DTM)              # lengthOfVocab
 # topics are probability distribtions over the entire vocabulary
 beta <- tmResult$terms   # get beta from results
-dim(beta)                # K distributions over nTerms(DTM) terms
+dim(beta)                # K distributions over ncol(DTM) terms
 rowSums(beta)            # rows in beta sum to 1
 
-nDocs(DTM)               # size of collection
+nrow(DTM)               # size of collection
 # for every document we have a probaility distribution of its contained topics
 theta <- tmResult$topics 
 dim(theta)               # nDocs(DTM) distributions over K topics
@@ -167,9 +176,9 @@ lapply(corpus[exampleIds], as.character)
 
 ``` {r echo=FALSE}
 exampleIds <- c(2, 100, 200)
-print(paste0(exampleIds[1], ": ", substr(content(corpus[[exampleIds[1]]]), 0, 400), '...'))
-print(paste0(exampleIds[2], ": ", substr(content(corpus[[exampleIds[2]]]), 0, 400), '...'))
-print(paste0(exampleIds[3], ": ", substr(content(corpus[[exampleIds[3]]]), 0, 400), '...'))
+print(paste0(exampleIds[1], ": ", substr(texts(corpus)[exampleIds[1]], 0, 400), '...'))
+print(paste0(exampleIds[2], ": ", substr(texts(corpus)[exampleIds[2]], 0, 400), '...'))
+print(paste0(exampleIds[3], ": ", substr(texts(corpus)[exampleIds[3]], 0, 400), '...'))
 ```
 
 After looking into the documents, we visualize the topic distributions within the documents.
@@ -244,7 +253,7 @@ What are the defining topics within a collection? There are different approaches
 
 ``` {r, results='hide'}
 # What are the most probable topics in the entire collection?
-topicProportions <- colSums(theta) / nDocs(DTM)  # mean probablities over all paragraphs
+topicProportions <- colSums(theta) / nrow(DTM)  # mean probablities over all paragraphs
 names(topicProportions) <- topicNames     # assign the topic names we created before
 sort(topicProportions, decreasing = TRUE) # show summed proportions in decreased order
 ```
@@ -260,7 +269,7 @@ We recognize some topics that are way more likely to occur in the corpus than ot
 ``` {r rank1, results='hide'}
 countsOfPrimaryTopics <- rep(0, K)
 names(countsOfPrimaryTopics) <- topicNames
-for (i in 1:nDocs(DTM)) {
+for (i in 1:nrow(DTM)) {
   topicsPerDoc <- theta[i, ] # select topic distribution for document i
   # get first element position from ordered list
   primaryTopic <- order(topicsPerDoc, decreasing = TRUE)[1] 
@@ -286,16 +295,16 @@ In the following, we will select documents based on their topic content and disp
 ``` {r}
 topicToFilter <- 6  # you can set this manually ...
 # ... or have it selected by a term in the topic name (e.g. 'children')
-topicToFilter <- grep('children', topicNames)[1] 
+topicToFilter <- grep('child', topicNames)[2] 
 topicThreshold <- 0.2
-selectedDocumentIndexes <- which(theta[, topicToFilter] >= topicThreshold)
-filteredCorpus <- corpus[selectedDocumentIndexes]
+selectedDocumentIndexes <- (theta[, topicToFilter] >= topicThreshold)
+filteredCorpus <- corpus %>% corpus_subset(subset = selectedDocumentIndexes)
 
 # show length of filtered corpus
 filteredCorpus
 ``` 
 
-Our filtered corpus contains `r length(filteredCorpus)` documents related to the topic `r topicToFilter` to at least 20 %.
+Our filtered corpus contains `r ndoc(filteredCorpus)` documents related to the topic `r topicToFilter` to at least 20 %.
 
 # Topic proportions over time
 

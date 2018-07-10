@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-06-15" />
+<meta name="date" content="2018-07-10" />
 
 <title>Tutorial 7: Classification</title>
 
@@ -355,7 +355,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 7: Classification</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-06-15</em></h4>
+<h4 class="date"><em>2018-07-10</em></h4>
 
 </div>
 
@@ -380,19 +380,17 @@ div.tocify {
 <h1><span class="header-section-number">1</span> Read paragraphs</h1>
 <p>As already known, we read the text source (21334 paragraphs from 231 speeches). For the moment, we apply very basic preprocessing.</p>
 <pre class="r"><code>options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 
 textdata &lt;- read.csv(&quot;data/sotu_paragraphs.csv&quot;, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)
-english_stopwords &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
 
-# Create corpus object
-corpus &lt;- Corpus(DataframeSource(textdata))
+corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
 
-# Preprocessing chain
-processedCorpus &lt;- tm_map(corpus, content_transformer(tolower))
-processedCorpus &lt;- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
-processedCorpus &lt;- tm_map(processedCorpus, stripWhitespace)</code></pre>
+#Build a dictionary of lemmas
+lemmaData &lt;- read.csv2(&quot;resources/baseform_en.tsv&quot;, sep=&quot;\t&quot;, header=FALSE, encoding = &quot;UTF-8&quot;, stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;%tokens_ngrams(1)</code></pre>
 </div>
 <div id="load-training-data" class="section level1">
 <h1><span class="header-section-number">2</span> Load training data</h1>
@@ -405,10 +403,10 @@ colnames(trainingData)</code></pre>
 <pre class="r"><code># Example paragraph Foreign Affairs
 set.seed(13)
 domestic_example &lt;- sample(trainingData$ID[trainingData$LABEL == &quot;DOMESTIC&quot;], 1)
-as.character(corpus[[domestic_example]])</code></pre>
+as.character(texts(corpus)[domestic_example])</code></pre>
 <pre><code>## [1] &quot;For present purposes, however, the last number given should be considerably\nreduced. Without attempting to enumerate all, it will be conceded that\nthere should be deducted from those which it includes 375,143 carpenters\nand joiners, 285,401 milliners, dressmakers, and seamstresses, 172,726\nblacksmiths, 133,756 tailors and tailoresses, 102,473 masons, 76,241\nbutchers, 41,309 bakers, 22,083 plasterers, and 4,891 engaged in\nmanufacturing agricultural implements, amounting in the aggregate to\n1,214,023, leaving 2,623,089 persons employed in such manufacturing\nindustries as are claimed to be benefited by a high tariff.&quot;</code></pre>
 <pre class="r"><code>foreign_example &lt;- sample(trainingData$ID[trainingData$LABEL == &quot;FOREIGN&quot;], 1)
-as.character(corpus[[foreign_example]])</code></pre>
+as.character(texts(corpus)[foreign_example])</code></pre>
 <pre><code>## [1] &quot;Our Army and Navy are being maintained at a high state of efficiency, under\nofficers of high training and intelligence, supported by a devoted\npersonnel of the rank and file. The London naval treaty has brought\nimportant economies in the conduct of the Navy. The Navy Department will\nlay before the committees of the Congress recommendations for a program of\nauthorization of new construction which should be initiated in the fiscal\nyear of 1932.&quot;</code></pre>
 <p>How is the ratio between domestic and foreign content in the training data?</p>
 <pre class="r"><code>classCounts &lt;- table(trainingData[, &quot;LABEL&quot;])
@@ -419,15 +417,22 @@ print(classCounts)</code></pre>
 <pre class="r"><code>numberOfDocuments &lt;- nrow(trainingData)</code></pre>
 <p>For our first classification attempt, we create a Document-Term Matrix from the preprocessed corpus and use the extracted single words (unigrams) as features for the classification. Since the resulting DTM might contain too many words, we restrict the vocabulary to a minimum frequency.</p>
 <pre class="r"><code># Base line: create feature set out of unigrams
-DTM &lt;- DocumentTermMatrix(processedCorpus)
+# Probably the DTM is too big for the classifier. Let us reduce it
+minimumFrequency &lt;- 5
+
+DTM &lt;- corpus_edit %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)
+
 # How many features do we have?
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 26271</code></pre>
-<pre class="r"><code># Probably the DTM is too big for the classifier. Let us reduce it
-minimumFrequency &lt;- 5
-DTM &lt;- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
-dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10701</code></pre>
+<pre><code>## [1] 21334 10863</code></pre>
 </div>
 <div id="classification" class="section level1">
 <h1><span class="header-section-number">3</span> Classification</h1>
@@ -439,7 +444,7 @@ require(SparseM)
 source(&quot;utils.R&quot;)
 
 annotatedDTM &lt;- DTM[trainingData[, &quot;ID&quot;], ]
-annotatedDTM &lt;- convertSlamToSparseM(annotatedDTM)
+annotatedDTM &lt;- convertMatrixToSparseM(annotatedDTM)
 annotatedLabels &lt;- trainingData[, &quot;LABEL&quot;]
 
 # split into training and test set
@@ -455,7 +460,7 @@ summary(model)</code></pre>
 <pre><code>##            Length Class  Mode     
 ## TypeDetail     1  -none- character
 ## Type           1  -none- numeric  
-## W          10702  -none- numeric  
+## W          10864  -none- numeric  
 ## Bias           1  -none- numeric  
 ## ClassNames     2  factor numeric  
 ## NbClass        1  -none- numeric</code></pre>
@@ -466,12 +471,12 @@ contingencyTable &lt;- table(predictedLabels, testLabels)
 print(contingencyTable) # Kontingenztabelle ausgeben</code></pre>
 <pre><code>##                testLabels
 ## predictedLabels DOMESTIC FOREIGN
-##        DOMESTIC       28       5
-##        FOREIGN        17      10</code></pre>
+##        DOMESTIC       24       5
+##        FOREIGN        21      10</code></pre>
 <pre class="r"><code>accuracy &lt;- sum(diag(contingencyTable)) / length(testLabels)
 print(accuracy) # Accuracy = Anteil korrekt klassifizierter Elemente</code></pre>
-<pre><code>## [1] 0.6333333</code></pre>
-<p>The accuracy of 0.6333333 appears moderate for a first try. But how does it actually relate to a base line? Think of the imbalanced class proportions in our training set. Let us create a pseudo classification as base line, in which we do not classify at all, but simply assume the label “DOMESTIC” or “FOREIGN” for each paragraph.</p>
+<pre><code>## [1] 0.5666667</code></pre>
+<p>The accuracy of 0.5666667 appears moderate for a first try. But how does it actually relate to a base line? Think of the imbalanced class proportions in our training set. Let us create a pseudo classification as base line, in which we do not classify at all, but simply assume the label “DOMESTIC” or “FOREIGN” for each paragraph.</p>
 <p>We further employ a function called <code>F.measure</code> which gives more differentiated measures than simple accuracy (<code>A</code>)to determine the classification quality. The F.measure (<code>F</code>) is the harmonic mean of Precision (<code>P</code>) and Recall (<code>R</code>) (see <a href="https://en.wikipedia.org/wiki/Precision_and_recall#Definition_.28classification_context.29" class="uri">https://en.wikipedia.org/wiki/Precision_and_recall#Definition_.28classification_context.29</a> for Details).</p>
 <pre class="r"><code># Create pseudo classification
 pseudoLabelsDOM &lt;- factor(rep(&quot;DOMESTIC&quot;, length(testLabels)), levels(testLabels))
@@ -480,10 +485,10 @@ pseudoLabelsFOR &lt;- factor(rep(&quot;FOREIGN&quot;, length(testLabels)), level
 # Evaluation of former LR classification with F-measures
 F.measure(predictedLabels, testLabels, positiveClassName = &quot;DOMESTIC&quot;)</code></pre>
 <pre><code>##          P          R          S          F          A       Pos. 
-##  0.8484848  0.6222222  0.6666667  0.7179487  0.6333333 45.0000000</code></pre>
+##  0.8275862  0.5333333  0.6666667  0.6486486  0.5666667 45.0000000</code></pre>
 <pre class="r"><code>F.measure(predictedLabels, testLabels, positiveClassName = &quot;FOREIGN&quot;)</code></pre>
 <pre><code>##          P          R          S          F          A       Pos. 
-##  0.3703704  0.6666667  0.6222222  0.4761905  0.6333333 15.0000000</code></pre>
+##  0.3225806  0.6666667  0.5333333  0.4347826  0.5666667 15.0000000</code></pre>
 <pre class="r"><code># Evaluation of pseudo classification with F-measures
 F.measure(pseudoLabelsDOM, testLabels, positiveClassName = &quot;DOMESTIC&quot;)</code></pre>
 <pre><code>##          P          R          S          F          A       Pos. 
@@ -551,20 +556,20 @@ for (j in 1:k) {
 # Final evaluation values of k runs:
 print(evalMeasures)</code></pre>
 <pre><code>##                       P         R         S         F         A Pos.
-## kthEvaluation 0.5000000 0.6000000 0.7000000 0.5454545 0.6666667   10
-## kthEvaluation 0.7000000 0.8750000 0.5714286 0.7777778 0.7333333   16
-## kthEvaluation 0.3636364 0.5714286 0.6956522 0.4444444 0.6666667    7
-## kthEvaluation 0.5000000 0.8888889 0.6190476 0.6400000 0.7000000    9
-## kthEvaluation 0.4545455 0.7142857 0.7391304 0.5555556 0.7333333    7
-## kthEvaluation 0.3888889 1.0000000 0.5217391 0.5600000 0.6333333    7
+## kthEvaluation 0.3846154 0.5000000 0.6000000 0.4347826 0.5666667   10
+## kthEvaluation 0.7368421 0.8750000 0.6428571 0.8000000 0.7666667   16
+## kthEvaluation 0.3333333 0.5714286 0.6521739 0.4210526 0.6333333    7
+## kthEvaluation 0.4666667 0.7777778 0.6190476 0.5833333 0.6666667    9
+## kthEvaluation 0.3076923 0.5714286 0.6086957 0.4000000 0.6000000    7
+## kthEvaluation 0.2666667 0.5714286 0.5217391 0.3636364 0.5333333    7
 ## kthEvaluation 0.4705882 0.7272727 0.5263158 0.5714286 0.6000000   11
-## kthEvaluation 0.4166667 0.8333333 0.7083333 0.5555556 0.7333333    6
-## kthEvaluation 0.5000000 1.0000000 0.5000000 0.6666667 0.6666667   10
+## kthEvaluation 0.5000000 0.8333333 0.7916667 0.6250000 0.8000000    6
+## kthEvaluation 0.5555556 1.0000000 0.6000000 0.7142857 0.7333333   10
 ## kthEvaluation 0.3846154 0.6250000 0.6363636 0.4761905 0.6333333    8</code></pre>
 <pre class="r"><code># Average over all folds
 print(colMeans(evalMeasures))</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.4678941 0.7835209 0.6218011 0.5793074 0.6766667 9.1000000</code></pre>
+## 0.4406576 0.7052670 0.6198860 0.5389710 0.6533333 9.1000000</code></pre>
 <p>Accuracy is around 1%, F-measure is around 1%. Let’s try some approaches to optimize the automatic classification.</p>
 </div>
 <div id="optimization" class="section level1">
@@ -598,27 +603,43 @@ axis(1,at=1:length(cParameterValues), labels = cParameterValues)</code></pre>
 <p><img src="Tutorial_7_Klassifikation_files/figure-html/optimizeC-1.png" width="672" /></p>
 <pre class="r"><code>bestC &lt;- cParameterValues[which.max(fValues)]
 print(paste0(&quot;Best C value: &quot;, bestC, &quot;, F1 = &quot;, max(fValues)))</code></pre>
-<pre><code>## [1] &quot;Best C value: 1, F1 = 0.579307359307359&quot;</code></pre>
-<p>From the empirical test, we can obtain C = 1 as optimal choice for the cost parameter. On the current training data set with the current features it achieves 0.5793074 F-score.</p>
+<pre><code>## [1] &quot;Best C value: 3, F1 = 0.550181053657161&quot;</code></pre>
+<p>From the empirical test, we can obtain C = 3 as optimal choice for the cost parameter. On the current training data set with the current features it achieves 0.5501811 F-score.</p>
 </div>
 <div id="optimized-preprocessing" class="section level2">
 <h2><span class="header-section-number">5.2</span> Optimized Preprocessing</h2>
 <p>Not only the classification model has parameters which can be optimized to improve the results. More important are the features used for classification. In our preprocessing chain above, we extracted single types and transformed them into lower case. We now add different preprocessing steps and check on the results. To get an optimal cost parameter for each new feature set, we wrapped the code for C-parameter optimization into the <code>optimize_C</code> function.</p>
 <p><strong>Stop word removal</strong></p>
 <p>Stop words often do not contribute to the meaning of a text. For the decision between DOMESTIC and FOREIGN affairs, we do not expect any useful information from them. So let’s remove them and if it improves the classifier.</p>
-<pre class="r"><code>processedCorpus &lt;- tm_map(corpus, content_transformer(tolower))
-processedCorpus &lt;- tm_map(processedCorpus, removeWords, english_stopwords)
-processedCorpus &lt;- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus &lt;- tm_map(processedCorpus, removeNumbers)
-processedCorpus &lt;- tm_map(processedCorpus, stripWhitespace)
+<pre class="r"><code>corpus_edit_sw &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+  tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())
 
-as.character(processedCorpus[[4963]])</code></pre>
-<pre><code>## [1] &quot; legislation extend colony newfoundland articles treaty washington th day protocol effect signed behalf united states great britain th day duly proclaimed day copy proclamation submitted herewith&quot;</code></pre>
+
+as.character(corpus_edit_sw[4963])</code></pre>
+<pre><code>##  [1] &quot;legislation&quot;  &quot;necessary&quot;    &quot;extend&quot;       &quot;colony&quot;      
+##  [5] &quot;newfoundland&quot; &quot;certain&quot;      &quot;articles&quot;     &quot;treaty&quot;      
+##  [9] &quot;washington&quot;   &quot;8th&quot;          &quot;day&quot;          &quot;may&quot;         
+## [13] &quot;protocol&quot;     &quot;effect&quot;       &quot;signed&quot;       &quot;behalf&quot;      
+## [17] &quot;united&quot;       &quot;states&quot;       &quot;great&quot;        &quot;britain&quot;     
+## [21] &quot;28th&quot;         &quot;day&quot;          &quot;may&quot;          &quot;last&quot;        
+## [25] &quot;duly&quot;         &quot;proclaimed&quot;   &quot;following&quot;    &quot;day&quot;         
+## [29] &quot;copy&quot;         &quot;proclamation&quot; &quot;submitted&quot;    &quot;herewith&quot;</code></pre>
 <pre class="r"><code>minimumFrequency &lt;- 5
-DTM &lt;- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+
+DTM &lt;- corpus_edit %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)
+
+# How many features do we have?
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10234</code></pre>
-<pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
+<pre><code>## [1] 21334 10863</code></pre>
+<pre class="r"><code>annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
 ## [1] &quot;C = 0.01&quot;
@@ -630,26 +651,83 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.03, F1 = 0.643298703748619&quot;</code></pre>
+## [1] &quot;Best C value: 3, F1 = 0.550181053657161&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.5987488 0.7111562 0.8038822 0.6432987 0.7800000 9.1000000</code></pre>
+## 0.4465929 0.7306638 0.6200671 0.5501811 0.6600000 9.1000000</code></pre>
 <p>Now let us see, if the use of bigrams, i.e. concatenations of sequences of two words can improve the result. Bigrams help to overcome a little bit the bag-of-words assumption of Document-Term-Matrices. With them, we can learn multi-word units such as <em>great britain</em>, <em>international affairs</em> or <em>united nations</em> as meaningful features for our task. The package <code>tokenizers</code> provides a simple and fast implementation to generate n-grams.</p>
 <p><strong>Bigrams</strong></p>
-<pre class="r"><code>require(tokenizers)
-tokenize_ngrams(&quot;This is a test&quot;, n = 2, n_min = 1, ngram_delim = &quot;_&quot;, simplify = T)</code></pre>
-<pre><code>## [1] &quot;this&quot;    &quot;this_is&quot; &quot;is&quot;      &quot;is_a&quot;    &quot;a&quot;       &quot;a_test&quot;  &quot;test&quot;</code></pre>
-<pre class="r"><code>bigram_corpus &lt;- tm_map(processedCorpus, content_transformer(tokenize_ngrams), n = 2, n_min = 1, ngram_delim = &quot;_&quot;, simplify = T)
-minimumFrequency &lt;- 5
-DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
-dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10234</code></pre>
-<pre class="r"><code>sample(colnames(DTM), 10)</code></pre>
-<pre><code>##  [1] &quot;laden&quot;             &quot;supersede&quot;         &quot;laughter&quot;         
-##  [4] &quot;conciliate&quot;        &quot;waves&quot;             &quot;proven&quot;           
-##  [7] &quot;beliefs&quot;           &quot;expressed&quot;         &quot;praiseworthy&quot;     
-## [10] &quot;instrumentalities&quot;</code></pre>
-<pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
+<pre class="r"><code>corpus_edit_bigrams &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+ tokens_ngrams(1:2) %&gt;% tokens_remove(pattern = stopwords())
+
+
+as.character(corpus_edit_bigrams[4963])</code></pre>
+<pre><code>##  [1] &quot;legislation&quot;           &quot;necessary&quot;            
+##  [3] &quot;extend&quot;                &quot;colony&quot;               
+##  [5] &quot;newfoundland&quot;          &quot;certain&quot;              
+##  [7] &quot;articles&quot;              &quot;treaty&quot;               
+##  [9] &quot;washington&quot;            &quot;8th&quot;                  
+## [11] &quot;day&quot;                   &quot;may&quot;                  
+## [13] &quot;protocol&quot;              &quot;effect&quot;               
+## [15] &quot;signed&quot;                &quot;behalf&quot;               
+## [17] &quot;united&quot;                &quot;states&quot;               
+## [19] &quot;great&quot;                 &quot;britain&quot;              
+## [21] &quot;28th&quot;                  &quot;day&quot;                  
+## [23] &quot;may&quot;                   &quot;last&quot;                 
+## [25] &quot;duly&quot;                  &quot;proclaimed&quot;           
+## [27] &quot;following&quot;             &quot;day&quot;                  
+## [29] &quot;copy&quot;                  &quot;proclamation&quot;         
+## [31] &quot;submitted&quot;             &quot;herewith&quot;             
+## [33] &quot;the_legislation&quot;       &quot;legislation_necessary&quot;
+## [35] &quot;necessary_to&quot;          &quot;to_extend&quot;            
+## [37] &quot;extend_to&quot;             &quot;to_the&quot;               
+## [39] &quot;the_colony&quot;            &quot;colony_of&quot;            
+## [41] &quot;of_newfoundland&quot;       &quot;newfoundland_certain&quot; 
+## [43] &quot;certain_articles&quot;      &quot;articles_of&quot;          
+## [45] &quot;of_the&quot;                &quot;the_treaty&quot;           
+## [47] &quot;treaty_of&quot;             &quot;of_washington&quot;        
+## [49] &quot;washington_of&quot;         &quot;of_the&quot;               
+## [51] &quot;the_8th&quot;               &quot;8th_day&quot;              
+## [53] &quot;day_of&quot;                &quot;of_may&quot;               
+## [55] &quot;may_having&quot;            &quot;having_been&quot;          
+## [57] &quot;been_had&quot;              &quot;had_a&quot;                
+## [59] &quot;a_protocol&quot;            &quot;protocol_to&quot;          
+## [61] &quot;to_that&quot;               &quot;that_effect&quot;          
+## [63] &quot;effect_was&quot;            &quot;was_signed&quot;           
+## [65] &quot;signed_in&quot;             &quot;in_behalf&quot;            
+## [67] &quot;behalf_of&quot;             &quot;of_the&quot;               
+## [69] &quot;the_united&quot;            &quot;united_states&quot;        
+## [71] &quot;states_and&quot;            &quot;and_of&quot;               
+## [73] &quot;of_great&quot;              &quot;great_britain&quot;        
+## [75] &quot;britain_on&quot;            &quot;on_the&quot;               
+## [77] &quot;the_28th&quot;              &quot;28th_day&quot;             
+## [79] &quot;day_of&quot;                &quot;of_may&quot;               
+## [81] &quot;may_last&quot;              &quot;last_and&quot;             
+## [83] &quot;and_was&quot;               &quot;was_duly&quot;             
+## [85] &quot;duly_proclaimed&quot;       &quot;proclaimed_on&quot;        
+## [87] &quot;on_the&quot;                &quot;the_following&quot;        
+## [89] &quot;following_day&quot;         &quot;day_a&quot;                
+## [91] &quot;a_copy&quot;                &quot;copy_of&quot;              
+## [93] &quot;of_the&quot;                &quot;the_proclamation&quot;     
+## [95] &quot;proclamation_is&quot;       &quot;is_submitted&quot;         
+## [97] &quot;submitted_herewith&quot;</code></pre>
+<pre class="r"><code>minimumFrequency &lt;- 5
+
+DTM &lt;- corpus_edit_bigrams  %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)  
+
+sample(colnames(DTM), 10)</code></pre>
+<pre><code>##  [1] &quot;are_important&quot; &quot;remains&quot;       &quot;course_a&quot;      &quot;adopted&quot;      
+##  [5] &quot;he_does&quot;       &quot;indonesia&quot;     &quot;move_from&quot;     &quot;retreat&quot;      
+##  [9] &quot;they_see&quot;      &quot;that_pledge&quot;</code></pre>
+<pre class="r"><code>annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
 ## [1] &quot;C = 0.01&quot;
@@ -661,18 +739,33 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.03, F1 = 0.657342988594839&quot;</code></pre>
+## [1] &quot;Best C value: 0.3, F1 = 0.604424036002983&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.6322403 0.7086562 0.8244239 0.6573430 0.7933333 9.1000000</code></pre>
+## 0.5292969 0.7177471 0.7365546 0.6044240 0.7400000 9.1000000</code></pre>
 <p><strong>Minimum feature frequency</strong></p>
 <p>Up to this point, we dropped features occurring less than five times in our data. Let’s see if we include more features by decreasing the minimum frequency.</p>
 <pre class="r"><code># More features
 minimumFrequency &lt;- 2
-DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
-dim(DTM)</code></pre>
-<pre><code>## [1] 21334 15916</code></pre>
-<pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
+
+DTM &lt;- corpus_edit_bigrams  %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)  
+
+sample(colnames(DTM), 10)</code></pre>
+<pre><code>##  [1] &quot;america_built&quot;     &quot;advance_toward&quot;    &quot;which_divides&quot;    
+##  [4] &quot;we_confine&quot;        &quot;that_almighty&quot;     &quot;correspondence_as&quot;
+##  [7] &quot;mom_and&quot;           &quot;violent_outbreaks&quot; &quot;for_irrigation&quot;   
+## [10] &quot;directed_in&quot;</code></pre>
+<pre class="r"><code>dim(DTM)</code></pre>
+<pre><code>## [1]  21334 156661</code></pre>
+<pre class="r"><code>annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
 ## [1] &quot;C = 0.01&quot;
@@ -684,19 +777,83 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.03, F1 = 0.666647017898869&quot;</code></pre>
+## [1] &quot;Best C value: 0.3, F1 = 0.611762762091709&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.6502056 0.7086562 0.8335336 0.6666470 0.8000000 9.1000000</code></pre>
-<p><strong>Stemming</strong></p>
+## 0.5419551 0.7177471 0.7539606 0.6117628 0.7500000 9.1000000</code></pre>
+<p><strong>Lemmatization</strong></p>
 <p>As a last method, we utilize stemming (before bigram-concatenation) to unify different variants of the same semantic form (such as <em>nation</em> and <em>nations</em>).</p>
 <pre class="r"><code># Stemming
-stemmed_corpus &lt;- tm_map(processedCorpus, stemDocument, language = &quot;english&quot;)
-stemmed_bigram_corpus &lt;- tm_map(stemmed_corpus, content_transformer(tokenize_ngrams), n = 2, n_min = 1, ngram_delim = &quot;_&quot;, simplify = T)
-minimumFrequency &lt;- 2
-DTM &lt;- DocumentTermMatrix(stemmed_bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+corpus_edit_bigrams_lemma &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
+  tokens_ngrams(1:2) %&gt;% tokens_remove(pattern = stopwords())
+
+
+as.character(corpus_edit_bigrams[4963])</code></pre>
+<pre><code>##  [1] &quot;legislation&quot;           &quot;necessary&quot;            
+##  [3] &quot;extend&quot;                &quot;colony&quot;               
+##  [5] &quot;newfoundland&quot;          &quot;certain&quot;              
+##  [7] &quot;articles&quot;              &quot;treaty&quot;               
+##  [9] &quot;washington&quot;            &quot;8th&quot;                  
+## [11] &quot;day&quot;                   &quot;may&quot;                  
+## [13] &quot;protocol&quot;              &quot;effect&quot;               
+## [15] &quot;signed&quot;                &quot;behalf&quot;               
+## [17] &quot;united&quot;                &quot;states&quot;               
+## [19] &quot;great&quot;                 &quot;britain&quot;              
+## [21] &quot;28th&quot;                  &quot;day&quot;                  
+## [23] &quot;may&quot;                   &quot;last&quot;                 
+## [25] &quot;duly&quot;                  &quot;proclaimed&quot;           
+## [27] &quot;following&quot;             &quot;day&quot;                  
+## [29] &quot;copy&quot;                  &quot;proclamation&quot;         
+## [31] &quot;submitted&quot;             &quot;herewith&quot;             
+## [33] &quot;the_legislation&quot;       &quot;legislation_necessary&quot;
+## [35] &quot;necessary_to&quot;          &quot;to_extend&quot;            
+## [37] &quot;extend_to&quot;             &quot;to_the&quot;               
+## [39] &quot;the_colony&quot;            &quot;colony_of&quot;            
+## [41] &quot;of_newfoundland&quot;       &quot;newfoundland_certain&quot; 
+## [43] &quot;certain_articles&quot;      &quot;articles_of&quot;          
+## [45] &quot;of_the&quot;                &quot;the_treaty&quot;           
+## [47] &quot;treaty_of&quot;             &quot;of_washington&quot;        
+## [49] &quot;washington_of&quot;         &quot;of_the&quot;               
+## [51] &quot;the_8th&quot;               &quot;8th_day&quot;              
+## [53] &quot;day_of&quot;                &quot;of_may&quot;               
+## [55] &quot;may_having&quot;            &quot;having_been&quot;          
+## [57] &quot;been_had&quot;              &quot;had_a&quot;                
+## [59] &quot;a_protocol&quot;            &quot;protocol_to&quot;          
+## [61] &quot;to_that&quot;               &quot;that_effect&quot;          
+## [63] &quot;effect_was&quot;            &quot;was_signed&quot;           
+## [65] &quot;signed_in&quot;             &quot;in_behalf&quot;            
+## [67] &quot;behalf_of&quot;             &quot;of_the&quot;               
+## [69] &quot;the_united&quot;            &quot;united_states&quot;        
+## [71] &quot;states_and&quot;            &quot;and_of&quot;               
+## [73] &quot;of_great&quot;              &quot;great_britain&quot;        
+## [75] &quot;britain_on&quot;            &quot;on_the&quot;               
+## [77] &quot;the_28th&quot;              &quot;28th_day&quot;             
+## [79] &quot;day_of&quot;                &quot;of_may&quot;               
+## [81] &quot;may_last&quot;              &quot;last_and&quot;             
+## [83] &quot;and_was&quot;               &quot;was_duly&quot;             
+## [85] &quot;duly_proclaimed&quot;       &quot;proclaimed_on&quot;        
+## [87] &quot;on_the&quot;                &quot;the_following&quot;        
+## [89] &quot;following_day&quot;         &quot;day_a&quot;                
+## [91] &quot;a_copy&quot;                &quot;copy_of&quot;              
+## [93] &quot;of_the&quot;                &quot;the_proclamation&quot;     
+## [95] &quot;proclamation_is&quot;       &quot;is_submitted&quot;         
+## [97] &quot;submitted_herewith&quot;</code></pre>
+<pre class="r"><code>minimumFrequency &lt;- 2
+
+DTM &lt;- corpus_edit_bigrams_lemma  %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)  
+
+
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334  8959</code></pre>
+<pre><code>## [1]  21334 139084</code></pre>
 <pre class="r"><code>annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
@@ -709,10 +866,10 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 3, F1 = 0.637124712893845&quot;</code></pre>
+## [1] &quot;Best C value: 10, F1 = 0.651029653634018&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
 <pre><code>##         P         R         S         F         A      Pos. 
-## 0.5610526 0.7570328 0.7393549 0.6371247 0.7533333 9.1000000</code></pre>
+## 0.5526111 0.8154455 0.7089088 0.6510297 0.7433333 9.1000000</code></pre>
 <p>Each individual approach to optimize our text features for classification has some effect on the results. Best results could be obtained from a combination of bigram features with minimum frequency 2 and stop word removal. Stemming did not have a positive effect on the performance.</p>
 <p>But, testing different features must be done for each new task / language individually, since there is no “one-size fits all” approach to this.</p>
 <p>GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead of spending too much time on feature optimization, it will probably be a better idea to invest into generation of more training data first.</p>
@@ -722,8 +879,19 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <h1><span class="header-section-number">6</span> Final classification</h1>
 <p>We now apply our best classification model to the entire data set, to determine the occurrence of FORGEIN/DOMESTIC affairs related content in each single speech.</p>
 <pre class="r"><code># Final classification
-DTM &lt;- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(2, Inf))))
-annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
+minimumFrequency &lt;- 2
+
+DTM &lt;- corpus_edit_bigrams  %&gt;% dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  &lt;- DTM  %&gt;%
+  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
+
+colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
+
+DTM &lt;- dfm_compress(DTM, &quot;features&quot;)  
+
+annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
 ## [1] &quot;C = 0.01&quot;
@@ -735,13 +903,13 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 10&quot;
 ## [1] &quot;C = 30&quot;
 ## [1] &quot;C = 100&quot;
-## [1] &quot;Best C value: 0.03, F1 = 0.666647017898869&quot;</code></pre>
+## [1] &quot;Best C value: 0.3, F1 = 0.611762762091709&quot;</code></pre>
 <pre class="r"><code>final_model &lt;- LiblineaR(annotatedDTM, annotatedLabels, cost = best_C)
 final_labels &lt;- predict(final_model, convertSlamToSparseM(DTM))$predictions
 table(final_labels) / sum(table(final_labels))</code></pre>
 <pre><code>## final_labels
 ##  DOMESTIC   FOREIGN 
-## 0.6381363 0.3618637</code></pre>
+## 0.5614512 0.4385488</code></pre>
 <p>We see that the classifier puts the majority of the around 21,000 paragraphs into the DOMESTIC category. We can visualize the result as a bar chart with <code>ggplot2</code>. For better readability</p>
 <pre class="r"><code>speech_year &lt;- substr(textdata$date, 0, 4)
 speech_id &lt;- textdata$speech_doc_id

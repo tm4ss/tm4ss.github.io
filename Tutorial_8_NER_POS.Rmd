@@ -23,7 +23,7 @@ We extract proper nouns (tag NNP for singular and tag NNPS for plural proper nou
 
 ```{r initalisierung, results='hide', message=FALSE, warning=FALSE}
 options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 library(NLP)
 
 # read suto paragraphs
@@ -31,7 +31,7 @@ textdata <- read.csv("data/sotu_paragraphs.csv", sep = ";", encoding = "UTF-8")
 english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
 # Create corpus object
-corpus <- Corpus(DataframeSource(textdata))
+corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 
 require(openNLP)
 require(openNLPdata)
@@ -62,11 +62,11 @@ annotateDocuments <- function(doc, pos_filter = NULL) {
 }
 
 # run annotation on a sample of the corpus
-annotated_corpus <- lapply(corpus[1:10], annotateDocuments)
+annotated_corpus <- lapply(texts(corpus)[1:10], annotateDocuments)
 
 # Have a look into the first annotated documents
-annotated_corpus[[1]]
-annotated_corpus[[2]]
+annotated_corpus[1]
+annotated_corpus[2]
 ```
 
 # Filter NEs for further applications
@@ -74,15 +74,17 @@ annotated_corpus[[2]]
 We annotate the first paragraphs of the corpus, extract proper nouns, also referred to as Named Entities (NEs) such as person names, locations etc., and compute significance of co-occurrence of them.
 
 ```{r cooc, message=FALSE, warning=FALSE, cache=T}
-sample_corpus <- sapply(corpus[1:1000], annotateDocuments, pos_filter = c("NNP", "NNPS"))
+sample_corpus <- sapply(texts(corpus)[1:1000], annotateDocuments, pos_filter = c("NNP", "NNPS"))
 
 # Binary term matrix
 require(Matrix)
 minimumFrequency <- 2
-filtered_corpus <- Corpus(VectorSource(sample_corpus))
-binDTM <- DocumentTermMatrix(filtered_corpus, control=list(bounds = list(global=c(minimumFrequency, Inf)), weighting = weightBin))
-# colnames(binDTM)
-binDTM <- sparseMatrix(i = binDTM$i, j = binDTM$j, x = binDTM$v, dims = c(binDTM$nrow, binDTM$ncol), dimnames = dimnames(binDTM))
+filtered_corpus <- corpus(sample_corpus)
+
+binDTM <- filtered_corpus %>% tokens(what = "fasterword") %>% tokens_tolower() %>%
+  tokens_ngrams(1) %>% dfm() %>% dfm_weight(scheme = "boolean")
+
+
 
 # Matrix multiplication for cooccurrence counts
 coocCounts <- t(binDTM) %*% binDTM

@@ -1,16 +1,18 @@
 ---
-title: "Tutorial 7: Classification"
+title: 'Tutorial 7: Classification'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    theme: united
-    toc_float: true
     number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
 highlight: tango
-bibliography: references.bib
 csl: springer.csl
+bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
@@ -36,19 +38,17 @@ As already known, we read the text source (21334 paragraphs from 231 speeches). 
 
 ```{r initalisierung, message=FALSE, warning=FALSE, results='hide', cache=T}
 options(stringsAsFactors = FALSE)
-library(tm)
+library(quanteda)
 
 textdata <- read.csv("data/sotu_paragraphs.csv", sep = ";", encoding = "UTF-8")
-english_stopwords <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
-# Create corpus object
-corpus <- Corpus(DataframeSource(textdata))
+corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 
-# Preprocessing chain
-processedCorpus <- tm_map(corpus, content_transformer(tolower))
-processedCorpus <- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus <- tm_map(processedCorpus, removeNumbers)
-processedCorpus <- tm_map(processedCorpus, stripWhitespace)
+#Build a dictionary of lemmas
+lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+
+# Create a DTM (may take a while)
+corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>%tokens_ngrams(1)
 ```
 
 # Load training data
@@ -64,9 +64,9 @@ colnames(trainingData)
 # Example paragraph Foreign Affairs
 set.seed(13)
 domestic_example <- sample(trainingData$ID[trainingData$LABEL == "DOMESTIC"], 1)
-as.character(corpus[[domestic_example]])
+as.character(texts(corpus)[domestic_example])
 foreign_example <- sample(trainingData$ID[trainingData$LABEL == "FOREIGN"], 1)
-as.character(corpus[[foreign_example]])
+as.character(texts(corpus)[foreign_example])
 ```
 
 How is the ratio between domestic and foreign content in the training data?
@@ -82,13 +82,20 @@ For our first classification attempt, we create a Document-Term Matrix from the 
 
 ```{r calcDTM, cache=TRUE}
 # Base line: create feature set out of unigrams
-DTM <- DocumentTermMatrix(processedCorpus)
-# How many features do we have?
-dim(DTM)
-
 # Probably the DTM is too big for the classifier. Let us reduce it
 minimumFrequency <- 5
-DTM <- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+
+DTM <- corpus_edit %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")
+
+# How many features do we have?
 dim(DTM)
 ```
 
@@ -106,7 +113,7 @@ require(SparseM)
 source("utils.R")
 
 annotatedDTM <- DTM[trainingData[, "ID"], ]
-annotatedDTM <- convertSlamToSparseM(annotatedDTM)
+annotatedDTM <- convertMatrixToSparseM(annotatedDTM)
 annotatedLabels <- trainingData[, "LABEL"]
 
 # split into training and test set
@@ -262,18 +269,28 @@ Not only the classification model has parameters which can be optimized to impro
 Stop words often do not contribute to the meaning of a text. For the decision between DOMESTIC and FOREIGN affairs, we do not expect any useful information from them. So let's remove them and if it improves the classifier.
 
 ```{r, optimizePreprocessing1, cache = T, message=FALSE, warning=FALSE}
-processedCorpus <- tm_map(corpus, content_transformer(tolower))
-processedCorpus <- tm_map(processedCorpus, removeWords, english_stopwords)
-processedCorpus <- tm_map(processedCorpus, removePunctuation, preserve_intra_word_dashes = TRUE)
-processedCorpus <- tm_map(processedCorpus, removeNumbers)
-processedCorpus <- tm_map(processedCorpus, stripWhitespace)
+corpus_edit_sw <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
 
-as.character(processedCorpus[[4963]])
+
+as.character(corpus_edit_sw[4963])
+
 minimumFrequency <- 5
-DTM <- DocumentTermMatrix(processedCorpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+
+DTM <- corpus_edit %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")
+
+# How many features do we have?
 dim(DTM)
 
-annotatedDTM <- convertSlamToSparseM(DTM[trainingData[, "ID"], ])
+annotatedDTM <- convertMatrixToSparseM(DTM[trainingData[, "ID"], ])
 best_C <- optimize_C(annotatedDTM, annotatedLabels)
 k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)
 ```
@@ -283,15 +300,27 @@ Now let us see, if the use of bigrams, i.e. concatenations of sequences of two w
 **Bigrams**
 
 ```{r, optimizePreprocessing2, cache = T, message=FALSE, warning=FALSE}
-require(tokenizers)
-tokenize_ngrams("This is a test", n = 2, n_min = 1, ngram_delim = "_", simplify = T)
-bigram_corpus <- tm_map(processedCorpus, content_transformer(tokenize_ngrams), n = 2, n_min = 1, ngram_delim = "_", simplify = T)
+corpus_edit_bigrams <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+ tokens_ngrams(1:2) %>% tokens_remove(pattern = stopwords())
+
+
+as.character(corpus_edit_bigrams[4963])
+
 minimumFrequency <- 5
-DTM <- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
-dim(DTM)
+
+DTM <- corpus_edit_bigrams  %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")  
+
 sample(colnames(DTM), 10)
 
-annotatedDTM <- convertSlamToSparseM(DTM[trainingData[, "ID"], ])
+annotatedDTM <- convertMatrixToSparseM(DTM[trainingData[, "ID"], ])
 best_C <- optimize_C(annotatedDTM, annotatedLabels)
 k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)
 ```
@@ -303,23 +332,51 @@ Up to this point, we dropped features occurring less than five times in our data
 ```{r, optimizePreprocessing3, cache = T, message=FALSE, warning=FALSE}
 # More features
 minimumFrequency <- 2
-DTM <- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+
+DTM <- corpus_edit_bigrams  %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")  
+
+sample(colnames(DTM), 10)
 dim(DTM)
-annotatedDTM <- convertSlamToSparseM(DTM[trainingData[, "ID"], ])
+
+annotatedDTM <- convertMatrixToSparseM(DTM[trainingData[, "ID"], ])
 best_C <- optimize_C(annotatedDTM, annotatedLabels)
 k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)
 ```
 
-**Stemming**
+**Lemmatization**
 
 As a last method, we utilize stemming (before bigram-concatenation) to unify different variants of the same semantic form (such as *nation* and *nations*).
 
 ```{r, optimizePreprocessing4, cache = T, message=FALSE, warning=FALSE}
 # Stemming
-stemmed_corpus <- tm_map(processedCorpus, stemDocument, language = "english")
-stemmed_bigram_corpus <- tm_map(stemmed_corpus, content_transformer(tokenize_ngrams), n = 2, n_min = 1, ngram_delim = "_", simplify = T)
+corpus_edit_bigrams_lemma <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_ngrams(1:2) %>% tokens_remove(pattern = stopwords())
+
+
+as.character(corpus_edit_bigrams[4963])
+
 minimumFrequency <- 2
-DTM <- DocumentTermMatrix(stemmed_bigram_corpus, control = list(bounds = list(global = c(minimumFrequency, Inf))))
+
+DTM <- corpus_edit_bigrams_lemma  %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")  
+
+
 dim(DTM)
 annotatedDTM <- convertSlamToSparseM(DTM[trainingData[, "ID"], ])
 best_C <- optimize_C(annotatedDTM, annotatedLabels)
@@ -338,8 +395,19 @@ We now apply our best classification model to the entire data set, to determine 
 
 ```{r finalClassification, cache = T, message=FALSE, warning=FALSE, fig.height=12, fig.width=10}
 # Final classification
-DTM <- DocumentTermMatrix(bigram_corpus, control = list(bounds = list(global = c(2, Inf))))
-annotatedDTM <- convertSlamToSparseM(DTM[trainingData[, "ID"], ])
+minimumFrequency <- 2
+
+DTM <- corpus_edit_bigrams  %>% dfm() %>% 
+  dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
+
+DTM  <- DTM  %>%
+  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+
+colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+
+DTM <- dfm_compress(DTM, "features")  
+
+annotatedDTM <- convertMatrixToSparseM(DTM[trainingData[, "ID"], ])
 best_C <- optimize_C(annotatedDTM, annotatedLabels)
 final_model <- LiblineaR(annotatedDTM, annotatedLabels, cost = best_C)
 final_labels <- predict(final_model, convertSlamToSparseM(DTM))$predictions

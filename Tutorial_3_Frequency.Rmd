@@ -64,7 +64,7 @@ corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, rem
 Effects of this preprocessing can be printed in the console. 
 
 ```{r results='hide'}
-as.character(corpus_edit[1])
+print(paste0("1: ", substr(paste(corpus_edit[1],collapse = " "), 0, 400), '...'))
 ```
 
 We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).

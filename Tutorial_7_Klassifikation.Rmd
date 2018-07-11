@@ -273,7 +273,7 @@ corpus_edit_sw <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, 
   tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
 
 
-as.character(corpus_edit_sw[4963])
+print(paste0("1: ", substr(paste(corpus_edit_sw[4963],collapse = " "), 0, 400), '...'))
 
 minimumFrequency <- 5
 
@@ -304,7 +304,7 @@ corpus_edit_bigrams <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = T
  tokens_ngrams(1:2) %>% tokens_remove(pattern = stopwords())
 
 
-as.character(corpus_edit_bigrams[4963])
+print(paste0("1: ", substr(paste(corpus_edit_bigrams[4963],collapse = " "), 0, 400), '...'))
 
 minimumFrequency <- 5
 
@@ -362,7 +362,7 @@ corpus_edit_bigrams_lemma <- corpus %>% tokens(remove_punct = TRUE, remove_numbe
   tokens_ngrams(1:2) %>% tokens_remove(pattern = stopwords())
 
 
-as.character(corpus_edit_bigrams[4963])
+print(paste0("1: ", substr(paste(corpus_edit_bigrams_lemma[4963],collapse = " "), 0, 400), '...'))
 
 minimumFrequency <- 2
 
@@ -397,7 +397,7 @@ We now apply our best classification model to the entire data set, to determine 
 # Final classification
 minimumFrequency <- 2
 
-DTM <- corpus_edit_bigrams  %>% dfm() %>% 
+DTM <- corpus_edit_bigrams_lemma  %>% dfm() %>% 
   dfm_trim(min_docfreq = minimumFrequency,max_docfreq = Inf)
 
 DTM  <- DTM  %>%

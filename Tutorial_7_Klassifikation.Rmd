@@ -103,7 +103,7 @@ dim(DTM)
 
 Now we build a linear classification model with the LiblineaR package. The package LiblineaR wraps around the open source library LIBLINEAR which provides a very fast implementations for two text classification algorithms: 1. Logistic Regression, and 2. Support Vector Machines (SVM) with a linear kernel. For both algorithms, different regularization methods exist (e.g. L1, and L2-regularization). The combination of algorithms and regularization can be controlled by the `type` parameter of the `LiblineaR` function. We stick to the default type, L2-regularized logistic regression (LR), since it usually achieves good performance in text classification.
 
-First, we load the packages. Since Liblinear requires a special Sparse Matrix format, we also load the "SparseM" package and a conversion function which allows to convert `slam`-matrices (as used in the `tm` package) into `SparseM`-matrices. 
+First, we load the packages. Since Liblinear requires a special Sparse Matrix format, we also load the "SparseM" package and a conversion function which allows to convert `quanteda's dfm`-matrices into `SparseM`-matrices. 
 
 Then, we split the annotated data into a training set (80%) and a test set (20%) using a boolean selector. The expression assigned to `selector_idx` creates a boolean vector of length `r numberOfDocuments` containing a FALSE value in every fifths position. This selector is used to select to training set. Its inverted vector (!) is used to select the test set.
 
@@ -358,7 +358,7 @@ As a last method, we utilize stemming (before bigram-concatenation) to unify dif
 ```{r, optimizePreprocessing4, cache = T, message=FALSE, warning=FALSE}
 # Stemming
 corpus_edit_bigrams_lemma <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
-  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
+  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% 
   tokens_ngrams(1:2) %>% tokens_remove(pattern = stopwords())
 
 

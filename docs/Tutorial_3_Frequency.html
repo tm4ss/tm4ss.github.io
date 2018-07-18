@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-07-04" />
+<meta name="date" content="2018-07-18" />
 
 <title>Tutorial 3: Frequency analysis</title>
 
@@ -355,7 +355,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 3: Frequency analysis</h1>
 <h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-07-04</em></h4>
+<h4 class="date"><em>2018-07-18</em></h4>
 
 </div>
 
@@ -392,9 +392,9 @@ corpus_edit &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRU
   tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
   tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())</code></pre>
 <p>Effects of this preprocessing can be printed in the console.</p>
-<pre class="r"><code>as.character(corpus_edit[1])</code></pre>
+<pre class="r"><code>print(paste0(&quot;1: &quot;, substr(paste(corpus_edit[1],collapse = &quot; &quot;), 0, 400), &#39;...&#39;))</code></pre>
 <p>We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).</p>
-<p>From the preprocessed corpus, we create a new DTM.</p>
+<p>From the preprocessed corpus, we create a new DTM. With some functions like <code>dfm_select</code> and <code>dfm_compress</code> we further shape the word features contained in the data object. <code>dfm_select</code> reduces the DTM-Object to words, which contain one alphabetic letter at least. <code>stri_replace_all_regex</code> deletes any character different to letters or the “_“. Finally, <code>dfm_compress</code> collapses features which are equal after tose transformations.</p>
 <pre class="r"><code>DTM &lt;- corpus_edit %&gt;% dfm() 
 
 DTM  &lt;- DTM  %&gt;%
@@ -431,7 +431,7 @@ legend(&#39;topleft&#39;, legend = terms_to_observe, col=1:l, text.col = 1:l, lt
 <div id="grouping-of-sentiments" class="section level1">
 <h1><span class="header-section-number">3</span> Grouping of sentiments</h1>
 <p>Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple <strong>Sentiment analysis</strong> approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.</p>
-<p>We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by <strong>???</strong>. Have a look in the text files to see, what they consist of.</p>
+<p>We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by <span class="citation">[1]</span>. Have a look in the text files to see, what they consist of.</p>
 <pre class="r"><code>positive_terms_all &lt;- readLines(&quot;data/positive-words.txt&quot;)
 negative_terms_all &lt;- readLines(&quot;data/negative-words.txt&quot;)</code></pre>
 <p>To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple <code>row_sums</code> command.</p>
@@ -495,8 +495,13 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 <li>Draw a heatmap of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way!</li>
 </ol>
 </div>
-<div id="references" class="section level1">
-<h1><span class="header-section-number">6</span> References</h1>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-Hu.2004">
+<p>1. Hu, M., Liu, B.: Mining and summarizing customer reviews. In: Proceedings of the tenth acm sigkdd international conference on knowledge discovery and data mining. pp. 168–177. ACM, New York, NY, USA (2004).</p>
+</div>
+</div>
 </div>
 
 <p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>

@@ -123,7 +123,7 @@ Among other things, we can observe peaks in reference to `war` around the US civ
 
 Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple **Sentiment analysis** approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.
 
-We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by @Hu.2014. Have a look in the text files to see, what they consist of.
+We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by @Hu.2004. Have a look in the text files to see, what they consist of.
 
 ```{r buildTS1, warning=F}
 positive_terms_all <- readLines("data/positive-words.txt")

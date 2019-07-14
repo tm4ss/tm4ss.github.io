@@ -1,5 +1,5 @@
 ---
-title: "Tutorial 1: Data import and web scraping"
+title: "Tutorial 2: Data import and web scraping"
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: 
@@ -242,36 +242,3 @@ write.csv2(all_articles, file = "data/guardian_merkel.csv")
 ```
 
 The last command write the extracted articles to a CSV-file in the data directory for any later use.
-
-# Read various file formats
-
-In case you have already a collection of text data files on your disk, you can import them into R in a very convenient provided by the `readtext` package. The package depends on some other programs or libraries in your system, to provide extraction for Word- and PDF-documents. So there may be some hurdles to install the package.
-
-But once it is successfully installed, it allows for very easy extraction of text data from various file formats. Fist, we request a list of files in the directory to extract text from. For demonstration purpose, we provide in `data/documents` a random selection of various text formats.
-
-```{r}
-data_files <- list.files(path = "data/documents", full.names = T, recursive = T)
-
-# View first file paths
-head(data_files, 3)
-```
-
-The `readtext` function from the package with the same name, detects automatically file formats of the given files list and extracts the content into a data.frame. The parameter `docvarsfrom` allows you to set metadata variables by splitting path names. In our example, `docvar3` contains a source type variable derived from the sub folder name. 
-
-```{r eval=F, message=F}
-require(readtext)
-
-extracted_texts <- readtext(data_files, docvarsfrom = "filepaths", dvsep = "/")
-
-# View first rows of the extracted texts
-head(extracted_texts)
-
-# View beginning of tenth extracted text
-substr(trimws(extracted_texts$text[10]) , 0, 100)
-```
-
-Again, the `extracted_texts` can be written by `write.csv2` to disk for later use.
-
-```{r, eval=F}
-write.csv2(extracted_texts, file = "data/text_extracts.csv")
-```

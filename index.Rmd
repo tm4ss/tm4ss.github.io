@@ -1,7 +1,7 @@
 ---
 title: "Text mining for humanists and social scientists in R"
 author: "Andreas Niekler, Gregor Wiedemann"
-date: "12. September 2017"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: 
   html_document:
     toc: true
@@ -45,8 +45,8 @@ The course consists of 8 tutorials written in R-markdown and further described i
 
 You can use *knitr* to create the tutorial sheets as HTML notebooks from the [R-markdown source code](https://github.com/tm4ss/tm4ss.github.io).
 
-1. Data import and web scraping
-2. Text as data
+1. Text data import in R
+2. Web crawling and scraping
 3. Frequency analysis
 4. Key term extraction
 5. Co-occurrence analysis

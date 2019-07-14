@@ -47,18 +47,25 @@ textdata$year <- substr(textdata$date, 0, 4)
 textdata$decade <- paste0(substr(textdata$date, 0, 3), "0")
 ```
 
-Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text.  `remove_punct` leaves only alphanumeric characters in the text. `remove_numbers` removes numeric characters and `remove_symbols` removes all characters in the Unicode "Symbol" [S] class. Lowercase transformation is performed and a set of English stop-words is removed. Note, the lowercase operation is applied twice because of some non-correct mappings in the lemmatization list. In the reference some mappings are are starting with an uppercase letter.
+Then, we create a corpus object again. 
+
+This time, we also apply **lemmatization** to the corpus. Lemmatization reduces (potentially) inflected word forms to its lexical baseform to unify similar semantic forms to the same text representation. For instance, 'presidents' becomes 'president' and 'singing' becomes 'sing'.
+
+Moreover, we apply different preprocessing steps to the corpus text.  `remove_punct` leaves only alphanumeric characters in the text. `remove_numbers` removes numeric characters and `remove_symbols` removes all characters in the Unicode "Symbol" [S] class. Lowercase transformation is performed (need to be applied before lemma replacement!), and finally a set of English stop-words is removed. 
 
 ```{r preprocesscorpus, cache=TRUE}
 corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 
-#Build a dictionary of lemmas
-lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+# Build a dictionary of lemmas
+lemma_data <- read.csv("resources/baseform_en.tsv", encoding = "UTF-8")
 
-# Create a DTM (may take a while)
-corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
-  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
-  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
+# Create a DTM
+corpus_edit <- corpus %>% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% 
+  tokens_tolower() %>% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = "fixed") %>% 
+  tokens_remove(pattern = stopwords())
+
 ```
 
 Effects of this preprocessing can be printed in the console. 
@@ -69,17 +76,11 @@ print(paste0("1: ", substr(paste(corpus_edit[1],collapse = " "), 0, 400), '...')
 
 We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).
 
-From the preprocessed corpus, we create a new DTM. With some functions like `dfm_select` and `dfm_compress` we further shape the word features contained in the data object. `dfm_select` reduces the DTM-Object to words, which contain one alphabetic letter at least. `stri_replace_all_regex` deletes any character different to letters or the "_". Finally, `dfm_compress` collapses features which are equal after tose transformations.
+From the preprocessed corpus, we create a new DTM. 
 
 ```{r generateDTM}
-DTM <- corpus_edit %>% dfm() 
-
-DTM  <- DTM  %>%
-  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
-
-colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
-
-DTM <- dfm_compress(DTM, "features")
+DTM <- corpus_edit %>% 
+  dfm() 
 ```
 
 The resulting DTM should have `r nrow(DTM)` rows and `r ncol(DTM)` columns.
@@ -125,9 +126,17 @@ Frequencies cannot only be aggregated over time for time series analysis, but to
 
 We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by @Hu.2004. Have a look in the text files to see, what they consist of.
 
+As an alternative, we also could use the AFINN sentiment lexicon from @Nielsen.2011.
+
 ```{r buildTS1, warning=F}
+# English Opinion Word Lexicon by Hu et al. 2004
 positive_terms_all <- readLines("data/positive-words.txt")
 negative_terms_all <- readLines("data/negative-words.txt")
+
+# AFINN sentiment lexicon by Nielsen 2011
+afinn_terms <- read.csv("data/AFINN-111.txt", header = F, sep = "\t")
+positive_terms_all <- afinn_terms$V1[afinn_terms$V2 > 0]
+negative_terms_all <- afinn_terms$V1[afinn_terms$V2 < 0]
 ```
 
 To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple `row_sums` command.
@@ -200,6 +209,7 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 
 1. Run the time series analysis with the terms "environment", "climate", "planet", "space".
 2. Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.
-3. Draw a heatmap of the terms "i", "you", "he", "she", "we", "they" aggregated per president. Caution: you need to modify the preprocessing in a certain way!
+3. The AFINN sentiment lexicon provides not only negative/positive terms, but also a valence value for each term ranging from [-5;+5]. Instead of counting sentiment terms only, use the valence values for sentiment scoring.
+4. Draw a `heatmap` of the terms "i", "you", "he", "she", "we", "they" aggregated per president. Caution: you need to modify the preprocessing in a certain way!
 
 # References

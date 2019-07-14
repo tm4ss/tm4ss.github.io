@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2018-07-18" />
+<meta name="date" content="2019-07-12" />
 
 <title>Tutorial 3: Frequency analysis</title>
 
@@ -79,9 +79,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type = "text/css">
 .main-container {
@@ -100,8 +98,14 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
+.html-widget {
+  margin-bottom: 20px;
+}
 button.code-folding-btn:focus {
   outline: none;
+}
+summary {
+  display: list-item;
 }
 </style>
 
@@ -117,7 +121,6 @@ body {
   padding-top: 56px;
   margin-top: -56px;
 }
-
 .section h2 {
   padding-top: 56px;
   margin-top: -56px;
@@ -137,6 +140,43 @@ body {
 .section h6 {
   padding-top: 56px;
   margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
 }
 </style>
 
@@ -158,18 +198,75 @@ $(document).ready(function () {
 });
 </script>
 
-
-<div class="container-fluid main-container">
-
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -247,8 +344,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -257,6 +352,16 @@ div.tocify {
 
 
 </style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row-fluid">
@@ -286,14 +391,14 @@ div.tocify {
   <a href="index.html">Intro</a>
 </li>
 <li>
-  <a href="Tutorial_1_Data_acquisition.html">
+  <a href="Tutorial_1_Read_textdata.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 1
   </a>
 </li>
 <li>
-  <a href="Tutorial_2_Read_data_Zipf.html">
+  <a href="Tutorial_2_Web_crawling.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 2
@@ -354,8 +459,8 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Tutorial 3: Frequency analysis</h1>
-<h4 class="author"><em>Andreas Niekler, Gregor Wiedemann</em></h4>
-<h4 class="date"><em>2018-07-18</em></h4>
+<h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
+<h4 class="date">2019-07-12</h4>
 
 </div>
 
@@ -381,29 +486,27 @@ library(dplyr)</code></pre>
 # we add some more metadata columns to the data frame
 textdata$year &lt;- substr(textdata$date, 0, 4)
 textdata$decade &lt;- paste0(substr(textdata$date, 0, 3), &quot;0&quot;)</code></pre>
-<p>Then, we create a corpus object again. Moreover, we apply different preprocessing steps to the corpus text. <code>remove_punct</code> leaves only alphanumeric characters in the text. <code>remove_numbers</code> removes numeric characters and <code>remove_symbols</code> removes all characters in the Unicode “Symbol” [S] class. Lowercase transformation is performed and a set of English stop-words is removed. Note, the lowercase operation is applied twice because of some non-correct mappings in the lemmatization list. In the reference some mappings are are starting with an uppercase letter.</p>
+<p>Then, we create a corpus object again.</p>
+<p>This time, we also apply <strong>lemmatization</strong> to the corpus. Lemmatization reduces (potentially) inflected word forms to its lexical baseform to unify similar semantic forms to the same text representation. For instance, ‘presidents’ becomes ‘president’ and ‘singing’ becomes ‘sing’.</p>
+<p>Moreover, we apply different preprocessing steps to the corpus text. <code>remove_punct</code> leaves only alphanumeric characters in the text. <code>remove_numbers</code> removes numeric characters and <code>remove_symbols</code> removes all characters in the Unicode “Symbol” [S] class. Lowercase transformation is performed (need to be applied before lemma replacement!), and finally a set of English stop-words is removed.</p>
 <pre class="r"><code>corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
 
-#Build a dictionary of lemmas
-lemmaData &lt;- read.csv2(&quot;resources/baseform_en.tsv&quot;, sep=&quot;\t&quot;, header=FALSE, encoding = &quot;UTF-8&quot;, stringsAsFactors = F)
+# Build a dictionary of lemmas
+lemma_data &lt;- read.csv(&quot;resources/baseform_en.tsv&quot;, encoding = &quot;UTF-8&quot;)
 
-# Create a DTM (may take a while)
-corpus_edit &lt;- corpus %&gt;% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% tokens_tolower() %&gt;% 
-  tokens_replace(., lemmaData$V1, lemmaData$V2) %&gt;% tokens_tolower() %&gt;%
-  tokens_ngrams(1) %&gt;% tokens_remove(pattern = stopwords())</code></pre>
+# Create a DTM
+corpus_edit &lt;- corpus %&gt;% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% 
+  tokens_tolower() %&gt;% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = &quot;fixed&quot;) %&gt;% 
+  tokens_remove(pattern = stopwords())</code></pre>
 <p>Effects of this preprocessing can be printed in the console.</p>
 <pre class="r"><code>print(paste0(&quot;1: &quot;, substr(paste(corpus_edit[1],collapse = &quot; &quot;), 0, 400), &#39;...&#39;))</code></pre>
 <p>We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).</p>
-<p>From the preprocessed corpus, we create a new DTM. With some functions like <code>dfm_select</code> and <code>dfm_compress</code> we further shape the word features contained in the data object. <code>dfm_select</code> reduces the DTM-Object to words, which contain one alphabetic letter at least. <code>stri_replace_all_regex</code> deletes any character different to letters or the “_“. Finally, <code>dfm_compress</code> collapses features which are equal after tose transformations.</p>
-<pre class="r"><code>DTM &lt;- corpus_edit %&gt;% dfm() 
-
-DTM  &lt;- DTM  %&gt;%
-  dfm_select(pattern = &quot;[a-z]&quot;, valuetype = &quot;regex&quot;, selection = &#39;keep&#39;)
-
-colnames(DTM) &lt;- colnames(DTM) %&gt;% stringi::stri_replace_all_regex(&quot;[^_a-z]&quot;, &quot;&quot;)
-
-DTM &lt;- dfm_compress(DTM, &quot;features&quot;)</code></pre>
-<p>The resulting DTM should have 231 rows and 17688 columns.</p>
+<p>From the preprocessed corpus, we create a new DTM.</p>
+<pre class="r"><code>DTM &lt;- corpus_edit %&gt;% 
+  dfm() </code></pre>
+<p>The resulting DTM should have 231 rows and 25601 columns.</p>
 </div>
 <div id="time-series" class="section level1">
 <h1><span class="header-section-number">2</span> Time series</h1>
@@ -432,8 +535,15 @@ legend(&#39;topleft&#39;, legend = terms_to_observe, col=1:l, text.col = 1:l, lt
 <h1><span class="header-section-number">3</span> Grouping of sentiments</h1>
 <p>Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple <strong>Sentiment analysis</strong> approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.</p>
 <p>We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by <span class="citation">[1]</span>. Have a look in the text files to see, what they consist of.</p>
-<pre class="r"><code>positive_terms_all &lt;- readLines(&quot;data/positive-words.txt&quot;)
-negative_terms_all &lt;- readLines(&quot;data/negative-words.txt&quot;)</code></pre>
+<p>As an alternative, we also could use the AFINN sentiment lexicon from <span class="citation">[2]</span>.</p>
+<pre class="r"><code># English Opinion Word Lexicon by Hu et al. 2004
+positive_terms_all &lt;- readLines(&quot;data/positive-words.txt&quot;)
+negative_terms_all &lt;- readLines(&quot;data/negative-words.txt&quot;)
+
+# AFINN sentiment lexicon by Nielsen 2011
+afinn_terms &lt;- read.csv(&quot;data/AFINN-111.txt&quot;, header = F, sep = &quot;\t&quot;)
+positive_terms_all &lt;- afinn_terms$V1[afinn_terms$V2 &gt; 0]
+negative_terms_all &lt;- afinn_terms$V1[afinn_terms$V2 &lt; 0]</code></pre>
 <p>To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple <code>row_sums</code> command.</p>
 <pre class="r"><code>positive_terms_in_suto &lt;- intersect(colnames(DTM), positive_terms_all)
 counts_positive &lt;- rowSums(DTM[, positive_terms_in_suto])
@@ -452,12 +562,12 @@ relative_sentiment_frequencies &lt;- data.frame(
 
 head(sentiments_per_president)</code></pre>
 <pre><code>##           president positive negative
-## 1   Abraham Lincoln   0.0827   0.0530
-## 2    Andrew Jackson   0.0956   0.0603
-## 3    Andrew Johnson   0.0870   0.0576
-## 4      Barack Obama   0.0890   0.0497
-## 5 Benjamin Harrison   0.0842   0.0471
-## 6   Calvin Coolidge   0.0964   0.0456</code></pre>
+## 1   Abraham Lincoln   0.0755   0.0361
+## 2    Andrew Jackson   0.0825   0.0362
+## 3    Andrew Johnson   0.0817   0.0394
+## 4      Barack Obama   0.0889   0.0465
+## 5 Benjamin Harrison   0.0811   0.0302
+## 6   Calvin Coolidge   0.0866   0.0338</code></pre>
 <p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a></p>
 <pre class="r"><code>require(reshape2)
 df &lt;- melt(sentiments_per_president, id.vars = &quot;president&quot;)
@@ -492,7 +602,8 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 <ol style="list-style-type: decimal">
 <li>Run the time series analysis with the terms “environment”, “climate”, “planet”, “space”.</li>
 <li>Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.</li>
-<li>Draw a heatmap of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way!</li>
+<li>The AFINN sentiment lexicon provides not only negative/positive terms, but also a valence value for each term ranging from [-5;+5]. Instead of counting sentiment terms only, use the valence values for sentiment scoring.</li>
+<li>Draw a <code>heatmap</code> of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way!</li>
 </ol>
 </div>
 <div id="references" class="section level1 unnumbered">
@@ -501,10 +612,13 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 <div id="ref-Hu.2004">
 <p>1. Hu, M., Liu, B.: Mining and summarizing customer reviews. In: Proceedings of the tenth acm sigkdd international conference on knowledge discovery and data mining. pp. 168–177. ACM, New York, NY, USA (2004).</p>
 </div>
+<div id="ref-Nielsen.2011">
+<p>2. Nielsen, F. Å.: AFINN, <a href="http://darenr.github.io/afinn" class="uri">http://darenr.github.io/afinn</a>, (2011).</p>
+</div>
 </div>
 </div>
 
-<p>2017, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
 
 
 </div>

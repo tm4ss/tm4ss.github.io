@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial 2: Processing of textual data'
+title: 'Tutorial 1: Processing of textual data'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output:
@@ -19,14 +19,50 @@ klippy::klippy()
 ```
 In this tutorial, we demonstrate how to read text data in R, tokenize texts and create a document-term matrix.
 
-1. Reading CSV data into a corpus,
-2. Create a document-term matrix,
-3. Investigate Zipf's law on distribution of words.
+1. Reading various file formats with the `readtext` package,
+2. From text to a corpus,
+3. Create a document-term matrix and investigate Zipf's law
 
-# Reading text data
+# Reading txt, pdf, html, docx, ...
 
+In case you have already a collection of document files on your disk, you can import them into R in a very convenient way provided by the `readtext` package. The package depends on some other programs or libraries in your system, e.g. to provide extraction of text from Word- and PDF-documents. 
 
-Set global options at the beginning.
+Hence, some persons encountered hurdles to install the package due to missing libraries. In this case, carefully read error messages and install the missing libraries.
+
+For demonstration purpose, we provide in `data/documents` a random selection of documents in various file formats. First, we request a list of files in the directory to extract text from. 
+
+```{r}
+data_files <- list.files(path = "data/documents", full.names = T, recursive = T)
+
+# View first file paths
+head(data_files, 3)
+```
+
+The `readtext` function from the package with the same name, detects automatically file formats of the given files list and extracts the content into a `data.frame`. The parameter `docvarsfrom` allows you to set metadata variables by splitting path names. In our example, `docvar3` contains a source type variable derived from the sub folder name. 
+
+```{r eval=F, message=F}
+require(readtext)
+
+extracted_texts <- readtext(data_files, docvarsfrom = "filepaths", dvsep = "/")
+
+# View first rows of the extracted texts
+head(extracted_texts)
+
+# View beginning of the second extracted text
+cat(substr(extracted_texts$text[2] , 0, 300))
+```
+
+Again, the `extracted_texts` can be written by `write.csv2` to disk for later use.
+
+```{r, eval=F}
+write.csv2(extracted_texts, file = "data/text_extracts.csv", fileEncoding = "UTF-8")
+```
+
+We choose CSV as a convenient text column based format for easy import and export in R and other programs. Also our example data for the rest of the tutorials is provided as CSV file. Windows users: Take care of setting UTF-8 file encoding explicitly when writing text data to the hard drive.
+
+# From text to a corpus object
+
+Set global options at the beginning of each script! When working with textual data strings, it is recommended to turn R's automatic conversion of strings into factors off.
 
 ```{r}
 # Global options
@@ -35,14 +71,16 @@ options(stringsAsFactors = FALSE)
 
 The `read.csv` command reads a **CSV** (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a *separator* character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = `TRUE` or `FALSE`) and the character set.
 
-We read a CSV containing 231 "State of the Union" addresses of the presidents of the United States. The texts are freely available from http://stateoftheunion.onetwothree.net. Our CSV file has the format: `"id";"speech_type";"president";"date";"text"`. Text is encapsualted into quotes (`"`). Since sepration is marked by `;` instead of `,`, we need to specify the separator char. 
+We read a CSV containing 231 "State of the Union" addresses of the presidents of the United States. The texts are freely available from http://stateoftheunion.onetwothree.net. 
+
+Our CSV file has the format: `"doc_id";"speech_type";"president";"date";"text"`. Text is encapsualted into quotes (`"`). Since sepration is marked by `;` instead of `,`, we need to specify the separator char. 
 
 ```{r results='hide', message=FALSE, warning=FALSE}
 # read csv into a data.frame
 textdata <- read.csv("data/sotu.csv", header = TRUE, sep = ";", encoding = "UTF-8")
 ```
 
-The texts are now available in a data frame together with some metadata (ID, speech type, president). Let us first see how many documents and metadata we have read.
+The texts are now available in a `data.frame` together with some metadata (document id, speech type, president). Let us first see how many documents and metadata we have read.
 
 ```{r message=FALSE, warning=FALSE}
 # dimensions of the data frame
@@ -60,7 +98,9 @@ table(textdata[, "president"])
 head(table(textdata[, "president"]), 12)
 ```
 
-Now we want to transfer the loaded text source into a corpus object of the `quanteda`-package. First we load the package.
+Now we want to transfer the loaded text source into a **corpus object** of the `quanteda`-package. 
+Quanteda provides a large number of highly efficient convenience functions to process text in R @Welbers.2017.
+First we load the package.
 
 ```{r results='hide', message=FALSE, warning=FALSE}
 require(quanteda)
@@ -74,26 +114,29 @@ corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 summary(corpus)
 ```
 
-A corpus is an extension of R list objects. With the `[[]]` brackets, we can access single list elements, here documents, within a corpus.
+A corpus is an extension of R list objects. With the `[[]]` brackets, we can access single list elements, here documents, within a corpus. We print the text of the first element of the corpus using the `texts` command. 
 
 ```{r eval=F, echo=T}
 # getting a single text documents content
-as.character(texts(corpus)[1])
+cat(texts(corpus[1]))
 ```
 ```{r eval=T, echo=F}
-paste0(substring(as.character(texts(corpus)[1]), 0, 120), "...")
+cat(paste0(substring(texts(corpus)[1], 0, 155), "..."))
 ```
+
+The command `cat` prints a given character vector with correct line breaks (compare the difference of the output with the `print` method instead).
 
 Success!!! We now have `r ndoc(corpus)` speeches for further analysis available in a convenient tm corpus object!
 
 # Text statistics
 
+A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be __tokenized__. This means that all the words in the texts need to be identified and separated. Only in this way it is possible to count the frequency of individual word forms. A word form is also called **"type"**. The occurrence of a type in a text is a **"token"**.
 
-A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be __tokenized__. This means that all the words in the texts need to be identified and separated. Only in this way is it possible to count the frequency of individual word forms. A word form is also called **"type"**. The occurrence of a type in a text is a **"token"**.
+For text mining, texts are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpus forms the **vocabulary** of a corpus. 
 
-For text mining, text are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpus forms the **vocabulary** of a corpus. For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term frequency vector for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called **document-term matrix** (DTM).
+For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term **frequency vector** for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called **document-term matrix** (DTM).
 
-The function `dfm` (Document-Feature-Matrix; Quanteda treats words as features of a text based dataset) of the `quanteda` package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the tokenizer of quanteda as the word separator. Quanteda has 3 differnent word separation methods. The standard and smartest way uses word boudaries and punctuations to separate the text sources. The other methods rely on whitespace information an work significantly faster but not as accurate.
+The function `dfm` (Document-Feature-Matrix; Quanteda treats words as features of a text-based dataset) of the `quanteda` package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the tokenizer of quanteda as the word separator (see `help(tokens)`for details). Quanteda has 3 different word separation methods. The standard and smartest way uses word boundaries and punctuations to separate the text sources. The other methods rely on whitespace information an work significantly faster but not as accurate.
 
 ```{r}
 # Create a DTM (may take a while)
@@ -181,3 +224,6 @@ sum(wordlist$freqs == 1) / nrow(wordlist)
 ```{r echo=FALSE}
 ncol(DTM) / sum(DTM)
 ```
+
+# References
+

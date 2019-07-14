@@ -10,10 +10,10 @@ navbar:
 #      href: Tutorial_0_R-Intro.html
 #      icon: ion-android-bulb
     - text: "Tutorial 1"
-      href: Tutorial_1_Data_acquisition.html
+      href: Tutorial_1_Read_textdata.html
       icon: ion-android-bulb
     - text: "Tutorial 2"
-      href: Tutorial_2_Read_data_Zipf.html
+      href: Tutorial_2_Web_crawling.html
       icon: ion-android-bulb
     - text: "Tutorial 3"
       href: Tutorial_3_Frequency.html

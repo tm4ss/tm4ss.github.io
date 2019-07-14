@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
+
+<meta name="date" content="2019-07-12" />
+
+<title>Tutorial 1: Processing of textual data</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
+<link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro</a>
+</li>
+<li>
+  <a href="Tutorial_1_Read_textdata.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 1
+  </a>
+</li>
+<li>
+  <a href="Tutorial_2_Web_crawling.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 2
+  </a>
+</li>
+<li>
+  <a href="Tutorial_3_Frequency.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 3
+  </a>
+</li>
+<li>
+  <a href="Tutorial_4_Term_extraction.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 4
+  </a>
+</li>
+<li>
+  <a href="Tutorial_5_Co-occurrence.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 5
+  </a>
+</li>
+<li>
+  <a href="Tutorial_6_Topic_Models.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 6
+  </a>
+</li>
+<li>
+  <a href="Tutorial_7_Klassifikation.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 7
+  </a>
+</li>
+<li>
+  <a href="Tutorial_8_NER_POS.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 8
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Tutorial 1: Processing of textual data</h1>
+<h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
+<h4 class="date">2019-07-12</h4>
+
+</div>
+
+
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> In this tutorial, we demonstrate how to read text data in R, tokenize texts and create a document-term matrix.</p>
+<ol style="list-style-type: decimal">
+<li>Reading various file formats with the <code>readtext</code> package,</li>
+<li>From text to a corpus,</li>
+<li>Create a document-term matrix and investigate Zipf’s law</li>
+</ol>
+<div id="reading-txt-pdf-html-docx" class="section level1">
+<h1><span class="header-section-number">1</span> Reading txt, pdf, html, docx, …</h1>
+<p>In case you have already a collection of document files on your disk, you can import them into R in a very convenient way provided by the <code>readtext</code> package. The package depends on some other programs or libraries in your system, e.g. to provide extraction of text from Word- and PDF-documents.</p>
+<p>Hence, some persons encountered hurdles to install the package due to missing libraries. In this case, carefully read error messages and install the missing libraries.</p>
+<p>For demonstration purpose, we provide in <code>data/documents</code> a random selection of documents in various file formats. First, we request a list of files in the directory to extract text from.</p>
+<pre class="r"><code>data_files &lt;- list.files(path = &quot;data/documents&quot;, full.names = T, recursive = T)
+
+# View first file paths
+head(data_files, 3)</code></pre>
+<pre><code>## [1] &quot;data/documents/bundestag/17_16_580-F_neu.pdf&quot;                                   
+## [2] &quot;data/documents/bundestag/prot_17_95.pdf&quot;                                        
+## [3] &quot;data/documents/bundestag/stellungnahme---buendnis-buergerenergie-e--v--data.pdf&quot;</code></pre>
+<p>The <code>readtext</code> function from the package with the same name, detects automatically file formats of the given files list and extracts the content into a <code>data.frame</code>. The parameter <code>docvarsfrom</code> allows you to set metadata variables by splitting path names. In our example, <code>docvar3</code> contains a source type variable derived from the sub folder name.</p>
+<pre class="r"><code>require(readtext)
+
+extracted_texts &lt;- readtext(data_files, docvarsfrom = &quot;filepaths&quot;, dvsep = &quot;/&quot;)
+
+# View first rows of the extracted texts
+head(extracted_texts)
+
+# View beginning of the second extracted text
+cat(substr(extracted_texts$text[2] , 0, 300))</code></pre>
+<p>Again, the <code>extracted_texts</code> can be written by <code>write.csv2</code> to disk for later use.</p>
+<pre class="r"><code>write.csv2(extracted_texts, file = &quot;data/text_extracts.csv&quot;, fileEncoding = &quot;UTF-8&quot;)</code></pre>
+<p>We choose CSV as a convenient text column based format for easy import and export in R and other programs. Also our example data for the rest of the tutorials is provided as CSV file. Windows users: Take care of setting UTF-8 file encoding explicitly when writing text data to the hard drive.</p>
+</div>
+<div id="from-text-to-a-corpus-object" class="section level1">
+<h1><span class="header-section-number">2</span> From text to a corpus object</h1>
+<p>Set global options at the beginning of each script! When working with textual data strings, it is recommended to turn R’s automatic conversion of strings into factors off.</p>
+<pre class="r"><code># Global options
+options(stringsAsFactors = FALSE)</code></pre>
+<p>The <code>read.csv</code> command reads a <strong>CSV</strong> (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a <em>separator</em> character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = <code>TRUE</code> or <code>FALSE</code>) and the character set.</p>
+<p>We read a CSV containing 231 “State of the Union” addresses of the presidents of the United States. The texts are freely available from <a href="http://stateoftheunion.onetwothree.net" class="uri">http://stateoftheunion.onetwothree.net</a>.</p>
+<p>Our CSV file has the format: <code>&quot;doc_id&quot;;&quot;speech_type&quot;;&quot;president&quot;;&quot;date&quot;;&quot;text&quot;</code>. Text is encapsualted into quotes (<code>&quot;</code>). Since sepration is marked by <code>;</code> instead of <code>,</code>, we need to specify the separator char.</p>
+<pre class="r"><code># read csv into a data.frame
+textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, header = TRUE, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)</code></pre>
+<p>The texts are now available in a <code>data.frame</code> together with some metadata (document id, speech type, president). Let us first see how many documents and metadata we have read.</p>
+<pre class="r"><code># dimensions of the data frame
+dim(textdata)</code></pre>
+<pre><code>## [1] 231   5</code></pre>
+<pre class="r"><code># column names of text and metadata
+colnames(textdata)</code></pre>
+<pre><code>## [1] &quot;doc_id&quot;      &quot;speech_type&quot; &quot;president&quot;   &quot;date&quot;        &quot;text&quot;</code></pre>
+<p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
+<pre class="r"><code>table(textdata[, &quot;president&quot;])</code></pre>
+<pre><code>## 
+##       Abraham Lincoln        Andrew Jackson        Andrew Johnson 
+##                     4                     8                     4 
+##          Barack Obama     Benjamin Harrison       Calvin Coolidge 
+##                     8                     4                     6 
+##     Chester A. Arthur       Donald J. Trump  Dwight D. Eisenhower 
+##                     4                     1                     9 
+## Franklin D. Roosevelt       Franklin Pierce      George H.W. Bush 
+##                    12                     4                     4</code></pre>
+<p>Now we want to transfer the loaded text source into a <strong>corpus object</strong> of the <code>quanteda</code>-package. Quanteda provides a large number of highly efficient convenience functions to process text in R <span class="citation">[1]</span>. First we load the package.</p>
+<pre class="r"><code>require(quanteda)</code></pre>
+<p>A corpus object is created with the <code>corpus</code> command. As parameter, the command gets the fulltext of the documents. In our case, this is the <code>text</code>-column of the <code>textdata</code>-data.frame. The docnames-parameter of the corpus function defines which unique identifier is given to each text example in the input (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).</p>
+<pre class="r"><code>corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
+# have a look on the new corpus object
+summary(corpus)</code></pre>
+<pre><code>## Corpus consisting of 231 documents, showing 100 documents:
+## 
+##  Text Types Tokens Sentences
+##     1   460   1170        24
+##     2   593   1504        40
+##     3   816   2477        60
+##     4   772   2288        61
+##     5   803   2122        56
+##     6  1137   3198        79
+##     7   821   2155        53
+##     8  1005   3096        78
+##     9   732   2239        58
+##    10   833   2368        54
+##    11   597   1624        35
+##    12   562   1489        40
+##    13  1098   3493        90
+##    14   823   2398        62
+##    15   837   2463        48
+##    16   746   2287        50
+##    17   984   3171        78
+##    18   969   3114        76
+##    19   858   2606        62
+##    20   956   2922        72
+##    21   699   1950        40
+##    22   893   2615        61
+##    23   829   2439        46
+##    24  1126   3496        87
+##    25  1074   3521        67
+##    26   831   2282        50
+##    27  1050   3390        59
+##    28  1086   3615        72
+##    29  1222   4815       122
+##    30  1243   4729       114
+##    31  1196   5091       131
+##    32  1070   3767        84
+##    33  1319   6323       149
+##    34  1265   5145       117
+##    35  1593   6927       184
+##    36  1750   9179       247
+##    37  2147   9809       212
+##    38  1817   8409       172
+##    39  1818   7586       165
+##    40  1830   7945       195
+##    41  2356  11418       299
+##    42  2767  16297       391
+##    43  1792   7719       165
+##    44  1916   8480       199
+##    45  1741   8497       181
+##    46  2581  14463       318
+##    47  2240  11573       239
+##    48  2421  13223       294
+##    49  2368  12355       281
+##    50  2388  12439       264
+##    51  2638  14512       341
+##    52  2153   9715       182
+##    53  2002   8837       197
+##    54  2037   9035       205
+##    55  1958   8645       193
+##    56  2115  10026       267
+##    57  2689  17529       446
+##    58  2782  19861       476
+##    59  2687  17790       440
+##    60  3289  23296       597
+##    61  1863   8223       210
+##    62  2061   9008       232
+##    63  2696  14332       351
+##    64  2379  10712       284
+##    65  2292  10379       231
+##    66  2427  10990       267
+##    67  2458  12583       274
+##    68  2325  11392       255
+##    69  2575  14932       406
+##    70  2912  17830       518
+##    71  2453  13598       396
+##    72  2638  15376       484
+##    73  1872   7661       213
+##    74  2061   9390       319
+##    75  1719   6645       200
+##    76  1755   6587       207
+##    77  2153  10090       276
+##    78  1871   7797       202
+##    79  2668  13177       381
+##    80  2352  10863       281
+##    81  1924   8488       247
+##    82  2173   9587       266
+##    83  1758   7020       211
+##    84  1162   4338       112
+##    85  2377  11013       292
+##    86  2143  10100       273
+##    87  2574  13408       347
+##    88  1787   7438       192
+##    89  1965   8707       218
+##    90  2040   8643       237
+##    91  2443  12647       313
+##    92  1768   7215       191
+##    93  1351   4098       118
+##    94  1062   3299        92
+##    95  1315   4082       108
+##    96  2355   9670       288
+##    97  3812  21381       559
+##    98  3110  16359       416
+##    99  1394   5723       123
+##   100  2402   9798       239
+## 
+## Source: Z:/Promotion/Courses/Gesis BM II 2019/Tutorials/* on x86 by rioreiser
+## Created: Fri Jul 12 15:05:46 2019
+## Notes:</code></pre>
+<p>A corpus is an extension of R list objects. With the <code>[[]]</code> brackets, we can access single list elements, here documents, within a corpus. We print the text of the first element of the corpus using the <code>texts</code> command.</p>
+<pre class="r"><code># getting a single text documents content
+cat(texts(corpus[1]))</code></pre>
+<pre><code>## Fellow-Citizens of the Senate and House of Representatives:
+## 
+## I embrace with great satisfaction the opportunity which now presents itself
+## of congratulating ...</code></pre>
+<p>The command <code>cat</code> prints a given character vector with correct line breaks (compare the difference of the output with the <code>print</code> method instead).</p>
+<p>Success!!! We now have 231 speeches for further analysis available in a convenient tm corpus object!</p>
+</div>
+<div id="text-statistics" class="section level1">
+<h1><span class="header-section-number">3</span> Text statistics</h1>
+<p>A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be <strong>tokenized</strong>. This means that all the words in the texts need to be identified and separated. Only in this way it is possible to count the frequency of individual word forms. A word form is also called <strong>“type”</strong>. The occurrence of a type in a text is a <strong>“token”</strong>.</p>
+<p>For text mining, texts are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpus forms the <strong>vocabulary</strong> of a corpus.</p>
+<p>For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term <strong>frequency vector</strong> for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called <strong>document-term matrix</strong> (DTM).</p>
+<p>The function <code>dfm</code> (Document-Feature-Matrix; Quanteda treats words as features of a text-based dataset) of the <code>quanteda</code> package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the tokenizer of quanteda as the word separator (see <code>help(tokens)</code>for details). Quanteda has 3 different word separation methods. The standard and smartest way uses word boundaries and punctuations to separate the text sources. The other methods rely on whitespace information an work significantly faster but not as accurate.</p>
+<pre class="r"><code># Create a DTM (may take a while)
+DTM &lt;- dfm(corpus)
+# Show some information
+DTM</code></pre>
+<pre><code>## Document-feature matrix of: 231 documents, 30,112 features (94.2% sparse).</code></pre>
+<pre class="r"><code># Dimensionality of the DTM
+dim(DTM)</code></pre>
+<pre><code>## [1]   231 30112</code></pre>
+<p>The dimensions of the DTM, 231 rows and 30112 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
+<p>A first impression of text statistics we can get from a word list. Such a word list represents the frequency counts of all words in all documents. We can get that information easily from the DTM by summing all of its column vectors.</p>
+<p>A so-called <strong>sparse matrix</strong> data structure is used for the document term matrix in the quanteda package (quanteda inherits the <code>Matrix</code> package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The <em>Matrix</em> package provides arithmetic operations on sparse DTMs.</p>
+<pre class="r"><code># sum columns for word counts
+freqs &lt;- colSums(DTM)
+# get vocabulary vector
+words &lt;- colnames(DTM)
+# combine words and their frequencies in a data frame
+wordlist &lt;- data.frame(words, freqs)
+# re-order the wordlist by decreasing frequency
+wordIndexes &lt;- order(wordlist[, &quot;freqs&quot;], decreasing = TRUE)
+wordlist &lt;- wordlist[wordIndexes, ]
+# show the most frequent words
+head(wordlist, 25)</code></pre>
+<pre><code>##       words  freqs
+## the     the 150528
+## of       of  97139
+## ,         ,  84764
+## .         .  63198
+## and     and  61182
+## to       to  60968
+## in       in  38782
+## a         a  28184
+## that   that  21848
+## for     for  19083
+## be       be  18740
+## our     our  17479
+## is       is  17075
+## it       it  15271
+## by       by  15034
+## which which  12349
+## as       as  12222
+## we       we  12144
+## this   this  12141
+## have   have  12088
+## with   with  12058
+## will   will   9551
+## on       on   9453
+## i         i   9304
+## has     has   9065</code></pre>
+<p>The words in this sorted list have a ranking depending on the position in this list. If the word ranks are plotted on the x axis and all frequencies on the y axis, then the Zipf distribution is obtained. This is a typical property of language data and its distribution is similar for all languages.</p>
+<pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, lwd=2, main = &quot;Rank frequency Plot&quot;, xlab=&quot;Rank&quot;, ylab =&quot;Frequency&quot;)</code></pre>
+<p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-15-1.png" width="768" /></p>
+<p>The distribution follows an extreme power law distribution (very few words occur very often, very many words occur very rare). The Zipf law says that the frequency of a word is reciprocal to its rank (1 / r). To make the plot more readable, the axes can be logarithmized.</p>
+<pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, log=&quot;xy&quot;, lwd=2, main = &quot;Rank-Frequency Plot&quot;, xlab=&quot;log-Rank&quot;, ylab =&quot;log-Frequency&quot;)</code></pre>
+<p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-16-1.png" width="768" /></p>
+<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 30112 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
+<p>Hence, ignoring very rare / frequent words has many advantages:</p>
+<ul>
+<li>reducing the dimensionality of the vocabulary (saves memory)</li>
+<li>processing speed up</li>
+<li>better identification of meaningful structures.</li>
+</ul>
+<p>To illustrate the range of ranks best to be used for analysis, we augment information in the rank frequency plot. First, we mark so-called <strong>stop words</strong>. These are words of a language that normally do not contribute to semantic information about a text. In addition, all words in the word list are identified which occur less than 10 times.</p>
+<p>The <code>%in%</code> operator can be used to compare which elements of the first vector are contained in the second vector. At this point, we compare the words in the word list with a loaded stopword list (retrieved by the function <code>stopwords</code> of the tm package) . The result of the <code>%in%</code> operator is a boolean vector which contains TRUE or FALSE values.</p>
+<p>A boolean value (or a vector of boolean values) can be inverted with the <code>!</code> operator (<code>TRUE</code> gets <code>FALSE</code> and vice versa). The <code>which</code> command returns the indices of entries in a boolean vector which contain the value <code>TRUE</code>.</p>
+<p>We also compute indices of words, which occur less than 10 times. With a union set operation, we combine both index lists. With a setdiff operation, we reduce a vector of all indices (the sequence <code>1:nrow(wordlist)</code>) by removing the stopword indices and the low freuent word indices.</p>
+<p>With the command “lines” the range of the remining indices can be drawn into the plot.</p>
+<pre class="r"><code>plot(wordlist$freqs, type = &quot;l&quot;, log=&quot;xy&quot;,lwd=2, main = &quot;Rank-Frequency plot&quot;, xlab=&quot;Rank&quot;, ylab = &quot;Frequency&quot;)
+englishStopwords &lt;- stopwords(&quot;en&quot;)
+stopwords_idx &lt;- which(wordlist$words %in% englishStopwords)
+low_frequent_idx &lt;- which(wordlist$freqs &lt; 10)
+insignificant_idx &lt;- union(stopwords_idx, low_frequent_idx)
+meaningful_range_idx &lt;- setdiff(1:nrow(wordlist), insignificant_idx)
+lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;green&quot;, lwd=2, type=&quot;p&quot;, pch=20)</code></pre>
+<p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<p>The green range marks the range of meaningful terms for the collection.</p>
+</div>
+<div id="optional-exercises" class="section level1">
+<h1><span class="header-section-number">4</span> Optional exercises</h1>
+<ol style="list-style-type: decimal">
+<li>Print out the word list without stop words and low frequent words.</li>
+</ol>
+<pre><code>##                 words freqs
+## ,                   , 84764
+## .                   . 63198
+## -                   -  7812
+## government government  6877
+## states         states  6475
+## congress     congress  4996
+## united         united  4819
+## ;                   ;  4471
+## can               can  4345
+## people         people  3979
+## upon             upon  3956
+## year             year  3823
+## $                   $  3644
+## may               may  3407
+## country       country  3360
+## must             must  3305
+## great           great  3256
+## made             made  3143
+## now               now  3079
+## public         public  3073
+## new               new  2976
+## time             time  2846
+## war               war  2759
+## one               one  2668
+## last             last  2614</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>If you look at the result, are there any corpus specific terms that should also be considered as stop word?</li>
+<li>What is the share of terms regarding the entire vocabulary which occur only once in the corpus?</li>
+</ol>
+<pre><code>## [1] 0.393564</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Compute the type-token ratio (TTR) of the corpus. the TTR is the fraction of the number of tokens divided by the number of types.</li>
+</ol>
+<pre><code>## [1] 0.0154557</code></pre>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-Welbers.2017">
+<p>1. Welbers, K., van Atteveldt, W., Benoit, K.: Text analysis in r. Communication Methods and Measures. 11, 245–265 (2017).</p>
+</div>
+</div>
+</div>
+
+<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

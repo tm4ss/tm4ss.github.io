@@ -17,47 +17,69 @@ bibliography: references.bib
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
 ```
-This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus.
+This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus. We also show how it is possible to hande multi-word units such as `United States' with the quanteda package.
 
-1. TF-IDF
-2. Log-likelihood ratio test
-3. Aggregations and visualization
+1. Multi-word unit tokenization
+2. TF-IDF
+3. Log-likelihood ratio test
+4. Visualization
+
+# Multi-word tokenization
 
 Like in the previous tutorial we read the CSV data file containing the State of the union addresses and preprocess the corpus object with a sequence of `quanteda` functions.
 
-This time, we also apply **lemmatization** to the corpus. Lemmatization reduces (potentially) inflected word forms to its lexical baseform to unify similar semantic forms to the same text representation. For instance, 'presidents' becomes 'president' and 'singing' becomes 'sing'.
+We also introduce handling of multi-word units (MWUs), also collocations in linguistics. MWUs are words comprising two or more tokens such as `machine learning', but also named entities such as `George Washington'. They can be inferred automatically with a statistical test. If two terms occur significantly more often as direct neighbors as expected by chance, they can be treated as collocations. 
 
-Finally, we create a Document-Term-Matrix.
+Quanteda provides two functions for handling MWUs: `textstat_collocations` performs a statsictical test to identify collocation candidates. `tokens_compound` concatenates collocation terms in a document with a separation character, e.g. `_`. By this, thw two terms are treated as a single new vocabulary type be each following text processing algorithm.
 
+Finally, we create a Document-Term-Matrix as usual, but this time with unigram tokens together with MWU tokens.
 
-```{r initalisierung, results='hide', message=FALSE, warning=FALSE, cache=T}
+```{r initalisierung, message=FALSE, warning=FALSE, cache=T}
 options(stringsAsFactors = FALSE)
 library(quanteda)
 
+# read the SOTU corpus data
 textdata <- read.csv("data/sotu.csv", sep = ";", encoding = "UTF-8")
-
 corpus <- corpus(textdata$text, docnames = textdata$doc_id)
 
-#Build a dictionary of lemmas
-lemmaData <- read.csv2("resources/baseform_en.tsv", sep="\t", header=FALSE, encoding = "UTF-8", stringsAsFactors = F)
+# Build a dictionary of lemmas
+lemma_data <- read.csv("resources/baseform_en.tsv", encoding = "UTF-8")
 
-# Create a DTM (may take a while)
-corpus_edit <- corpus %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
-  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
-  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
+# read an extended stop word list
+stopwords_extended <- readLines("resources/stopwords_en.txt", encoding = "UTF-8")
 
-# View first document
-substr(paste(as.character(corpus_edit[1]),collapse = " "), 0, 250)
+# Preprocessing of the corpus
+corpus_tokens <- corpus %>% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% 
+  tokens_tolower() %>% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = "fixed") %>% 
+  tokens_remove(pattern = stopwords_extended, padding = T)
 
-# Create DTM
-DTM <- corpus_edit %>% dfm() 
+# calculate multi-word unit candidates
+sotu_collocations <- textstat_collocations(corpus_tokens, min_count = 25)
+# check top collocations
+head(sotu_collocations, 25)
+# check bottom collocations
+tail(sotu_collocations, 25)
+```
 
-DTM  <- DTM  %>%
-  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
+Caution: For the calculation of collocation statistics being aware of deleted stop words, you need to add the paramter `padding = T` to the `tokens_remove` function above.
 
-colnames(DTM) <- colnames(DTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
+If you do not like all of the suggested collocation pairs to be
+considered as MWUs in the subsequent analysis, you can simply remove
+rows containing unwanted pairs from the sotu_collocations object.
 
-DTM <- dfm_compress(DTM, "features")
+```{r initalisierung2, results='hide', message=FALSE, warning=FALSE, cache=T}
+# We will treat the top 250 collocations as MWU
+sotu_collocations <- sotu_collocations[1:250, ]
+
+# compound collocations
+corpus_tokens <- tokens_compound(corpus_tokens, sotu_collocations)
+
+# Create DTM (also remove padding empty term)
+DTM <- corpus_tokens %>% 
+  tokens_remove("") %>%
+  dfm() 
 ```
 
 # TF-IDF
@@ -117,19 +139,17 @@ From the comparison corpus, we also create a count of all terms.
 
 ```{r comparisonDTM, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
 # Create a DTM (may take a while)
-corpus_compare_edit <- corpus_compare %>% tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% tokens_tolower() %>% 
-  tokens_replace(., lemmaData$V1, lemmaData$V2) %>% tokens_tolower() %>%
-  tokens_ngrams(1) %>% tokens_remove(pattern = stopwords())
+corpus_compare_edit <- corpus_compare %>% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% 
+  tokens_tolower() %>% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = "fixed") %>% 
+  tokens_remove(pattern = stopwords_extended, padding = T)
 
 # Create DTM
-comparisonDTM <- corpus_compare_edit %>% dfm() 
-
-comparisonDTM  <- comparisonDTM  %>%
-  dfm_select(pattern = "[a-z]", valuetype = "regex", selection = 'keep')
-
-colnames(comparisonDTM) <- colnames(comparisonDTM) %>% stringi::stri_replace_all_regex("[^_a-z]", "")
-
-comparisonDTM <- dfm_compress(comparisonDTM, "features")
+comparisonDTM <- corpus_compare_edit %>% 
+  tokens_compound(sotu_collocations) %>%
+  tokens_remove("") %>%
+  dfm() 
 
 termCountsComparison <- colSums(comparisonDTM)
 ```
@@ -140,7 +160,7 @@ Let us now calculate the log-likelihood ratio test by comparing frequencies of a
 
 ```{r singleTermComparison}
 # Loglikelihood for a single term
-term <- "care"
+term <- "health_care"
 
 # Determine variables
 a <- termCountsTarget[term]
@@ -178,7 +198,9 @@ uniqueTerms <- setdiff(names(termCountsTarget), names(termCountsComparison))
 sample(uniqueTerms, 20)
 ```
 
-Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the `a == 0` resp. `b == 0` expression add 1 to the expression which yields a 0 value after applying the log function.
+Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector. 
+
+Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the `a == 0` resp. `b == 0` expression add 1 to the expression which yields a 0 value after applying the log function.
 
 ```{r allTermComparison2}
 # Create vector of zeros to append to comparison counts
@@ -211,7 +233,7 @@ Let's take a look at the results: The 50 more frequently used / less frequently 
 
 ```{r}
 # top terms (overuse in targetCorpus compared to comparisonCorpus)
-sort(logLikelihood, decreasing=TRUE)[1:25]
+sort(logLikelihood, decreasing=TRUE)[1:50]
 # bottom terms (underuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=FALSE)[1:25]
 
@@ -226,7 +248,7 @@ sum(logLikelihood > 6.63)
 
 The method extracted `r sum(logLikelihood > 6.63)` key terms from the first Obama speech.
 
-# Aggregation and visualization
+# Visualization
 
 Finally, visualize the result of the 50 most significant terms as Wordcloud. This can be realized simply by function of the package wordcloud. Additionally to the words and their weights (here we use likelihood values), we override default scaling and color parameters. Feel free to try different parameters to modify the wordcloud rendering.
 
@@ -293,15 +315,17 @@ df <- data.frame(
 )
 head(df, 10)
 ```
-2. Create a wordcloud which compares Obama's second speech with all his other speeches.
+2. Create a wordcloud which compares Obama's last speech with all his other speeches.
 ```{r extra2, message=FALSE, cache=T, error=F, warning=F, echo=F}
 obama_speeches <- which(textdata$president == "Barack Obama")
 
-termCountsTarget <- colSums(DTM[obama_speeches[2], ])
+last_speech_id <- length(obama_speeches)
+termCountsTarget <- colSums(DTM[obama_speeches[last_speech_id], ])
 termCountsTarget <- termCountsTarget[termCountsTarget > 0]
-termCountsComparison <- colSums(DTM[obama_speeches[-2], ])
+termCountsComparison <- colSums(DTM[obama_speeches[-last_speech_id], ])
 loglik_terms <- calculateLogLikelihood(termCountsTarget, termCountsComparison, minSignificance = 3.84)
   
 top50 <- sort(loglik_terms, decreasing = TRUE)[1:50]
 wordcloud::wordcloud(names(top50), top50, max.words = 50, scale = c(3, .9), colors = RColorBrewer::brewer.pal(8, "Dark2"), random.order = F)
 ```
+

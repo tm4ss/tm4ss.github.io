@@ -168,7 +168,7 @@ sentiments_per_president <- aggregate(relative_sentiment_frequencies, by = list(
 head(sentiments_per_president)
 ```
 
-Scores per president can be visualized as bar plot. The package `ggplot2` offers a great variety of plots. The package `reshape2` offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: http://ggplot2.org
+Scores per president can be visualized as bar plot. The package `ggplot2` offers a great variety of plots. The package `reshape2` offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: https://ggplot2.tidyverse.org
 
 ```{r buildTS5, warning=F, message=F}
 require(reshape2)

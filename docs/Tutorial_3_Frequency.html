@@ -568,7 +568,7 @@ head(sentiments_per_president)</code></pre>
 ## 4      Barack Obama   0.0913   0.0515
 ## 5 Benjamin Harrison   0.0778   0.0346
 ## 6   Calvin Coolidge   0.0924   0.0364</code></pre>
-<p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a></p>
+<p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="https://ggplot2.tidyverse.org" class="uri">https://ggplot2.tidyverse.org</a></p>
 <pre class="r"><code>require(reshape2)
 df &lt;- melt(sentiments_per_president, id.vars = &quot;president&quot;)
 require(ggplot2)

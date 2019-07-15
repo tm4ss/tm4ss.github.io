@@ -1,1 +1,0 @@
-In this directory, the script of tutorial 4 writes a number of PDF files containing word clouds with typical vocabulary for each president.

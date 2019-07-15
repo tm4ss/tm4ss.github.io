@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
+
+<meta name="date" content="2019-07-15" />
+
+<title>Tutorial 3: Frequency analysis</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
+<link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro</a>
+</li>
+<li>
+  <a href="Tutorial_1_Read_textdata.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 1
+  </a>
+</li>
+<li>
+  <a href="Tutorial_2_Web_crawling.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 2
+  </a>
+</li>
+<li>
+  <a href="Tutorial_3_Frequency.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 3
+  </a>
+</li>
+<li>
+  <a href="Tutorial_4_Term_extraction.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 4
+  </a>
+</li>
+<li>
+  <a href="Tutorial_5_Co-occurrence.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 5
+  </a>
+</li>
+<li>
+  <a href="Tutorial_6_Topic_Models.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 6
+  </a>
+</li>
+<li>
+  <a href="Tutorial_7_Klassifikation.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 7
+  </a>
+</li>
+<li>
+  <a href="Tutorial_8_NER_POS.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 8
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Tutorial 3: Frequency analysis</h1>
+<h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
+<h4 class="date">2019-07-15</h4>
+
+</div>
+
+
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the <code>quanteda</code> package.</p>
+<ol style="list-style-type: decimal">
+<li>Text preprocessing</li>
+<li>Time series</li>
+<li>Grouping of semantic categories</li>
+<li>Heatmaps</li>
+</ol>
+<pre class="r"><code>options(stringsAsFactors = FALSE)
+require(quanteda)
+library(dplyr)</code></pre>
+<div id="text-preprocessing" class="section level1">
+<h1><span class="header-section-number">1</span> Text preprocessing</h1>
+<p>Like in the previous tutorial we read the CSV data file containing the State of the union addresses. This time, we add two more columns for the year and the decade. For the year we select a sub string of the four first characters from the <code>date</code> column of the data frame (e.g. extracting “1990” from “1990-02-12”). For the decade we select a sub string of the first three characters and paste a 0 to it. In later parts of the exercise we can use these columns for grouping data.</p>
+<pre class="r"><code>textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)
+
+# we add some more metadata columns to the data frame
+textdata$year &lt;- substr(textdata$date, 0, 4)
+textdata$decade &lt;- paste0(substr(textdata$date, 0, 3), &quot;0&quot;)</code></pre>
+<p>Then, we create a corpus object again.</p>
+<p>This time, we also apply <strong>lemmatization</strong> to the corpus. Lemmatization reduces (potentially) inflected word forms to its lexical baseform to unify similar semantic forms to the same text representation. For instance, ‘presidents’ becomes ‘president’ and ‘singing’ becomes ‘sing’.</p>
+<p>Moreover, we apply different preprocessing steps to the corpus text. <code>remove_punct</code> leaves only alphanumeric characters in the text. <code>remove_numbers</code> removes numeric characters and <code>remove_symbols</code> removes all characters in the Unicode “Symbol” [S] class. Lowercase transformation is performed (need to be applied before lemma replacement!), and finally a set of English stop-words is removed.</p>
+<pre class="r"><code>sotu_corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id)
+
+# Build a dictionary of lemmas
+lemma_data &lt;- read.csv(&quot;resources/baseform_en.tsv&quot;, encoding = &quot;UTF-8&quot;)
+
+# Create a DTM
+corpus_tokens &lt;- sotu_corpus %&gt;% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% 
+  tokens_tolower() %&gt;% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = &quot;fixed&quot;) %&gt;% 
+  tokens_remove(pattern = stopwords())</code></pre>
+<p>Effects of this preprocessing can be printed in the console.</p>
+<pre class="r"><code>print(paste0(&quot;1: &quot;, substr(paste(corpus_tokens[1],collapse = &quot; &quot;), 0, 400), &#39;...&#39;))</code></pre>
+<p>We see that the text is now a sequence of text features corresponding to the selected methods (including lemmatization).</p>
+<p>From the preprocessed corpus, we create a new DTM.</p>
+<pre class="r"><code>DTM &lt;- corpus_tokens %&gt;% 
+  dfm() </code></pre>
+<p>The resulting DTM should have 233 rows and 18167 columns.</p>
+</div>
+<div id="time-series" class="section level1">
+<h1><span class="header-section-number">2</span> Time series</h1>
+<p>We now want to measure frequencies of certain terms over time. Frequencies in single decades are plotted as line graphs to follow their trends over time. First, we determine which terms to analyze and reduce our DTM to this these terms.</p>
+<pre class="r"><code>terms_to_observe &lt;- c(&quot;nation&quot;, &quot;war&quot;, &quot;god&quot;, &quot;terror&quot;, &quot;security&quot;)
+
+DTM_reduced &lt;- as.matrix(DTM[, terms_to_observe])</code></pre>
+<p>The reduced DTM contains counts for each of our 5 terms and in each of the 233 documents (rows of the reduced DTM). Since our corpus covers a time span of more than 200 years, we could aggregate frequencies in single documents per decade to get a meaningful representation of term frequencies over time.</p>
+<p>Information of each decade per document we added in the beginning to the <code>textdata</code> variable. There are ten speeches per decade mostly (you can check with <code>table(textdata$decade</code>). We use <code>textdata$decade</code> as a grouping parameter for the <code>aggregate</code> function. This function sub-selects rows from the input data (<code>DTM_reduced</code>) for all different decade values given in the <code>by</code>-parameter. Each sub-selection is processed column-wise using the function provided in the third parameter (<code>sum</code>).</p>
+<pre class="r"><code>counts_per_decade &lt;- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)</code></pre>
+<p><code>counts_per_decade</code> now contains sums of term frequencies per decade. Time series for single terms can be plotted either by the simple <code>plot</code> function. Additional time series could be added by the <code>lines</code>-function (Tutorial 2). A more simple way is to use the matplot-function which can draw multiple lines in one command.</p>
+<pre class="r"><code># give x and y values beautiful names
+decades &lt;- counts_per_decade$decade
+frequencies &lt;- counts_per_decade[, terms_to_observe]
+
+# plot multiple frequencies
+matplot(decades, frequencies, type = &quot;l&quot;)
+
+# add legend to the plot
+l &lt;- length(terms_to_observe)
+legend(&#39;topleft&#39;, legend = terms_to_observe, col=1:l, text.col = 1:l, lty = 1:l)  </code></pre>
+<p><img src="Tutorial_3_Frequency_files/figure-html/plotMat-1.png" width="672" /></p>
+<p>Among other things, we can observe peaks in reference to <code>war</code> around the US civil war, around 1900 and WWII. The term nation also peaks around 1900 giving hints for further investigations on possible relatedness of both terms during that time. References to security, god of terror appear to be more ‘modern’ phenomena.</p>
+</div>
+<div id="grouping-of-sentiments" class="section level1">
+<h1><span class="header-section-number">3</span> Grouping of sentiments</h1>
+<p>Frequencies cannot only be aggregated over time for time series analysis, but to count categories of terms for comparison. For instance, we can model a very simple <strong>Sentiment analysis</strong> approach using lists of positive an negative words. Then, counts of these words can be aggregated w.r.t to any metadata. For instance, if we count sentiment words per president, we can get an impression of who utilized emotional language to what extent.</p>
+<p>We provide a selection of very positive / negative English words extracted from an English Opinion Word Lexicon compiled by <span class="citation">[1]</span>. Have a look in the text files to see, what they consist of.</p>
+<p>As an alternative, we also could use the AFINN sentiment lexicon from <span class="citation">[2]</span>.</p>
+<pre class="r"><code># English Opinion Word Lexicon by Hu et al. 2004
+positive_terms_all &lt;- readLines(&quot;data/positive-words.txt&quot;)
+negative_terms_all &lt;- readLines(&quot;data/negative-words.txt&quot;)
+
+# AFINN sentiment lexicon by Nielsen 2011
+afinn_terms &lt;- read.csv(&quot;data/AFINN-111.txt&quot;, header = F, sep = &quot;\t&quot;)
+positive_terms_all &lt;- afinn_terms$V1[afinn_terms$V2 &gt; 0]
+negative_terms_all &lt;- afinn_terms$V1[afinn_terms$V2 &lt; 0]</code></pre>
+<p>To count occurrence of these terms in our speeches, we first need to restrict the list to those words actually occurring in our speeches. These terms then can be aggregated per speech by a simple <code>row_sums</code> command.</p>
+<pre class="r"><code>positive_terms_in_suto &lt;- intersect(colnames(DTM), positive_terms_all)
+counts_positive &lt;- rowSums(DTM[, positive_terms_in_suto])
+
+negative_terms_in_suto &lt;- intersect(colnames(DTM), negative_terms_all)
+counts_negative &lt;- rowSums(DTM[, negative_terms_in_suto])</code></pre>
+<p>Since lengths of speeches tend to vary greatly, we do want to measure relative frequencies of sentiment terms. This can be achieved by dividing counts of sentiment terms by the number of all terms in each document. The relative frequencies we store in a dataframe for subsequent aggregation and visualization.</p>
+<pre class="r"><code>counts_all_terms &lt;- rowSums(DTM)
+
+relative_sentiment_frequencies &lt;- data.frame(
+  positive = counts_positive / counts_all_terms,
+  negative = counts_negative / counts_all_terms
+)</code></pre>
+<p>Now we aggregate not per decade, but per president. Further we do not take the sum (not all presidents have the same number of speeches) but the mean. A sample output shows the computed mean sentiment scores per president.</p>
+<pre class="r"><code>sentiments_per_president &lt;- aggregate(relative_sentiment_frequencies, by = list(president = textdata$president), mean)
+
+head(sentiments_per_president)</code></pre>
+<pre><code>##           president positive negative
+## 1   Abraham Lincoln   0.0751   0.0414
+## 2    Andrew Jackson   0.0827   0.0386
+## 3    Andrew Johnson   0.0785   0.0460
+## 4      Barack Obama   0.0913   0.0515
+## 5 Benjamin Harrison   0.0778   0.0346
+## 6   Calvin Coolidge   0.0924   0.0364</code></pre>
+<p>Scores per president can be visualized as bar plot. The package <code>ggplot2</code> offers a great variety of plots. The package <code>reshape2</code> offers functions to convert data into the right format for ggplot2. For more information on ggplot2 see: <a href="http://ggplot2.org" class="uri">http://ggplot2.org</a></p>
+<pre class="r"><code>require(reshape2)
+df &lt;- melt(sentiments_per_president, id.vars = &quot;president&quot;)
+require(ggplot2)
+ggplot(data = df, aes(x = president, y = value, fill = variable)) + 
+  geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
+<p><img src="Tutorial_3_Frequency_files/figure-html/buildTS5-1.png" width="672" /></p>
+<p>The standard output is sorted by president’s names alphabetically. We can make use of the reorder command, to sort by positive / negative sentiment score:</p>
+<pre class="r"><code># order by positive sentiments
+ggplot(data = df, aes(x = reorder(president, df$value, head, 1), y = value, fill = variable)) + geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
+<p><img src="Tutorial_3_Frequency_files/figure-html/buildTS6-1.png" width="672" /></p>
+<pre class="r"><code># order by negative sentiments
+ggplot(data = df, aes(x = reorder(president, df$value, tail, 1), y = value, fill = variable)) + geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
+<p><img src="Tutorial_3_Frequency_files/figure-html/buildTS6-2.png" width="672" /></p>
+</div>
+<div id="heatmaps" class="section level1">
+<h1><span class="header-section-number">4</span> Heatmaps</h1>
+<p>The overlapping of several time series in a plot can become very confusing. Heatmaps provide an alternative for the visualization of multiple frequencies over time. In this visualization method, a time series is mapped as a row in a matrix grid. Each cell of the grid is filled with a color corresponding to the value from the time series. Thus, several time series can be displayed in parallel.</p>
+<p>In addition, the time series can be sorted by similarity in a heatmap. In this way, similar frequency sequences with parallel shapes (heat activated cells) can be detected more quickly. Dendrograms can be plotted aside to visualize quantities of similarity.</p>
+<pre class="r"><code>terms_to_observe &lt;- c(&quot;war&quot;, &quot;peace&quot;, &quot;health&quot;, &quot;terror&quot;, &quot;islam&quot;, 
+                      &quot;threat&quot;, &quot;security&quot;, &quot;conflict&quot;, &quot;job&quot;, 
+                      &quot;economy&quot;, &quot;indian&quot;, &quot;afghanistan&quot;, &quot;muslim&quot;, 
+                      &quot;god&quot;, &quot;world&quot;, &quot;territory&quot;, &quot;frontier&quot;, &quot;north&quot;,
+                      &quot;south&quot;, &quot;black&quot;, &quot;racism&quot;, &quot;slavery&quot;, &quot;iran&quot;)
+DTM_reduced &lt;- as.matrix(DTM[, terms_to_observe])
+rownames(DTM_reduced) &lt;- ifelse(as.integer(textdata$year) %% 2 == 0, textdata$year, &quot;&quot;)
+heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE, margins = c(5, 10))</code></pre>
+<p><img src="Tutorial_3_Frequency_files/figure-html/HM1-1.png" width="864" /></p>
+</div>
+<div id="optional-exercises" class="section level1">
+<h1><span class="header-section-number">5</span> Optional exercises</h1>
+<ol style="list-style-type: decimal">
+<li>Run the time series analysis with the terms “environment”, “climate”, “planet”, “space”.</li>
+<li>Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.</li>
+<li>The AFINN sentiment lexicon provides not only negative/positive terms, but also a valence value for each term ranging from [-5;+5]. Instead of counting sentiment terms only, use the valence values for sentiment scoring.</li>
+<li>Draw a <code>heatmap</code> of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way!</li>
+</ol>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-Hu.2004">
+<p>1. Hu, M., Liu, B.: Mining and summarizing customer reviews. In: Proceedings of the tenth acm sigkdd international conference on knowledge discovery and data mining. pp. 168–177. ACM, New York, NY, USA (2004).</p>
+</div>
+<div id="ref-Nielsen.2011">
+<p>2. Nielsen, F. Å.: AFINN, <a href="http://darenr.github.io/afinn">http://darenr.github.io/afinn</a>, (2011).</p>
+</div>
+</div>
+</div>
+
+<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

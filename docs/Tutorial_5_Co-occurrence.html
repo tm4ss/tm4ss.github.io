@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
+
+<meta name="date" content="2019-07-15" />
+
+<title>Tutorial 5: Co-occurrence analysis</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
+<link href="site_libs/ionicons-2.0.1/css/ionicons.min.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro</a>
+</li>
+<li>
+  <a href="Tutorial_1_Read_textdata.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 1
+  </a>
+</li>
+<li>
+  <a href="Tutorial_2_Web_crawling.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 2
+  </a>
+</li>
+<li>
+  <a href="Tutorial_3_Frequency.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 3
+  </a>
+</li>
+<li>
+  <a href="Tutorial_4_Term_extraction.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 4
+  </a>
+</li>
+<li>
+  <a href="Tutorial_5_Co-occurrence.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 5
+  </a>
+</li>
+<li>
+  <a href="Tutorial_6_Topic_Models.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 6
+  </a>
+</li>
+<li>
+  <a href="Tutorial_7_Klassifikation.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 7
+  </a>
+</li>
+<li>
+  <a href="Tutorial_8_NER_POS.html">
+    <span class="ion ion-android-bulb"></span>
+     
+    Tutorial 8
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Tutorial 5: Co-occurrence analysis</h1>
+<h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
+<h4 class="date">2019-07-15</h4>
+
+</div>
+
+
+<p><script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script> This exercise will demonstrate how to perform co-occurrence analysis with <strong>R</strong> and the quanteda-package. It is shown how different significance measures can be used to extract semantic links between words.</p>
+<p>Change to your working directory, create a new R script, load the quanteda-package and define a few already known default variables.</p>
+<pre class="r"><code>options(stringsAsFactors = FALSE)
+library(quanteda)
+
+textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)
+
+sotu_corpus &lt;- corpus(textdata$text, docnames = textdata$doc_id, docvars = data.frame(year = substr(textdata$date, 0, 4)))</code></pre>
+<div id="sentence-detection" class="section level1">
+<h1><span class="header-section-number">1</span> Sentence detection</h1>
+<p>The separation of the text into semantic analysis units is important for co-occurrence analysis. Context windows can be for instance documents, paragraphs or sentences or neighboring words. One of the most frequently used context window is the sentence.</p>
+<p>Documents are decomposed into sentences. Sentences are defined as a separate (quasi-)documents in a new corpus object of the quanteda-package. The further application of the quanteda-package functions remains the same. In contrast to previous exercises, however, we now use sentences which are stored as individual documents in the body.</p>
+<p>Important: The sentence segmentation must take place <em>before</em> the other preprocessing steps because the sentence-segmentation-model relies on intact word forms and punctuation marks.</p>
+<p>The following code uses a quanteda function to <strong>reshape</strong> the corpus into sentences.</p>
+<pre class="r"><code># original corpus length and its first document
+ndoc(sotu_corpus)</code></pre>
+<pre><code>## [1] 233</code></pre>
+<pre class="r"><code>substr(texts(sotu_corpus)[1], 0, 200)</code></pre>
+<pre><code>##                                                                                                                                                                                                             1 
+## &quot;Fellow-Citizens of the Senate and House of Representatives:\n\nI embrace with great satisfaction the opportunity which now presents itself\nof congratulating you on the present favorable prospects of our&quot;</code></pre>
+<pre class="r"><code>corpus_sentences &lt;- corpus_reshape(sotu_corpus, to = &quot;sentences&quot;)
+
+ndoc(corpus_sentences)</code></pre>
+<pre><code>## [1] 62735</code></pre>
+<pre class="r"><code>texts(corpus_sentences)[1]</code></pre>
+<pre><code>##                                                                                                                                                                                                                        1.1 
+## &quot;Fellow-Citizens of the Senate and House of Representatives:  I embrace with great satisfaction the opportunity which now presents itself of congratulating you on the present favorable prospects of our public affairs.&quot;</code></pre>
+<pre class="r"><code>texts(corpus_sentences)[2]</code></pre>
+<pre><code>##                                                                                                                                                                                                                                                                                                                                                                                                                                  1.2 
+## &quot;The recent accession of the important state of North Carolina to the Constitution of the United States (of which official information has been received), the rising credit and respectability of our country, the general and increasing good will toward the government of the Union, and the concord, peace, and plenty with which we are blessed are circumstances auspicious in an eminent degree to our national prosperity.&quot;</code></pre>
+<p>CAUTION: The newly decomposed corpus has now reached a considerable size of 62735 sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.</p>
+<p>Now we are returning to our usual pre-processing chain and apply it on the separated sentences.</p>
+<pre class="r"><code># Build a dictionary of lemmas
+lemma_data &lt;- read.csv(&quot;resources/baseform_en.tsv&quot;, encoding = &quot;UTF-8&quot;)
+
+# read an extended stop word list
+stopwords_extended &lt;- readLines(&quot;resources/stopwords_en.txt&quot;, encoding = &quot;UTF-8&quot;)
+
+# Preprocessing of the corpus of sentences
+corpus_tokens &lt;- corpus_sentences %&gt;% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %&gt;% 
+  tokens_tolower() %&gt;% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = &quot;fixed&quot;) %&gt;% 
+  tokens_remove(pattern = stopwords_extended, padding = T)
+
+# calculate multi-word unit candidates
+sotu_collocations &lt;- textstat_collocations(corpus_tokens, min_count = 25)
+sotu_collocations &lt;- sotu_collocations[1:250, ]
+
+corpus_tokens &lt;- tokens_compound(corpus_tokens, sotu_collocations)</code></pre>
+<p>Again, we create a document-term-matrix. Only word forms which occur at least 10 times should be taken into account. An upper limit is not set (<code>Inf</code> = infinite).</p>
+<p>Additionally, we are interested in the joint occurrence of words in a sentence. For this, we do not need the exact count of how often the terms occur, but only the information whether they occur together or not. This can be encoded in a binary document-term-matrix. The parameter <code>weighting</code> in the control options calls the <code>weightBin</code> function. This writes a 1 into the DTM if the term is contained in a sentence and 0 if not.</p>
+<pre class="r"><code>minimumFrequency &lt;- 10
+
+# Create DTM, prune vocabulary and set binary values for presence/absence of types
+binDTM &lt;- corpus_tokens %&gt;% 
+  tokens_remove(&quot;&quot;) %&gt;%
+  dfm() %&gt;% 
+  dfm_trim(min_docfreq = minimumFrequency, max_docfreq = Inf) %&gt;% 
+  dfm_weight(&quot;boolean&quot;)</code></pre>
+</div>
+<div id="counting-co-occurrences" class="section level1">
+<h1><span class="header-section-number">2</span> Counting co-occurrences</h1>
+<p>The counting of the joint word occurrence is easily possible via a matrix multiplication (<a href="https://en.wikipedia.org/wiki/Matrix_multiplication" class="uri">https://en.wikipedia.org/wiki/Matrix_multiplication</a>) on the binary DTM. For this purpose, the transposed matrix (dimensions: nTypes x nDocs) is multiplied by the original matrix (nDocs x nTypes), which as a result encodes a term-term matrix (dimensions: nTypes x nTypes).</p>
+<pre class="r"><code># Matrix multiplication for cooccurrence counts
+coocCounts &lt;- t(binDTM) %*% binDTM</code></pre>
+<p>Let’s look at a snippet of the result. The matrix has <code>nTerms</code> rows and columns and is symmetric. Each cell contains the number of joint occurrences. In the diagonal, the frequencies of single occurrences of each term are encoded.</p>
+<pre class="r"><code>as.matrix(coocCounts[202:205, 202:205])</code></pre>
+<pre><code>##             distant post-office agree opinion
+## distant         163           1     0       0
+## post-office       1          38     0       0
+## agree             0           0   310       7
+## opinion           0           0     7     463</code></pre>
+<p>Interprete as follows: agree appears together 7 times with opinion in the 62735 sentences of the SUTO addresses. agree alone occurs 310 times.</p>
+</div>
+<div id="statistical-significance" class="section level1">
+<h1><span class="header-section-number">3</span> Statistical significance</h1>
+<p>In order to not only count joint occurrence we have to determine their significance. Different significance-measures can be used. We need also various counts to calculate the significance of the joint occurrence of a term <code>i</code> (<code>coocTerm</code>) with any other term <code>j</code>: * k - Number of all context units in the corpus * ki - Number of occurrences of <code>coocTerm</code> * kj - Number of occurrences of comparison term j * kij - Number of joint occurrences of <code>coocTerm</code> and j</p>
+<p>These quantities can be calculated for any term <code>coocTerm</code> as follows:</p>
+<pre class="r"><code>coocTerm &lt;- &quot;spain&quot;
+k &lt;- nrow(binDTM)
+ki &lt;- sum(binDTM[, coocTerm])
+kj &lt;- colSums(binDTM)
+names(kj) &lt;- colnames(binDTM)
+kij &lt;- coocCounts[coocTerm, ]</code></pre>
+<p>An implementation in <em>R</em> for Mutual Information, Dice, and Log-Likelihood may look like this. At the end of each formula, the result is sorted so that the most significant co-occurrences are at the first ranks of the list.</p>
+<pre class="r"><code>########## MI: log(k*kij / (ki * kj) ########
+mutualInformationSig &lt;- log(k * kij / (ki * kj))
+mutualInformationSig &lt;- mutualInformationSig[order(mutualInformationSig, decreasing = TRUE)]
+
+########## DICE: 2 X&amp;Y / X + Y ##############
+dicesig &lt;- 2 * kij / (ki + kj)
+dicesig &lt;- dicesig[order(dicesig, decreasing=TRUE)]
+  
+########## Log Likelihood ###################
+logsig &lt;- 2 * ((k * log(k)) - (ki * log(ki)) - (kj * log(kj)) + (kij * log(kij)) 
+          + (k - ki - kj + kij) * log(k - ki - kj + kij) 
+          + (ki - kij) * log(ki - kij) + (kj - kij) * log(kj - kij) 
+          - (k - ki) * log(k - ki) - (k - kj) * log(k - kj))
+logsig &lt;- logsig[order(logsig, decreasing=T)]</code></pre>
+<p>The result of the four variants for the statistical extraction of co-occurrence terms is shown in a data frame below. It can be seen that frequency is a bad indicator of meaning constitution. Mutual information emphasizes rather rare events in the data. Dice and Log-likelihood yield very well interpretable contexts.</p>
+<pre class="r"><code># Put all significance statistics in one Data-Frame
+resultOverView &lt;- data.frame(
+  names(sort(kij, decreasing=T)[1:10]), sort(kij, decreasing=T)[1:10],
+  names(mutualInformationSig[1:10]), mutualInformationSig[1:10], 
+  names(dicesig[1:10]), dicesig[1:10], 
+  names(logsig[1:10]), logsig[1:10],
+  row.names = NULL)
+colnames(resultOverView) &lt;- c(&quot;Freq-terms&quot;, &quot;Freq&quot;, &quot;MI-terms&quot;, &quot;MI&quot;, &quot;Dice-Terms&quot;, &quot;Dice&quot;, &quot;LL-Terms&quot;, &quot;LL&quot;)
+print(resultOverView)</code></pre>
+<pre><code>##     Freq-terms Freq    MI-terms   MI Dice-Terms   Dice    LL-Terms    LL
+## 1        spain  443       spain 4.95      spain 1.0000        cuba 256.4
+## 2  unite_state  138     amistad 4.04       cuba 0.1434 unite_state 246.3
+## 3   government  125    antilles 4.04    spanish 0.1072     spanish 163.6
+## 4       treaty   59      madrid 3.89     france 0.0840  government 124.9
+## 5         make   57    catholic 3.89     island 0.0736      treaty 121.3
+## 6         cuba   53       queen 3.85     colony 0.0734      france 116.2
+## 7         part   49    autonomy 3.57    florida 0.0710       claim 107.0
+## 8        claim   47        cede 3.55     madrid 0.0691      madrid 106.2
+## 9          war   46  adventurer 3.52      claim 0.0669      island 103.7
+## 10     country   43 spoliations 3.41     treaty 0.0646     florida  96.3</code></pre>
+</div>
+<div id="visualization-of-co-occurrence" class="section level1">
+<h1><span class="header-section-number">4</span> Visualization of co-occurrence</h1>
+<p>In the following, we create a network visualization of significant co-occurrences.</p>
+<p>For this, we provide the calculation of the co-occurrence significance measures, which we have just introduced, as single function in the file <code>calculateCoocStatistics.R</code>. This function can be imported into the current R-Session with the <code>source</code> command.</p>
+<pre class="r"><code># Read in the source code for the co-occurrence calculation
+source(&quot;calculateCoocStatistics.R&quot;)
+# Definition of a parameter for the representation of the co-occurrences of a concept
+numberOfCoocs &lt;- 15
+# Determination of the term of which co-competitors are to be measured.
+coocTerm &lt;- &quot;california&quot;</code></pre>
+<p>We use the imported function <code>calculateCoocStatistics</code> to calculate the co-occurrences for the target term <em>“california”</em>.</p>
+<pre class="r"><code>coocs &lt;- calculateCoocStatistics(coocTerm, binDTM, measure=&quot;LOGLIK&quot;)
+# Display the numberOfCoocs main terms
+print(coocs[1:numberOfCoocs])</code></pre>
+<pre><code>##      oregon      mexico       texas     mineral       upper   territory 
+##       255.8       157.8        55.3        54.4        51.5        47.3 
+##   wisconsin     arizona acquisition  possession       coast        mine 
+##        42.7        41.6        40.6        36.6        36.0        35.8 
+##      grande        york       maine 
+##        35.7        34.9        33.8</code></pre>
+<p>To acquire an extended semantic environment of the target term, ‘secondary co-occurrence’ terms can be computed for each co-occurrence term of the target term. This results in a graph that can be visualized with special layout algorithms (e.g. Force Directed Graph).</p>
+<p>Network graphs can be evaluated and visualized in R with the <code>igraph</code>-package. Any graph object can be created from a three-column data-frame. Each row in that data-frame is a triple. Each triple encodes an edge-information of two nodes (source, sink) and an edge-weight value.</p>
+<p>For a term co-occurrence network, each triple consists of the target word, a co-occurring word and the significance of their joint occurrence. We denote the values with <em>from, to, sig</em>.</p>
+<pre class="r"><code>resultGraph &lt;- data.frame(from = character(), to = character(), sig = numeric(0))</code></pre>
+<p>The process of gathering the network for the target term runs in two steps. First, we obtain all significant co-occurrence terms for the target term. Second, we obtain all co-occurrences of the co-occurrence terms from step one.</p>
+<p>Intermediate results for each term are stored as temporary triples named <code>tmpGraph</code>. With the <code>rbind</code> command (“row bind”, used for concatenation of data-frames) all <code>tmpGraph</code> are appended to the complete network object stored in <code>resultGraph</code>.</p>
+<pre class="r"><code># The structure of the temporary graph object is equal to that of the resultGraph
+tmpGraph &lt;- data.frame(from = character(), to = character(), sig = numeric(0))
+
+# Fill the data.frame to produce the correct number of lines
+tmpGraph[1:numberOfCoocs, 3] &lt;- coocs[1:numberOfCoocs]
+# Entry of the search word into the first column in all lines
+tmpGraph[, 1] &lt;- coocTerm
+# Entry of the co-occurrences into the second column of the respective line
+tmpGraph[, 2] &lt;- names(coocs)[1:numberOfCoocs]
+# Set the significances
+tmpGraph[, 3] &lt;- coocs[1:numberOfCoocs]
+
+# Attach the triples to resultGraph
+resultGraph &lt;- rbind(resultGraph, tmpGraph)
+
+# Iteration over the most significant numberOfCoocs co-occurrences of the search term
+for (i in 1:numberOfCoocs){
+  
+  # Calling up the co-occurrence calculation for term i from the search words co-occurrences
+  newCoocTerm &lt;- names(coocs)[i]
+  coocs2 &lt;- calculateCoocStatistics(newCoocTerm, binDTM, measure=&quot;LOGLIK&quot;)
+  
+  #print the co-occurrences
+  coocs2[1:10]
+  
+  # Structure of the temporary graph object
+  tmpGraph &lt;- data.frame(from = character(), to = character(), sig = numeric(0))
+  tmpGraph[1:numberOfCoocs, 3] &lt;- coocs2[1:numberOfCoocs]
+  tmpGraph[, 1] &lt;- newCoocTerm
+  tmpGraph[, 2] &lt;- names(coocs2)[1:numberOfCoocs]
+  tmpGraph[, 3] &lt;- coocs2[1:numberOfCoocs]
+  
+  #Append the result to the result graph
+  resultGraph &lt;- rbind(resultGraph, tmpGraph[2:length(tmpGraph[, 1]), ])
+}</code></pre>
+<p>As a result, <code>resultGraph</code> now contains all <code>numberOfCoocs * numberOfCoocs</code> edges of a term co-occurrence network.</p>
+<pre class="r"><code># Sample of some examples from resultGraph
+resultGraph[sample(nrow(resultGraph), 6), ]</code></pre>
+<pre><code>##            from           to  sig
+## 5    california        upper 51.5
+## 146   territory jurisdiction 87.8
+## 1015      maine     virginia 33.8
+## 4    california      mineral 54.4
+## 610  possession       island 57.0
+## 413      grande       nueces 65.5</code></pre>
+<p>The package iGraph offers multiple graph visualizations for graph objects. Graph objects can be created from triple lists, such as those we just generated. In the next step we load the package iGraph and create a visualization of all nodes and edges from the object <code>resultGraph</code>.</p>
+<pre class="r"><code>require(igraph)
+
+# Set the graph and type
+graphNetwork &lt;- graph.data.frame(resultGraph, directed = F)
+
+# Identification of all nodes with less than 2 edges
+graphVs &lt;- V(graphNetwork)[degree(graphNetwork) &lt; 2]
+# These edges are removed from the graph
+graphNetwork &lt;- delete.vertices(graphNetwork, graphVs) 
+
+# Assign colors to edges and nodes (searchterm blue, rest orange)
+V(graphNetwork)$color &lt;- ifelse(V(graphNetwork)$name == coocTerm, &#39;cornflowerblue&#39;, &#39;orange&#39;) 
+
+# Edges with a significance of at least 50% of the maximum sig- nificance in the graph are drawn in orange
+halfMaxSig &lt;- max(E(graphNetwork)$sig) * 0.5
+E(graphNetwork)$color &lt;- ifelse(E(graphNetwork)$sig &gt; halfMaxSig, &quot;coral&quot;, &quot;azure3&quot;)
+
+# Disable edges with radius
+E(graphNetwork)$curved &lt;- 0 
+# Size the nodes by their degree of networking
+V(graphNetwork)$size &lt;- log(degree(graphNetwork)) * 5
+
+# All nodes must be assigned a standard minimum-size
+V(graphNetwork)$size[V(graphNetwork)$size &lt; 5] &lt;- 3 
+
+# edge thickness
+E(graphNetwork)$width &lt;- 2
+
+# Define the frame and spacing for the plot
+par(mai=c(0,0,1,0)) 
+
+# Finaler Plot
+plot(graphNetwork,              
+     layout = layout.fruchterman.reingold,  # Force Directed Layout 
+     main = paste(coocTerm, &#39; Graph&#39;),
+     vertex.label.family = &quot;sans&quot;,
+     vertex.label.cex = 0.8,
+     vertex.shape = &quot;circle&quot;,
+     vertex.label.dist = 0.5,           # Labels of the nodes moved slightly
+     vertex.frame.color = &#39;darkolivegreen&#39;,
+     vertex.label.color = &#39;black&#39;,      # Color of node names
+     vertex.label.font = 2,         # Font of node names
+     vertex.label = V(graphNetwork)$name,       # node names
+     vertex.label.cex = 1 # font size of node names 
+)</code></pre>
+<p><img src="Tutorial_5_Co-occurrence_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
+</div>
+<div id="optional-exercises" class="section level1">
+<h1><span class="header-section-number">5</span> Optional exercises</h1>
+<ol style="list-style-type: decimal">
+<li>Create term networks for “civil”, “germany”, “tax”</li>
+<li><p>For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx2-1.png" width="960" /> The plot may get very messy. Try lower values for <code>numberOfCoocs</code> to create a less dense network plot.</p></li>
+<li><p>Separate the DTM into two time periods (year &lt; 1950; year &gt; = 1950). Represent the graphs for the term “california” for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (<code>get_binDTM &lt;- function(mycorpus)</code>) and for visualizing a co-occurrence network (<code>vis_cooc_network &lt;- function(binDTM, coocTerm)</code>). <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-1.png" width="960" /><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-2.png" width="960" /></p></li>
+</ol>
+</div>
+
+<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

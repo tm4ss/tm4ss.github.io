@@ -1,0 +1,229 @@
+---
+title: 'Tutorial 1: Processing of textual data'
+author: "Andreas Niekler, Gregor Wiedemann"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    number_sections: yes
+    theme: united
+    toc: yes
+    toc_float: yes
+highlight: tango
+csl: springer.csl
+bibliography: references.bib
+---
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
+In this tutorial, we demonstrate how to read text data in R, tokenize texts and create a document-term matrix.
+
+1. Reading various file formats with the `readtext` package,
+2. From text to a corpus,
+3. Create a document-term matrix and investigate Zipf's law
+
+# Reading txt, pdf, html, docx, ...
+
+In case you have already a collection of document files on your disk, you can import them into R in a very convenient way provided by the `readtext` package. The package depends on some other programs or libraries in your system, e.g. to provide extraction of text from Word- and PDF-documents. 
+
+Hence, some persons encountered hurdles to install the package due to missing libraries. In this case, carefully read error messages and install the missing libraries.
+
+For demonstration purpose, we provide in `data/documents` a random selection of documents in various file formats. First, we request a list of files in the directory to extract text from. 
+
+```{r}
+data_files <- list.files(path = "data/documents", full.names = T, recursive = T)
+
+# View first file paths
+head(data_files, 3)
+```
+
+The `readtext` function from the package with the same name, detects automatically file formats of the given files list and extracts the content into a `data.frame`. The parameter `docvarsfrom` allows you to set metadata variables by splitting path names. In our example, `docvar3` contains a source type variable derived from the sub folder name. 
+
+```{r eval=F, message=F}
+require(readtext)
+
+extracted_texts <- readtext(data_files, docvarsfrom = "filepaths", dvsep = "/")
+
+# View first rows of the extracted texts
+head(extracted_texts)
+
+# View beginning of the second extracted text
+cat(substr(extracted_texts$text[2] , 0, 300))
+```
+
+Again, the `extracted_texts` can be written by `write.csv2` to disk for later use.
+
+```{r, eval=F}
+write.csv2(extracted_texts, file = "data/text_extracts.csv", fileEncoding = "UTF-8")
+```
+
+We choose CSV as a convenient text column based format for easy import and export in R and other programs. Also our example data for the rest of the tutorials is provided as CSV file. Windows users: Take care of setting UTF-8 file encoding explicitly when writing text data to the hard drive.
+
+# From text to a corpus object
+
+Set global options at the beginning of each script! When working with textual data strings, it is recommended to turn R's automatic conversion of strings into factors off.
+
+```{r}
+# Global options
+options(stringsAsFactors = FALSE)
+```
+
+The `read.csv` command reads a **CSV** (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a *separator* character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = `TRUE` or `FALSE`) and the character set.
+
+We read a CSV containing 233 "State of the Union" addresses of the presidents of the United States. The texts are freely available from http://stateoftheunion.onetwothree.net. 
+
+Our CSV file has the format: `"doc_id";"speech_type";"president";"date";"text"`. Text is encapsualted into quotes (`"`). Since sepration is marked by `;` instead of `,`, we need to specify the separator char. 
+
+```{r results='hide', message=FALSE, warning=FALSE}
+# read csv into a data.frame
+textdata <- read.csv("data/sotu.csv", header = TRUE, sep = ";", encoding = "UTF-8")
+```
+
+The texts are now available in a `data.frame` together with some metadata (document id, speech type, president). Let us first see how many documents and metadata we have read.
+
+```{r message=FALSE, warning=FALSE}
+# dimensions of the data frame
+dim(textdata)
+# column names of text and metadata
+colnames(textdata)
+```
+
+**How many speeches do we have per president?** This can easily be counted with the command `table`, which can be used to create a cross table of different values. If we apply it to a column, e.g. *president* of our data frame, we get the counts of the unique *president* values.
+
+```{r eval=F, echo=T}
+table(textdata[, "president"])
+```
+```{r eval=TRUE, echo=FALSE}
+head(table(textdata[, "president"]), 12)
+```
+
+Now we want to transfer the loaded text source into a **corpus object** of the `quanteda`-package. 
+Quanteda provides a large number of highly efficient convenience functions to process text in R @Welbers.2017.
+First we load the package.
+
+```{r results='hide', message=FALSE, warning=FALSE}
+require(quanteda)
+```
+
+A corpus object is created with the `corpus` command. As parameter, the command gets the fulltext of the documents. In our case, this is the `text`-column of the `textdata`-data.frame. The docnames-parameter of the corpus function defines which unique identifier is given to each text example in the input (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).
+
+```{r}
+sotu_corpus <- corpus(textdata$text, docnames = textdata$doc_id)
+# have a look on the new corpus object
+summary(sotu_corpus)
+```
+
+A corpus is an extension of R list objects. With the `[[]]` brackets, we can access single list elements, here documents, within a corpus. We print the text of the first element of the corpus using the `texts` command. 
+
+```{r eval=F, echo=T}
+# getting a single text documents content
+cat(texts(sotu_corpus[1]))
+```
+```{r eval=T, echo=F}
+cat(paste0(substring(texts(sotu_corpus)[1], 0, 155), "..."))
+```
+
+The command `cat` prints a given character vector with correct line breaks (compare the difference of the output with the `print` method instead).
+
+Success!!! We now have `r ndoc(sotu_corpus)` speeches for further analysis available in a convenient tm corpus object!
+
+# Text statistics
+
+A further aim of this exercise is to learn about statistical characteristics of text data. At the moment, our texts are represented as long character strings wrapped in document objects of a corpus. To analyze which word forms the texts contain, they must be __tokenized__. This means that all the words in the texts need to be identified and separated. Only in this way it is possible to count the frequency of individual word forms. A word form is also called **"type"**. The occurrence of a type in a text is a **"token"**.
+
+For text mining, texts are further transformed into a numeric representation. The basic idea is that the texts can be represented as statistics about the contained words (or other content fragments such as sequences of two words). The list of every distinct word form in the entire corpus forms the **vocabulary** of a corpus. 
+
+For each document, we can count how often each word of the vocabulary occurs in it. By this, we get a term **frequency vector** for each document. The dimensionality of this term vector corresponds to the size of the vocabulary. Hence, the word vectors have the same form for each document in a corpus. Consequently, multiple term vectors representing different documents can be combined into a matrix. This data structure is called **document-term matrix** (DTM).
+
+The function `dfm` (Document-Feature-Matrix; Quanteda treats words as features of a text-based dataset) of the `quanteda` package creates such a DTM. If this command is called without further parameters, the individual word forms are identified by using the tokenizer of quanteda as the word separator (see `help(tokens)`for details). Quanteda has 3 different word separation methods. The standard and smartest way uses word boundaries and punctuations to separate the text sources. The other methods rely on whitespace information an work significantly faster but not as accurate.
+
+```{r}
+# Create a DTM (may take a while)
+DTM <- dfm(sotu_corpus)
+# Show some information
+DTM
+# Dimensionality of the DTM
+dim(DTM)
+```
+
+The dimensions of the DTM, `r nrow(DTM)` rows and `r ncol(DTM)` columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.
+
+A first impression of text statistics we can get from a word list. Such a word list represents the frequency counts of all words in all documents. We can get that information easily from the DTM by summing all of its column vectors.
+
+A so-called **sparse matrix** data structure is used for the document term matrix in the quanteda package (quanteda inherits the `Matrix` package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The *Matrix* package provides arithmetic operations on sparse DTMs.
+
+```{r}
+# sum columns for word counts
+freqs <- colSums(DTM)
+# get vocabulary vector
+words <- colnames(DTM)
+# combine words and their frequencies in a data frame
+wordlist <- data.frame(words, freqs)
+# re-order the wordlist by decreasing frequency
+wordIndexes <- order(wordlist[, "freqs"], decreasing = TRUE)
+wordlist <- wordlist[wordIndexes, ]
+# show the most frequent words
+head(wordlist, 25)
+```
+
+The words in this sorted list have a ranking depending on the position in this list. If the word ranks are plotted on the x axis and all frequencies on the y axis, then the Zipf distribution is obtained. This is a typical property of language data and its distribution is similar for all languages.
+
+```{r fig.width=8, fig.height=7}
+plot(wordlist$freqs , type = "l", lwd=2, main = "Rank frequency Plot", xlab="Rank", ylab ="Frequency")
+```
+
+The distribution follows an extreme power law distribution (very few words occur very often, very many words occur very rare). The Zipf law says that the frequency of a word is reciprocal to its rank (1 / r). To make the plot more readable, the axes can be logarithmized.
+
+```{r fig.width=8, fig.height=7}
+plot(wordlist$freqs , type = "l", log="xy", lwd=2, main = "Rank-Frequency Plot", xlab="log-Rank", ylab ="log-Frequency")
+```
+
+In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and `r nrow(wordlist)` can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text. 
+
+Hence, ignoring very rare / frequent words has many advantages:
+
+* reducing the dimensionality of the vocabulary (saves memory)
+* processing speed up
+* better identification of meaningful structures.
+
+To illustrate the range of ranks best to be used for analysis, we augment information in the rank frequency plot. First, we mark so-called **stop words**. These are words of a language that normally do not contribute to semantic information about a text. In addition, all words in the word list are identified which occur less than 10 times.
+
+The `%in%` operator can be used to compare which elements of the first vector are contained in the second vector. At this point, we compare the words in the word list with a loaded stopword list (retrieved by the function `stopwords` of the tm package) . The result of the `%in%` operator is a boolean vector which contains TRUE or FALSE values.
+
+A boolean value (or a vector of boolean values) can be inverted with the `!` operator (`TRUE` gets `FALSE` and vice versa). The `which` command returns the indices of entries in a boolean vector which contain the value `TRUE`.
+
+We also compute indices of words, which occur less than 10 times. With a union set operation, we combine both index lists. With a setdiff operation, we reduce a vector of all indices (the sequence `1:nrow(wordlist)`) by removing the stopword indices and the low freuent word indices.
+
+With the command "lines" the range of the remining indices can be drawn into the plot.
+
+```{r fig.width=8, fig.height=7}
+plot(wordlist$freqs, type = "l", log="xy",lwd=2, main = "Rank-Frequency plot", xlab="Rank", ylab = "Frequency")
+englishStopwords <- stopwords("en")
+stopwords_idx <- which(wordlist$words %in% englishStopwords)
+low_frequent_idx <- which(wordlist$freqs < 10)
+insignificant_idx <- union(stopwords_idx, low_frequent_idx)
+meaningful_range_idx <- setdiff(1:nrow(wordlist), insignificant_idx)
+lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = "green", lwd=2, type="p", pch=20)
+```
+
+The green range marks the range of meaningful terms for the collection.
+
+# Optional exercises
+
+1. Print out the word list without stop words and low frequent words.
+```{r echo=FALSE}
+head(wordlist[meaningful_range_idx, ], 25)
+```
+2. If you look at the result, are there any corpus specific terms that should also be considered as stop word?
+3. What is the share of terms regarding the entire vocabulary which occur only once in the corpus?
+```{r echo=FALSE}
+sum(wordlist$freqs == 1) / nrow(wordlist)
+```
+4. Compute the type-token ratio (TTR) of the corpus. the TTR is the fraction of the number of tokens divided by the number of types.
+```{r echo=FALSE}
+ncol(DTM) / sum(DTM)
+```
+
+# References
+

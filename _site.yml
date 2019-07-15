@@ -1,0 +1,42 @@
+# name: "A five day text mining course for humanists and social scientists in R"
+name: "Text mining for humanists and social scientists in R"
+output_dir: "docs"
+navbar:
+  # title: "Course plan:"
+  left:
+    - text: "Intro"
+      href: index.html
+#    - text: "Tutorial 0"
+#      href: Tutorial_0_R-Intro.html
+#      icon: ion-android-bulb
+    - text: "Tutorial 1"
+      href: Tutorial_1_Read_textdata.html
+      icon: ion-android-bulb
+    - text: "Tutorial 2"
+      href: Tutorial_2_Web_crawling.html
+      icon: ion-android-bulb
+    - text: "Tutorial 3"
+      href: Tutorial_3_Frequency.html
+      icon: ion-android-bulb
+    - text: "Tutorial 4"
+      href: Tutorial_4_Term_extraction.html
+      icon: ion-android-bulb
+    - text: "Tutorial 5"
+      href: Tutorial_5_Co-occurrence.html
+      icon: ion-android-bulb
+    - text: "Tutorial 6"
+      href: Tutorial_6_Topic_Models.html
+      icon: ion-android-bulb
+    - text: "Tutorial 7"
+      href: Tutorial_7_Klassifikation.html
+      icon: ion-android-bulb
+    - text: "Tutorial 8"
+      href: Tutorial_8_NER_POS.html
+      icon: ion-android-bulb
+
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    include:
+      after_body: footer.html

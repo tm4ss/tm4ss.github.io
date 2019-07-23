@@ -23,6 +23,8 @@ In this tutorial, we demonstrate how to read text data in R, tokenize texts and 
 2. From text to a corpus,
 3. Create a document-term matrix and investigate Zipf's law
 
+First, let's create a new R Project (File -> New Project -> Existing directory) in the provided tutorial folder. Then we create a new R File (File -> New File -> R script) and save it as "Tutorial_1.R".
+
 # Reading txt, pdf, html, docx, ...
 
 In case you have already a collection of document files on your disk, you can import them into R in a very convenient way provided by the `readtext` package. The package depends on some other programs or libraries in your system, e.g. to provide extraction of text from Word- and PDF-documents. 

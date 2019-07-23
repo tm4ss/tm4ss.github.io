@@ -11,9 +11,9 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-15" />
+<meta name="date" content="2019-07-23" />
 
-<title>Tutorial 2: Data import and web scraping</title>
+<title>Tutorial 2: Web crawling and scraping</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -458,9 +458,9 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Tutorial 2: Data import and web scraping</h1>
+<h1 class="title toc-ignore">Tutorial 2: Web crawling and scraping</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-15</h4>
+<h4 class="date">2019-07-23</h4>
 
 </div>
 
@@ -476,7 +476,7 @@ div.tocify {
 </ol>
 <div id="preparation" class="section level1">
 <h1><span class="header-section-number">1</span> Preparation</h1>
-<p>Create a new R Project (File -&gt; New Project -&gt; Existing directory) in the provided tutorial folder. Then create a new R script (File -&gt; New File -&gt; R Script) named “Tutorial_1.R”. In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.</p>
+<p>Create a new R script (File -&gt; New File -&gt; R Script) named “Tutorial_2.R”. In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.</p>
 <p>Tip: Copy individual sections of the source code directly into the console (2) and run it step by step. Get familiar with the function calls included in the Help function.</p>
 <p>First, make sure your working directory is the data directory we provided for the exercises.</p>
 <pre class="r"><code># important option for text analysis
@@ -492,7 +492,7 @@ getwd()</code></pre>
 require(&quot;rvest&quot;)</code></pre>
 <p>A convenient method to download and parse a webpage provides the function <code>read_html</code> which accepts a URL as a parameter. The function downloads the page and interprets the html source code as an HTML / XML object.</p>
 <pre class="r"><code>html_document &lt;- read_html(url)</code></pre>
-<p>HTML / XML objects are a structured representation of HTML / XML source code, which allows to extract single elements (headlines e.g. <code>&lt;h1&gt;</code>, paragraphs <code>&lt;p&gt;</code>, links <code>&lt;a&gt;</code>, …), their attributes (e.g. <code>&lt;a href="http://..."&gt;</code>) or text wrapped in between elements (e.g. <code>&lt;p&gt;my text...&lt;/p&gt;</code>). Elements can be extracted in XML objects with XPATH-expressions.</p>
+<p>HTML / XML objects are a structured representation of HTML / XML source code, which allows to extract single elements (headlines e.g. <code>&lt;h1&gt;</code>, paragraphs <code>&lt;p&gt;</code>, links <code>&lt;a&gt;</code>, …), their attributes (e.g. <code>&lt;a href=&quot;http://...&quot;&gt;</code>) or text wrapped in between elements (e.g. <code>&lt;p&gt;my text...&lt;/p&gt;</code>). Elements can be extracted in XML objects with XPATH-expressions.</p>
 <p>XPATH (see <a href="https://en.wikipedia.org/wiki/XPath" class="uri">https://en.wikipedia.org/wiki/XPath</a>) is a query language to select elements in XML-tree structures. We use it to select the headline element from the HTML page. The following xpath expression queries for first-order-headline elements <code>h1</code>, anywhere in the tree <code>//</code> which fulfill a certain condition <code>[...]</code>, namely that the <code>class</code> attribute of the <code>h1</code> element must contain the value <code>content__headline</code>.</p>
 <p>The next expression uses R pipe operator %&gt;%, which takes the input from the left side of the expression and passes it on to the function ion the right side as its first argument. The result of this function is either passed onto the next function, again via %&gt;% or it is assigned to the variable, if it is the last operation in the pipe chain. Our pipe takes the <code>html_document</code> object, passes it to the html_node function, which extracts the first node fitting the given xpath expression. The resulting node object is passed to the <code>html_text</code> function which extracts the text wrapped in the <code>h1</code>-element.</p>
 <pre class="r"><code>title_xpath &lt;- &quot;//h1[contains(@class, &#39;content__headline&#39;)]&quot;
@@ -538,9 +538,9 @@ html_document &lt;- read_html(url)</code></pre>
   html_attr(name = &quot;href&quot;)</code></pre>
 <p>Now, <code>links</code> contains a list of 20 hyperlinks to single articles tagged with Angela Merkel.</p>
 <pre class="r"><code>head(links, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/commentisfree/2019/jul/15/whats-wrong-with-angela-merkel-as-a-doctor-i-will-sit-out-the-pop-quiz&quot;
-## [2] &quot;https://www.theguardian.com/world/2019/jul/11/angela-merkel-sits-anthems-after-latest-shaking-episode&quot;                       
-## [3] &quot;https://www.theguardian.com/world/2019/jul/10/angela-merkel-seen-shaking-for-third-time&quot;</code></pre>
+<pre><code>## [1] &quot;https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump&quot;               
+## [2] &quot;https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister&quot;             
+## [3] &quot;https://www.theguardian.com/commentisfree/2019/jul/15/whats-wrong-with-angela-merkel-as-a-doctor-i-will-sit-out-the-pop-quiz&quot;</code></pre>
 <p>But stop! There is not only one page of links to tagged articles. If you have a look on the page in your browser, the tag overview page has several more than 60 sub pages, accessible via a paging navigator at the bottom. By clicking on the second page, we see a different URL-structure, which now contains a link to a specific paging number. We can use that format to create links to all sub pages by combining the base URL with the page numbers.</p>
 <pre class="r"><code>page_numbers &lt;- 1:3
 base_url &lt;- &quot;https://www.theguardian.com/world/angela-merkel?page=&quot;
@@ -610,9 +610,9 @@ for (i in 1:length(all_links)) {
   # Append current article data.frame to the data.frame of all articles
   all_articles &lt;- rbind(all_articles, article)
 }</code></pre>
-<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/commentisfree/2019/jul/15/whats-wrong-with-angela-merkel-as-a-doctor-i-will-sit-out-the-pop-quiz 
-## Downloading 2 of 60 URL: https://www.theguardian.com/world/2019/jul/11/angela-merkel-sits-anthems-after-latest-shaking-episode 
-## Downloading 3 of 60 URL: https://www.theguardian.com/world/2019/jul/10/angela-merkel-seen-shaking-for-third-time</code></pre>
+<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump 
+## Downloading 2 of 60 URL: https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister 
+## Downloading 3 of 60 URL: https://www.theguardian.com/commentisfree/2019/jul/15/whats-wrong-with-angela-merkel-as-a-doctor-i-will-sit-out-the-pop-quiz</code></pre>
 <pre class="r"><code># View first articles
 head(all_articles, 3)
 

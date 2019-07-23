@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-15" />
+<meta name="date" content="2019-07-23" />
 
 <title>Tutorial 1: Processing of textual data</title>
 
@@ -460,7 +460,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 1: Processing of textual data</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-15</h4>
+<h4 class="date">2019-07-23</h4>
 
 </div>
 
@@ -474,6 +474,7 @@ div.tocify {
 <li>From text to a corpus,</li>
 <li>Create a document-term matrix and investigate Zipf’s law</li>
 </ol>
+<p>First, let’s create a new R Project (File -&gt; New Project -&gt; Existing directory) in the provided tutorial folder. Then we create a new R File (File -&gt; New File -&gt; R script) and save it as “Tutorial_1.R”.</p>
 <div id="reading-txt-pdf-html-docx" class="section level1">
 <h1><span class="header-section-number">1</span> Reading txt, pdf, html, docx, …</h1>
 <p>In case you have already a collection of document files on your disk, you can import them into R in a very convenient way provided by the <code>readtext</code> package. The package depends on some other programs or libraries in your system, e.g. to provide extraction of text from Word- and PDF-documents.</p>
@@ -507,7 +508,7 @@ cat(substr(extracted_texts$text[2] , 0, 300))</code></pre>
 options(stringsAsFactors = FALSE)</code></pre>
 <p>The <code>read.csv</code> command reads a <strong>CSV</strong> (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a <em>separator</em> character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = <code>TRUE</code> or <code>FALSE</code>) and the character set.</p>
 <p>We read a CSV containing 233 “State of the Union” addresses of the presidents of the United States. The texts are freely available from <a href="http://stateoftheunion.onetwothree.net" class="uri">http://stateoftheunion.onetwothree.net</a>.</p>
-<p>Our CSV file has the format: <code>"doc_id";"speech_type";"president";"date";"text"</code>. Text is encapsualted into quotes (<code>"</code>). Since sepration is marked by <code>;</code> instead of <code>,</code>, we need to specify the separator char.</p>
+<p>Our CSV file has the format: <code>&quot;doc_id&quot;;&quot;speech_type&quot;;&quot;president&quot;;&quot;date&quot;;&quot;text&quot;</code>. Text is encapsualted into quotes (<code>&quot;</code>). Since sepration is marked by <code>;</code> instead of <code>,</code>, we need to specify the separator char.</p>
 <pre class="r"><code># read csv into a data.frame
 textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, header = TRUE, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)</code></pre>
 <p>The texts are now available in a <code>data.frame</code> together with some metadata (document id, speech type, president). Let us first see how many documents and metadata we have read.</p>
@@ -517,7 +518,7 @@ dim(textdata)</code></pre>
 <pre class="r"><code># column names of text and metadata
 colnames(textdata)</code></pre>
 <pre><code>## [1] &quot;doc_id&quot;      &quot;speech_type&quot; &quot;president&quot;   &quot;date&quot;        &quot;text&quot;</code></pre>
-<p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
+<p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
 <pre class="r"><code>table(textdata[, &quot;president&quot;])</code></pre>
 <pre><code>## 
 ##       Abraham Lincoln        Andrew Jackson        Andrew Johnson 
@@ -638,8 +639,8 @@ summary(sotu_corpus)</code></pre>
 ##    99  1394   5723       123
 ##   100  2402   9798       239
 ## 
-## Source: D:/Eigene Dateien/Promotion/Courses/Gesis BM II 2019/Tutorials/* on x86-64 by rioreiser
-## Created: Mon Jul 15 19:44:03 2019
+## Source: Z:/Promotion/Courses/Gesis BM III 2019/Tutorials/* on x86 by rioreiser
+## Created: Tue Jul 23 15:31:36 2019
 ## Notes:</code></pre>
 <p>A corpus is an extension of R list objects. With the <code>[[]]</code> brackets, we can access single list elements, here documents, within a corpus. We print the text of the first element of the corpus using the <code>texts</code> command.</p>
 <pre class="r"><code># getting a single text documents content
@@ -768,11 +769,11 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 <li>If you look at the result, are there any corpus specific terms that should also be considered as stop word?</li>
 <li>What is the share of terms regarding the entire vocabulary which occur only once in the corpus?</li>
 </ol>
-<pre><code>## [1] 0.393</code></pre>
+<pre><code>## [1] 0.3933615</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Compute the type-token ratio (TTR) of the corpus. the TTR is the fraction of the number of tokens divided by the number of types.</li>
 </ol>
-<pre><code>## [1] 0.0155</code></pre>
+<pre><code>## [1] 0.01546221</code></pre>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>

@@ -1,5 +1,5 @@
 ---
-title: "Tutorial 2: Data import and web scraping"
+title: "Tutorial 2: Web crawling and scraping"
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: 
@@ -25,7 +25,7 @@ In a third exercise, we will extract text data from various formats such as PDF,
 
 # Preparation
 
-Create a new R Project (File -> New Project -> Existing directory) in the provided tutorial folder. Then create a new R script (File -> New File -> R Script) named "Tutorial_1.R". In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.
+Create a new R script (File -> New File -> R Script) named "Tutorial_2.R". In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.
 
 Tip: Copy individual sections of the source code directly into the console (2) and run it step by step. Get familiar with the function calls included in the Help function.
 

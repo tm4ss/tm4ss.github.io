@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-23" />
+<meta name="date" content="2019-07-26" />
 
 <title>Tutorial 2: Web crawling and scraping</title>
 
@@ -460,7 +460,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 2: Web crawling and scraping</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-23</h4>
+<h4 class="date">2019-07-26</h4>
 
 </div>
 
@@ -538,9 +538,9 @@ html_document &lt;- read_html(url)</code></pre>
   html_attr(name = &quot;href&quot;)</code></pre>
 <p>Now, <code>links</code> contains a list of 20 hyperlinks to single articles tagged with Angela Merkel.</p>
 <pre class="r"><code>head(links, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump&quot;               
-## [2] &quot;https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister&quot;             
-## [3] &quot;https://www.theguardian.com/commentisfree/2019/jul/15/whats-wrong-with-angela-merkel-as-a-doctor-i-will-sit-out-the-pop-quiz&quot;</code></pre>
+<pre><code>## [1] &quot;https://www.theguardian.com/politics/live/2019/jul/23/boris-johnson-tory-leadership-theresa-may-politics-live&quot;  
+## [2] &quot;https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump&quot;  
+## [3] &quot;https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister&quot;</code></pre>
 <p>But stop! There is not only one page of links to tagged articles. If you have a look on the page in your browser, the tag overview page has several more than 60 sub pages, accessible via a paging navigator at the bottom. By clicking on the second page, we see a different URL-structure, which now contains a link to a specific paging number. We can use that format to create links to all sub pages by combining the base URL with the page numbers.</p>
 <pre class="r"><code>page_numbers &lt;- 1:3
 base_url &lt;- &quot;https://www.theguardian.com/world/angela-merkel?page=&quot;
@@ -610,15 +610,20 @@ for (i in 1:length(all_links)) {
   # Append current article data.frame to the data.frame of all articles
   all_articles &lt;- rbind(all_articles, article)
 }</code></pre>
-<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump 
-## Downloading 2 of 60 URL: https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister 
-## Downloading 3 of 60 URL: https://www.theguardian.com/commentisfree/2019/jul/15/whats-wrong-with-angela-merkel-as-a-doctor-i-will-sit-out-the-pop-quiz</code></pre>
+<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/politics/live/2019/jul/23/boris-johnson-tory-leadership-theresa-may-politics-live 
+## Downloading 2 of 60 URL: https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump 
+## Downloading 3 of 60 URL: https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister</code></pre>
 <pre class="r"><code># View first articles
 head(all_articles, 3)
 
 # Write articles to disk
 write.csv2(all_articles, file = &quot;data/guardian_merkel.csv&quot;)</code></pre>
 <p>The last command write the extracted articles to a CSV-file in the data directory for any later use.</p>
+</div>
+<div id="optional-exercises" class="section level1">
+<h1><span class="header-section-number">4</span> Optional exercises</h1>
+<p>Try to perform extraction of news articles from another web page, e.g. <a href="https://www.spiegel.de" class="uri">https://www.spiegel.de</a> or <a href="https://www.nytimes.com" class="uri">https://www.nytimes.com</a>.</p>
+<p>For this, investigate the URL patterns of the page and look into the source code with the `inspect element’ functionality of your browser to find appropriate XPATH expressions.</p>
 </div>
 
 <p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>

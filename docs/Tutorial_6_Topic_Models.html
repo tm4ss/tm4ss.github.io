@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-15" />
+<meta name="date" content="2019-07-26" />
 
 <title>Tutorial 6: Topic Models</title>
 
@@ -465,7 +465,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 6: Topic Models</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-15</h4>
+<h4 class="date">2019-07-26</h4>
 
 </div>
 
@@ -613,14 +613,14 @@ words &lt;- names(top40terms)
 probabilities &lt;- sort(tmResult$terms[topicToViz,], decreasing=TRUE)[1:40]
 # visualize the terms as wordcloud
 wordcloud2(data.frame(words, probabilities), shuffle = FALSE, size = 0.8)</code></pre>
-<div id="htmlwidget-38590342824a56508785" style="width:384px;height:384px;" class="wordcloud2 html-widget"></div>
-<script type="application/json" data-for="htmlwidget-38590342824a56508785">{"x":{"word":["mexico","war","texas","peace","congress","duty","act","territory","policy","part","army","revenue","treasury","mexican","amount","citizen","loan","time","recommend","treaty","large","claim","secretary","american","force","california","authorize","command","month","order","establish","price","term","nation","impose","oregon","demand","hostility","reduce","foreign"],"freq":[0.0283871111176985,0.0209021921178615,0.010193570380471,0.00848908387555767,0.00745157035082779,0.00689575953400821,0.00630289466273399,0.00630289466273399,0.00593235411818762,0.00578413790036906,0.00578413790036906,0.00548770546473195,0.00545065141027731,0.00522832708354948,0.00519127302909485,0.00508011086573093,0.00493189464791238,0.00489484059345773,0.0048577865390031,0.00459840815782063,0.00459840815782063,0.00441313788554744,0.00433902977663816,0.00407965139545569,0.00407965139545569,0.00404259734100105,0.00400554328654641,0.00400554328654641,0.00396848923209177,0.0038943811231825,0.00385732706872786,0.00374616490536394,0.00370911085090931,0.00363500274200003,0.00363500274200003,0.00359794868754539,0.00348678652418148,0.00348678652418148,0.00348678652418148,0.00344973246972684],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":5072.72470956794,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div id="htmlwidget-44af750824add1309d60" style="width:384px;height:384px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-44af750824add1309d60">{"x":{"word":["mexico","war","texas","peace","congress","duty","act","territory","policy","part","army","revenue","treasury","mexican","amount","citizen","loan","time","recommend","treaty","large","claim","secretary","american","force","california","authorize","command","month","order","establish","price","term","nation","impose","oregon","demand","hostility","reduce","foreign"],"freq":[0.0283871111176985,0.0209021921178615,0.010193570380471,0.00848908387555767,0.00745157035082779,0.00689575953400821,0.00630289466273399,0.00630289466273399,0.00593235411818762,0.00578413790036906,0.00578413790036906,0.00548770546473195,0.00545065141027731,0.00522832708354948,0.00519127302909485,0.00508011086573093,0.00493189464791238,0.00489484059345773,0.0048577865390031,0.00459840815782063,0.00459840815782063,0.00441313788554744,0.00433902977663816,0.00407965139545569,0.00407965139545569,0.00404259734100105,0.00400554328654641,0.00400554328654641,0.00396848923209177,0.0038943811231825,0.00385732706872786,0.00374616490536394,0.00370911085090931,0.00363500274200003,0.00363500274200003,0.00359794868754539,0.00348678652418148,0.00348678652418148,0.00348678652418148,0.00344973246972684],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":5072.72470956794,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <p>Let us now look more closely at the distribution of topics within individual documents. To this end, we visualize the distribution in 3 sample documents.</p>
 <p>Let us first take a look at the contents of three sample documents:</p>
 <pre class="r"><code>exampleIds &lt;- c(2, 100, 200)
-cat(corpus[exampleIds[1]])
-cat(corpus[exampleIds[2]])
-cat(corpus[exampleIds[3]])</code></pre>
+cat(sotu_corpus[exampleIds[1]])
+cat(sotu_corpus[exampleIds[2]])
+cat(sotu_corpus[exampleIds[3]])</code></pre>
 <pre><code>## 2: Fellow-Citizens of the Senate and House of Representatives:
 ## 
 ## In meeting you again I feel much satisfaction in being able to repeat my
@@ -799,7 +799,7 @@ ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) +
 <ol style="list-style-type: decimal">
 <li>Create a list of all documents that have a thematic context with <em>economy</em>.</li>
 <li>Repeat the exercises with a different K value (e.g., K = 5, 30, 50). What do you think of the results?</li>
-<li>Split the original text source into paragraphs (e.g. use <code>strsplit(textdata$text, "\n\n")</code>) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?</li>
+<li>Split the original text source into paragraphs (e.g. use <code>strsplit(textdata$text, &quot;\n\n&quot;)</code>) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?</li>
 </ol>
 </div>
 <div id="references" class="section level1 unnumbered">

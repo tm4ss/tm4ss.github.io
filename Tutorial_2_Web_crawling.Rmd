@@ -242,3 +242,9 @@ write.csv2(all_articles, file = "data/guardian_merkel.csv")
 ```
 
 The last command write the extracted articles to a CSV-file in the data directory for any later use.
+
+# Optional exercises
+
+Try to perform extraction of news articles from another web page, e.g. https://www.spiegel.de or https://www.nytimes.com.
+
+For this, investigate the URL patterns of the page and look into the source code with the `inspect element' functionality of your browser to find appropriate XPATH expressions.

@@ -181,9 +181,9 @@ Let us first take a look at the contents of three sample documents:
 
 ``` {r eval=FALSE}
 exampleIds <- c(2, 100, 200)
-cat(corpus[exampleIds[1]])
-cat(corpus[exampleIds[2]])
-cat(corpus[exampleIds[3]])
+cat(sotu_corpus[exampleIds[1]])
+cat(sotu_corpus[exampleIds[2]])
+cat(sotu_corpus[exampleIds[3]])
 ```
 
 ``` {r echo=FALSE}

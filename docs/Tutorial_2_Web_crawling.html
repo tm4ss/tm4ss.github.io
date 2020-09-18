@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-26" />
+<meta name="date" content="2020-09-18" />
 
 <title>Tutorial 2: Web crawling and scraping</title>
 
@@ -93,7 +93,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -242,6 +241,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -254,48 +254,9 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -309,6 +270,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -460,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 2: Web crawling and scraping</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-26</h4>
+<h4 class="date">2020-09-18</h4>
 
 </div>
 
@@ -485,21 +452,46 @@ options(stringsAsFactors = F)
 # zip file. If necessary, use `setwd(&quot;your-tutorial-folder-path&quot;)` to change it.
 getwd()</code></pre>
 </div>
+<div id="prepare-scraping-of-dynamic-web-pages" class="section level1">
+<h1><span class="header-section-number">2</span> Prepare scraping of dynamic web pages</h1>
+<p>Modern websites often do not contain the full content displayed in the browser in their corresponding source files which are served by the webserver. Instead, the browser loads additional content dynamically via javascript code contained in the original source file. To be able to scrape such content, we rely on a headless browser “phantomJS” which renders a site for a given URL for us, before we start the actual scraping, i.e. the extraction of certain identifiable elements from the rendered site.</p>
+<p>If not done yet, please install the <code>webdriver</code> package for R and install the <a href="https://phantomjs.org">phantomJS</a> headless browser. This needs to be done only once.</p>
+<pre class="r"><code>install.packages(&quot;webdriver&quot;)
+library(webdriver)
+install_phantomjs()</code></pre>
+<p>Now we can start an instance of PhantomJS and create a new browser session that awaits to load URLs to render the corresponding websites.</p>
+<pre class="r"><code>require(webdriver)</code></pre>
+<pre><code>## Loading required package: webdriver</code></pre>
+<pre class="r"><code>pjs_instance &lt;- run_phantomjs()
+pjs_session &lt;- Session$new(port = pjs_instance$port)</code></pre>
+</div>
 <div id="crawl-single-webpage" class="section level1">
-<h1><span class="header-section-number">2</span> Crawl single webpage</h1>
+<h1><span class="header-section-number">3</span> Crawl single webpage</h1>
 <p>In a first exercise, we will download a single web page from “The Guardian” and extract text together with relevant metadata such as the article date. Let’s define the URL of the article of interest and load the <em>rvest</em> package, which provides very useful functions for web crawling and scraping.</p>
 <pre class="r"><code>url &lt;- &quot;https://www.theguardian.com/world/2017/jun/26/angela-merkel-and-donald-trump-head-for-clash-at-g20-summit&quot;
 require(&quot;rvest&quot;)</code></pre>
 <p>A convenient method to download and parse a webpage provides the function <code>read_html</code> which accepts a URL as a parameter. The function downloads the page and interprets the html source code as an HTML / XML object.</p>
-<pre class="r"><code>html_document &lt;- read_html(url)</code></pre>
-<p>HTML / XML objects are a structured representation of HTML / XML source code, which allows to extract single elements (headlines e.g. <code>&lt;h1&gt;</code>, paragraphs <code>&lt;p&gt;</code>, links <code>&lt;a&gt;</code>, …), their attributes (e.g. <code>&lt;a href=&quot;http://...&quot;&gt;</code>) or text wrapped in between elements (e.g. <code>&lt;p&gt;my text...&lt;/p&gt;</code>). Elements can be extracted in XML objects with XPATH-expressions.</p>
+<div id="dynamic-web-pages" class="section level2">
+<h2><span class="header-section-number">3.1</span> Dynamic web pages</h2>
+<p>To make sure that we get the dynamically rendered HTML content of the website, we pass the original source code dowloaded from the URL to our PhantomJS session first, and the use the rendered source.</p>
+<p><em>NOTICE</em>: In case the website does not fetch or alter the to-be-scraped content dynamically, you can omit the PhantomJS webdriver and just download the the static HTML source code to retrieve the information from there. In this case, replace the following block of code with a simple call of <code>html_document &lt;- read_html(url)</code> where the <code>read_html()</code> function downloads the page source for you.</p>
+<pre class="r"><code># load URL to phantomJS session
+pjs_session$go(url)
+# retrieve the rendered source code of the page
+rendered_source &lt;- pjs_session$getSource()
+# parse the dynamically rendered source code
+html_document &lt;- read_html(rendered_source)</code></pre>
+</div>
+<div id="scrape-information-from-xhtml" class="section level2">
+<h2><span class="header-section-number">3.2</span> Scrape information from XHTML</h2>
+<p>HTML / XML objects are a structured representation of HTML / XML source code, which allows to extract single elements (headlines e.g. <code>&lt;h1&gt;</code>, paragraphs <code>&lt;p&gt;</code>, links <code>&lt;a&gt;</code>, …), their attributes (e.g. <code>&lt;a href="http://..."&gt;</code>) or text wrapped in between elements (e.g. <code>&lt;p&gt;my text...&lt;/p&gt;</code>). Elements can be extracted in XML objects with XPATH-expressions.</p>
 <p>XPATH (see <a href="https://en.wikipedia.org/wiki/XPath" class="uri">https://en.wikipedia.org/wiki/XPath</a>) is a query language to select elements in XML-tree structures. We use it to select the headline element from the HTML page. The following xpath expression queries for first-order-headline elements <code>h1</code>, anywhere in the tree <code>//</code> which fulfill a certain condition <code>[...]</code>, namely that the <code>class</code> attribute of the <code>h1</code> element must contain the value <code>content__headline</code>.</p>
 <p>The next expression uses R pipe operator %&gt;%, which takes the input from the left side of the expression and passes it on to the function ion the right side as its first argument. The result of this function is either passed onto the next function, again via %&gt;% or it is assigned to the variable, if it is the last operation in the pipe chain. Our pipe takes the <code>html_document</code> object, passes it to the html_node function, which extracts the first node fitting the given xpath expression. The resulting node object is passed to the <code>html_text</code> function which extracts the text wrapped in the <code>h1</code>-element.</p>
 <pre class="r"><code>title_xpath &lt;- &quot;//h1[contains(@class, &#39;content__headline&#39;)]&quot;
 title_text &lt;- html_document %&gt;%
   html_node(xpath = title_xpath) %&gt;%
   html_text(trim = T)</code></pre>
-<p>Let’s see, what the title_text contains:</p>
+<p>Let’s see, what the <code>title_text</code> contains:</p>
 <pre class="r"><code>cat(title_text)</code></pre>
 <pre><code>## Angela Merkel and Donald Trump head for clash at G20 summit</code></pre>
 <p>Now we modify the xpath expressions, to extract the article info, the paragraphs of the body text and the article date. Note that there are multiple paragraphs in the article. To extract not only the first, but all paragraphs we utilize the <code>html_nodes</code> function and glue the resulting single text vectors of each paragraph together with the <code>paste0</code> function.</p>
@@ -527,20 +519,26 @@ cat(format(date_object, &quot;%Y-%m-%d&quot;))</code></pre>
 <pre><code>## 2017-06-26</code></pre>
 <p>The variables <code>title_text</code>, <code>intro_text</code>, <code>body_text</code> and <code>date_object</code> now contain the raw data for any subsequent text processing.</p>
 </div>
+</div>
 <div id="follow-links" class="section level1">
-<h1><span class="header-section-number">3</span> Follow links</h1>
+<h1><span class="header-section-number">4</span> Follow links</h1>
 <p>Usually, we do not want download a single document, but a series of documents. In our second exercise, we want to download all Guardian articles tagged with “Angela Merkel”. Instead of a tag page, we could also be interested in downloading results of a site-search engine or any other link collection. The task is always two-fold: First, we download and parse the tag overview page to extract all links to articles of interest:</p>
 <pre class="r"><code>url &lt;- &quot;https://www.theguardian.com/world/angela-merkel&quot;
-html_document &lt;- read_html(url)</code></pre>
+
+# go to URL, download and render page
+pjs_session$go(url)
+rendered_source &lt;- pjs_session$getSource()
+# parse the source code into an XML object
+html_document &lt;- read_html(rendered_source)</code></pre>
 <p>Second, we download and scrape each individual article page. For this, we extract all <code>href</code>-attributes from <code>a</code>-elements fitting a certain CSS-class. To select the right contents via XPATH-selectors, you need to investigate the HTML-structure of your specific page. Modern browsers such as Firefox and Chrome support you in that task by a function called “Inspect Element” (or similar), available through a right-click on the page element.</p>
 <pre class="r"><code>links &lt;- html_document %&gt;%
   html_nodes(xpath = &quot;//div[contains(@class, &#39;fc-item__container&#39;)]/a&quot;) %&gt;%
   html_attr(name = &quot;href&quot;)</code></pre>
 <p>Now, <code>links</code> contains a list of 20 hyperlinks to single articles tagged with Angela Merkel.</p>
 <pre class="r"><code>head(links, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/politics/live/2019/jul/23/boris-johnson-tory-leadership-theresa-may-politics-live&quot;  
-## [2] &quot;https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump&quot;  
-## [3] &quot;https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister&quot;</code></pre>
+<pre><code>## [1] &quot;https://www.theguardian.com/world/2020/sep/16/ursula-von-der-leyen-says-polands-lgbt-free-zones-have-no-place-in-eu&quot;           
+## [2] &quot;https://www.theguardian.com/world/2020/sep/13/party-disputes-thwart-angela-merkels-hopes-of-an-orderly-succession&quot;             
+## [3] &quot;https://www.theguardian.com/books/2020/sep/07/why-the-germans-do-it-better-by-john-kampfner-review-in-praise-of-the-powerhouse&quot;</code></pre>
 <p>But stop! There is not only one page of links to tagged articles. If you have a look on the page in your browser, the tag overview page has several more than 60 sub pages, accessible via a paging navigator at the bottom. By clicking on the second page, we see a different URL-structure, which now contains a link to a specific paging number. We can use that format to create links to all sub pages by combining the base URL with the page numbers.</p>
 <pre class="r"><code>page_numbers &lt;- 1:3
 base_url &lt;- &quot;https://www.theguardian.com/world/angela-merkel?page=&quot;
@@ -554,8 +552,10 @@ head(paging_urls, 3)</code></pre>
 <p>Now we can iterate over all URLs of tag overview pages, to collect more/all links to articles tagged with Angela Merkel. We iterate with a for-loop over all URLs and append results from each single URL to a vector of all links.</p>
 <pre class="r"><code>all_links &lt;- NULL
 for (url in paging_urls) {
-  # download and parse single ta overview page
-  html_document &lt;- read_html(url)
+  # download and parse single overview page
+  pjs_session$go(url)
+  rendered_source &lt;- pjs_session$getSource()
+  html_document &lt;- read_html(rendered_source)
 
   # extract links to articles
   links &lt;- html_document %&gt;%
@@ -568,7 +568,9 @@ for (url in paging_urls) {
 <p>An effective way of programming is to encapsulate repeatedly used code in a specific function. This function then can be called with specific parameters, process something and return a result. We use this here, to encapsulate the downloading and parsing of a Guardian article given a specific URL. The code is the same as in our exercise 1 above, only that we combine the extracted texts and metadata in a data.frame and wrap the entire process in a function-Block.</p>
 <pre class="r"><code>scrape_guardian_article &lt;- function(url) {
   
-  html_document &lt;- read_html(url)
+  pjs_session$go(url)
+  rendered_source &lt;- pjs_session$getSource()
+  html_document &lt;- read_html(rendered_source)
   
   title_xpath &lt;- &quot;//h1[contains(@class, &#39;content__headline&#39;)]&quot;
   title_text &lt;- html_document %&gt;%
@@ -610,9 +612,9 @@ for (i in 1:length(all_links)) {
   # Append current article data.frame to the data.frame of all articles
   all_articles &lt;- rbind(all_articles, article)
 }</code></pre>
-<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/politics/live/2019/jul/23/boris-johnson-tory-leadership-theresa-may-politics-live 
-## Downloading 2 of 60 URL: https://www.theguardian.com/world/2019/jul/19/angela-merkel-dismisses-health-fears-shaking-bouts-donald-trump 
-## Downloading 3 of 60 URL: https://www.theguardian.com/world/2019/jul/17/akk-annegret-kramp-karrenbauer-appointed-germany-defence-minister</code></pre>
+<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2020/sep/16/ursula-von-der-leyen-says-polands-lgbt-free-zones-have-no-place-in-eu 
+## Downloading 2 of 60 URL: https://www.theguardian.com/world/2020/sep/13/party-disputes-thwart-angela-merkels-hopes-of-an-orderly-succession 
+## Downloading 3 of 60 URL: https://www.theguardian.com/books/2020/sep/07/why-the-germans-do-it-better-by-john-kampfner-review-in-praise-of-the-powerhouse</code></pre>
 <pre class="r"><code># View first articles
 head(all_articles, 3)
 
@@ -621,7 +623,7 @@ write.csv2(all_articles, file = &quot;data/guardian_merkel.csv&quot;)</code></pr
 <p>The last command write the extracted articles to a CSV-file in the data directory for any later use.</p>
 </div>
 <div id="optional-exercises" class="section level1">
-<h1><span class="header-section-number">4</span> Optional exercises</h1>
+<h1><span class="header-section-number">5</span> Optional exercises</h1>
 <p>Try to perform extraction of news articles from another web page, e.g. <a href="https://www.spiegel.de" class="uri">https://www.spiegel.de</a> or <a href="https://www.nytimes.com" class="uri">https://www.nytimes.com</a>.</p>
 <p>For this, investigate the URL patterns of the page and look into the source code with the `inspect element’ functionality of your browser to find appropriate XPATH expressions.</p>
 </div>
@@ -645,6 +647,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

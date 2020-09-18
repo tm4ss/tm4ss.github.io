@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-15" />
+<meta name="date" content="2020-09-18" />
 
 <title>Tutorial 5: Co-occurrence analysis</title>
 
@@ -93,7 +93,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -242,6 +241,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -254,48 +254,9 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -309,6 +270,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -460,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 5: Co-occurrence analysis</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-15</h4>
+<h4 class="date">2020-09-18</h4>
 
 </div>
 
@@ -491,14 +458,14 @@ ndoc(sotu_corpus)</code></pre>
 <pre class="r"><code>corpus_sentences &lt;- corpus_reshape(sotu_corpus, to = &quot;sentences&quot;)
 
 ndoc(corpus_sentences)</code></pre>
-<pre><code>## [1] 62735</code></pre>
+<pre><code>## [1] 62802</code></pre>
 <pre class="r"><code>texts(corpus_sentences)[1]</code></pre>
 <pre><code>##                                                                                                                                                                                                                        1.1 
 ## &quot;Fellow-Citizens of the Senate and House of Representatives:  I embrace with great satisfaction the opportunity which now presents itself of congratulating you on the present favorable prospects of our public affairs.&quot;</code></pre>
 <pre class="r"><code>texts(corpus_sentences)[2]</code></pre>
 <pre><code>##                                                                                                                                                                                                                                                                                                                                                                                                                                  1.2 
 ## &quot;The recent accession of the important state of North Carolina to the Constitution of the United States (of which official information has been received), the rising credit and respectability of our country, the general and increasing good will toward the government of the Union, and the concord, peace, and plenty with which we are blessed are circumstances auspicious in an eminent degree to our national prosperity.&quot;</code></pre>
-<p>CAUTION: The newly decomposed corpus has now reached a considerable size of 62735 sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.</p>
+<p>CAUTION: The newly decomposed corpus has now reached a considerable size of 62802 sentences. Older computers may get in trouble because of insufficient memory during this preprocessing step.</p>
 <p>Now we are returning to our usual pre-processing chain and apply it on the separated sentences.</p>
 <pre class="r"><code># Build a dictionary of lemmas
 lemma_data &lt;- read.csv(&quot;resources/baseform_en.tsv&quot;, encoding = &quot;UTF-8&quot;)
@@ -541,7 +508,7 @@ coocCounts &lt;- t(binDTM) %*% binDTM</code></pre>
 ## post-office       1          38     0       0
 ## agree             0           0   310       7
 ## opinion           0           0     7     463</code></pre>
-<p>Interprete as follows: agree appears together 7 times with opinion in the 62735 sentences of the SUTO addresses. agree alone occurs 310 times.</p>
+<p>Interprete as follows: agree appears together 7 times with opinion in the 62802 sentences of the SUTO addresses. agree alone occurs 310 times.</p>
 </div>
 <div id="statistical-significance" class="section level1">
 <h1><span class="header-section-number">3</span> Statistical significance</h1>
@@ -578,17 +545,28 @@ resultOverView &lt;- data.frame(
   row.names = NULL)
 colnames(resultOverView) &lt;- c(&quot;Freq-terms&quot;, &quot;Freq&quot;, &quot;MI-terms&quot;, &quot;MI&quot;, &quot;Dice-Terms&quot;, &quot;Dice&quot;, &quot;LL-Terms&quot;, &quot;LL&quot;)
 print(resultOverView)</code></pre>
-<pre><code>##     Freq-terms Freq    MI-terms   MI Dice-Terms   Dice    LL-Terms    LL
-## 1        spain  443       spain 4.95      spain 1.0000        cuba 256.4
-## 2  unite_state  138     amistad 4.04       cuba 0.1434 unite_state 246.3
-## 3   government  125    antilles 4.04    spanish 0.1072     spanish 163.6
-## 4       treaty   59      madrid 3.89     france 0.0840  government 124.9
-## 5         make   57    catholic 3.89     island 0.0736      treaty 121.3
-## 6         cuba   53       queen 3.85     colony 0.0734      france 116.2
-## 7         part   49    autonomy 3.57    florida 0.0710       claim 107.0
-## 8        claim   47        cede 3.55     madrid 0.0691      madrid 106.2
-## 9          war   46  adventurer 3.52      claim 0.0669      island 103.7
-## 10     country   43 spoliations 3.41     treaty 0.0646     florida  96.3</code></pre>
+<pre><code>##     Freq-terms Freq    MI-terms       MI Dice-Terms       Dice    LL-Terms
+## 1        spain  444       spain 4.951918      spain 1.00000000        cuba
+## 2  unite_state  138     amistad 4.035627       cuba 0.14324324 unite_state
+## 3   government  125    antilles 4.035627    spanish 0.10702341     spanish
+## 4       treaty   59      madrid 3.893311     france 0.08386277  government
+## 5         make   57    catholic 3.887207     colony 0.07329843      treaty
+## 6         cuba   53       queen 3.853305     island 0.07114625      france
+## 7         part   48    autonomy 3.565623    florida 0.07076350       claim
+## 8        claim   47        cede 3.546575     madrid 0.06896552      madrid
+## 9          war   46  adventurer 3.516833      claim 0.06685633      island
+## 10     country   43 spoliations 3.411473     treaty 0.06448087     florida
+##           LL
+## 1  256.28278
+## 2  245.89001
+## 3  163.48543
+## 4  124.63260
+## 5  121.05902
+## 6  116.16941
+## 7  106.86636
+## 8  106.19479
+## 9   98.19931
+## 10  95.82471</code></pre>
 </div>
 <div id="visualization-of-co-occurrence" class="section level1">
 <h1><span class="header-section-number">4</span> Visualization of co-occurrence</h1>
@@ -601,15 +579,16 @@ numberOfCoocs &lt;- 15
 # Determination of the term of which co-competitors are to be measured.
 coocTerm &lt;- &quot;california&quot;</code></pre>
 <p>We use the imported function <code>calculateCoocStatistics</code> to calculate the co-occurrences for the target term <em>“california”</em>.</p>
-<pre class="r"><code>coocs &lt;- calculateCoocStatistics(coocTerm, binDTM, measure=&quot;LOGLIK&quot;)
-# Display the numberOfCoocs main terms
+<pre class="r"><code>coocs &lt;- calculateCoocStatistics(coocTerm, binDTM, measure=&quot;LOGLIK&quot;)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre class="r"><code># Display the numberOfCoocs main terms
 print(coocs[1:numberOfCoocs])</code></pre>
 <pre><code>##      oregon      mexico       texas     mineral       upper   territory 
-##       255.8       157.8        55.3        54.4        51.5        47.3 
+##   255.87021   157.83198    55.36257    54.44800    51.53089    47.36293 
 ##   wisconsin     arizona acquisition  possession       coast        mine 
-##        42.7        41.6        40.6        36.6        36.0        35.8 
+##    42.66294    41.63449    40.59820    36.63567    35.96802    35.83549 
 ##      grande        york       maine 
-##        35.7        34.9        33.8</code></pre>
+##    35.75060    34.93237    33.78352</code></pre>
 <p>To acquire an extended semantic environment of the target term, ‘secondary co-occurrence’ terms can be computed for each co-occurrence term of the target term. This results in a graph that can be visualized with special layout algorithms (e.g. Force Directed Graph).</p>
 <p>Network graphs can be evaluated and visualized in R with the <code>igraph</code>-package. Any graph object can be created from a three-column data-frame. Each row in that data-frame is a triple. Each triple encodes an edge-information of two nodes (source, sink) and an edge-weight value.</p>
 <p>For a term co-occurrence network, each triple consists of the target word, a co-occurring word and the significance of their joint occurrence. We denote the values with <em>from, to, sig</em>.</p>
@@ -654,13 +633,13 @@ for (i in 1:numberOfCoocs){
 <p>As a result, <code>resultGraph</code> now contains all <code>numberOfCoocs * numberOfCoocs</code> edges of a term co-occurrence network.</p>
 <pre class="r"><code># Sample of some examples from resultGraph
 resultGraph[sample(nrow(resultGraph), 6), ]</code></pre>
-<pre><code>##            from           to  sig
-## 5    california        upper 51.5
-## 146   territory jurisdiction 87.8
-## 1015      maine     virginia 33.8
-## 4    california      mineral 54.4
-## 610  possession       island 57.0
-## 413      grande       nueces 65.5</code></pre>
+<pre><code>##           from        to       sig
+## 47   wisconsin minnesota  51.84874
+## 814       york  virginia  35.72554
+## 46   territory    mexico 162.11607
+## 1211     coast       bay  80.88702
+## 157  wisconsin    oregon  24.91645
+## 36   territory    indian 209.46222</code></pre>
 <p>The package iGraph offers multiple graph visualizations for graph objects. Graph objects can be created from triple lists, such as those we just generated. In the next step we load the package iGraph and create a visualization of all nodes and edges from the object <code>resultGraph</code>.</p>
 <pre class="r"><code>require(igraph)
 
@@ -712,7 +691,7 @@ plot(graphNetwork,
 <div id="optional-exercises" class="section level1">
 <h1><span class="header-section-number">5</span> Optional exercises</h1>
 <ol style="list-style-type: decimal">
-<li>Create term networks for “civil”, “germany”, “tax”</li>
+<li><p>Create term networks for “civil”, “germany”, “tax”</p></li>
 <li><p>For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx2-1.png" width="960" /> The plot may get very messy. Try lower values for <code>numberOfCoocs</code> to create a less dense network plot.</p></li>
 <li><p>Separate the DTM into two time periods (year &lt; 1950; year &gt; = 1950). Represent the graphs for the term “california” for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (<code>get_binDTM &lt;- function(mycorpus)</code>) and for visualizing a co-occurrence network (<code>vis_cooc_network &lt;- function(binDTM, coocTerm)</code>). <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-1.png" width="960" /><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-2.png" width="960" /></p></li>
 </ol>
@@ -737,6 +716,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

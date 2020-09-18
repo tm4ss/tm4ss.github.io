@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-26" />
+<meta name="date" content="2020-09-18" />
 
 <title>Tutorial 6: Topic Models</title>
 
@@ -31,7 +31,7 @@
 <link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
 <link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
 <script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
-<script src="site_libs/htmlwidgets-1.3/htmlwidgets.js"></script>
+<script src="site_libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
 <link href="site_libs/wordcloud2-0.0.1/wordcloud.css" rel="stylesheet" />
 <script src="site_libs/wordcloud2-0.0.1/wordcloud2-all.js"></script>
 <script src="site_libs/wordcloud2-0.0.1/hover.js"></script>
@@ -98,7 +98,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -247,6 +246,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -259,48 +259,9 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -314,6 +275,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -465,7 +432,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 6: Topic Models</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-26</h4>
+<h4 class="date">2020-09-18</h4>
 
 </div>
 
@@ -521,7 +488,7 @@ DTM &lt;- corpus_tokens %&gt;%
 
 # have a look at the number of documents and terms in the matrix
 dim(DTM)</code></pre>
-<pre><code>## [1]  233 9386</code></pre>
+<pre><code>## [1]  233 9389</code></pre>
 <p>For topic modeling not only language specific stop words may beconsidered as uninformative, but also domain specific terms. We remove 10 of the most frequent terms to improve the modeling.</p>
 <pre class="r"><code>top10_terms &lt;- c( &quot;unite_state&quot;, &quot;past_year&quot;, &quot;year_ago&quot;, &quot;year_end&quot;, &quot;government&quot;, &quot;state&quot;, &quot;country&quot;, &quot;year&quot;, &quot;make&quot;, &quot;seek&quot;)
 
@@ -545,7 +512,7 @@ set.seed(9161)
 # compute the LDA model, inference via 1000 iterations of Gibbs sampling
 topicModel &lt;- LDA(DTM, K, method=&quot;Gibbs&quot;, control=list(iter = 500, verbose = 25))</code></pre>
 <p>Depending on the size of the vocabulary, the collection size and the number K, the inference of topic models can take a very long time. This calculation may take several minutes. If it takes too long, reduce the vocabulary in the DTM by increasing the minimum frequency in the previous step.</p>
-<p>The topic model inference results in two (approximate) posterior probability distributions: a distribution <code>theta</code> over K topics within each document and a distribution <code>beta</code> over V terms within each topic, where V represents the length of the vocabulary of the collection (V = 9376). Let’s take a closer look at these results:</p>
+<p>The topic model inference results in two (approximate) posterior probability distributions: a distribution <code>theta</code> over K topics within each document and a distribution <code>beta</code> over V terms within each topic, where V represents the length of the vocabulary of the collection (V = 9379). Let’s take a closer look at these results:</p>
 <pre class="r"><code># have a look a some of the results (posterior distributions)
 tmResult &lt;- posterior(topicModel)
 # format of the resulting object
@@ -553,11 +520,11 @@ attributes(tmResult)</code></pre>
 <pre><code>## $names
 ## [1] &quot;terms&quot;  &quot;topics&quot;</code></pre>
 <pre class="r"><code>ncol(DTM)                # lengthOfVocab</code></pre>
-<pre><code>## [1] 9376</code></pre>
+<pre><code>## [1] 9379</code></pre>
 <pre class="r"><code># topics are probability distribtions over the entire vocabulary
 beta &lt;- tmResult$terms   # get beta from results
 dim(beta)                # K distributions over ncol(DTM) terms</code></pre>
-<pre><code>## [1]   20 9376</code></pre>
+<pre><code>## [1]   20 9379</code></pre>
 <pre class="r"><code>rowSums(beta)            # rows in beta sum to 1</code></pre>
 <pre><code>##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
 ##  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1</code></pre>
@@ -572,28 +539,28 @@ dim(theta)               # nDocs(DTM) distributions over K topics</code></pre>
 ##  1  1  1  1  1  1  1  1  1  1</code></pre>
 <p>Let’s take a look at the 10 most likely terms within the term probabilities <code>beta</code> of the inferred topics (only the first 8 are shown below).</p>
 <pre class="r"><code>terms(topicModel, 10)</code></pre>
-<pre><code>##       Topic 1         Topic 2       Topic 3       Topic 4  Topic 5   
-##  [1,] &quot;treaty&quot;        &quot;bank&quot;        &quot;gold&quot;        &quot;nation&quot; &quot;war&quot;     
-##  [2,] &quot;island&quot;        &quot;public&quot;      &quot;amount&quot;      &quot;great&quot;  &quot;world&quot;   
-##  [3,] &quot;international&quot; &quot;subject&quot;     &quot;issue&quot;       &quot;world&quot;  &quot;freedom&quot; 
-##  [4,] &quot;congress&quot;      &quot;time&quot;        &quot;note&quot;        &quot;man&quot;    &quot;peace&quot;   
-##  [5,] &quot;commission&quot;    &quot;duty&quot;        &quot;silver&quot;      &quot;time&quot;   &quot;force&quot;   
-##  [6,] &quot;american&quot;      &quot;people&quot;      &quot;condition&quot;   &quot;people&quot; &quot;man&quot;     
-##  [7,] &quot;act&quot;           &quot;interest&quot;    &quot;bond&quot;        &quot;peace&quot;  &quot;defense&quot; 
-##  [8,] &quot;cuba&quot;          &quot;institution&quot; &quot;treasury&quot;    &quot;war&quot;    &quot;time&quot;    
-##  [9,] &quot;relation&quot;      &quot;congress&quot;    &quot;circulation&quot; &quot;thing&quot;  &quot;strength&quot;
-## [10,] &quot;convention&quot;    &quot;regard&quot;      &quot;present&quot;     &quot;speak&quot;  &quot;fight&quot;   
-##       Topic 6        Topic 7     Topic 8    
-##  [1,] &quot;constitution&quot; &quot;congress&quot;  &quot;law&quot;      
-##  [2,] &quot;union&quot;        &quot;citizen&quot;   &quot;present&quot;  
-##  [3,] &quot;congress&quot;     &quot;report&quot;    &quot;general&quot;  
-##  [4,] &quot;power&quot;        &quot;subject&quot;   &quot;good&quot;     
-##  [5,] &quot;president&quot;    &quot;time&quot;      &quot;interest&quot; 
-##  [6,] &quot;people&quot;       &quot;part&quot;      &quot;provision&quot;
-##  [7,] &quot;territory&quot;    &quot;attention&quot; &quot;purpose&quot;  
-##  [8,] &quot;act&quot;          &quot;person&quot;    &quot;system&quot;   
-##  [9,] &quot;republic&quot;     &quot;claim&quot;     &quot;duty&quot;     
-## [10,] &quot;law&quot;          &quot;recommend&quot; &quot;case&quot;</code></pre>
+<pre><code>##       Topic 1  Topic 2       Topic 3    Topic 4       Topic 5     
+##  [1,] &quot;nation&quot; &quot;bank&quot;        &quot;increase&quot; &quot;nation&quot;      &quot;war&quot;       
+##  [2,] &quot;people&quot; &quot;great&quot;       &quot;duty&quot;     &quot;congress&quot;    &quot;force&quot;     
+##  [3,] &quot;great&quot;  &quot;people&quot;      &quot;people&quot;   &quot;treaty&quot;      &quot;man&quot;       
+##  [4,] &quot;man&quot;    &quot;time&quot;        &quot;pay&quot;      &quot;act&quot;         &quot;enemy&quot;     
+##  [5,] &quot;world&quot;  &quot;currency&quot;    &quot;good&quot;     &quot;vessel&quot;      &quot;fight&quot;     
+##  [6,] &quot;war&quot;    &quot;money&quot;       &quot;law&quot;      &quot;session&quot;     &quot;american&quot;  
+##  [7,] &quot;policy&quot; &quot;credit&quot;      &quot;present&quot;  &quot;great&quot;       &quot;army&quot;      
+##  [8,] &quot;peace&quot;  &quot;issue&quot;       &quot;revenue&quot;  &quot;improvement&quot; &quot;production&quot;
+##  [9,] &quot;call&quot;   &quot;institution&quot; &quot;amount&quot;   &quot;receive&quot;     &quot;peace&quot;     
+## [10,] &quot;matt&quot;   &quot;system&quot;      &quot;rate&quot;     &quot;effect&quot;      &quot;victory&quot;   
+##       Topic 6        Topic 7         Topic 8    
+##  [1,] &quot;constitution&quot; &quot;american&quot;      &quot;land&quot;     
+##  [2,] &quot;congress&quot;     &quot;international&quot; &quot;claim&quot;    
+##  [3,] &quot;power&quot;        &quot;convention&quot;    &quot;work&quot;     
+##  [4,] &quot;union&quot;        &quot;commission&quot;    &quot;report&quot;   
+##  [5,] &quot;people&quot;       &quot;foreign&quot;       &quot;secretary&quot;
+##  [6,] &quot;president&quot;    &quot;order&quot;         &quot;indian&quot;   
+##  [7,] &quot;territory&quot;    &quot;department&quot;    &quot;increase&quot; 
+##  [8,] &quot;law&quot;          &quot;officer&quot;       &quot;numb&quot;     
+##  [9,] &quot;act&quot;          &quot;commerce&quot;      &quot;great&quot;    
+## [10,] &quot;question&quot;     &quot;show&quot;          &quot;show&quot;</code></pre>
 <p>For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concatenate the five most likely terms of each topic to a string that represents a pseudo-name for each topic.</p>
 <pre class="r"><code>top5termsPerTopic &lt;- terms(topicModel, 5)
 topicNames &lt;- apply(top5termsPerTopic, 2, paste, collapse=&quot; &quot;)</code></pre>
@@ -613,8 +580,8 @@ words &lt;- names(top40terms)
 probabilities &lt;- sort(tmResult$terms[topicToViz,], decreasing=TRUE)[1:40]
 # visualize the terms as wordcloud
 wordcloud2(data.frame(words, probabilities), shuffle = FALSE, size = 0.8)</code></pre>
-<div id="htmlwidget-44af750824add1309d60" style="width:384px;height:384px;" class="wordcloud2 html-widget"></div>
-<script type="application/json" data-for="htmlwidget-44af750824add1309d60">{"x":{"word":["mexico","war","texas","peace","congress","duty","act","territory","policy","part","army","revenue","treasury","mexican","amount","citizen","loan","time","recommend","treaty","large","claim","secretary","american","force","california","authorize","command","month","order","establish","price","term","nation","impose","oregon","demand","hostility","reduce","foreign"],"freq":[0.0283871111176985,0.0209021921178615,0.010193570380471,0.00848908387555767,0.00745157035082779,0.00689575953400821,0.00630289466273399,0.00630289466273399,0.00593235411818762,0.00578413790036906,0.00578413790036906,0.00548770546473195,0.00545065141027731,0.00522832708354948,0.00519127302909485,0.00508011086573093,0.00493189464791238,0.00489484059345773,0.0048577865390031,0.00459840815782063,0.00459840815782063,0.00441313788554744,0.00433902977663816,0.00407965139545569,0.00407965139545569,0.00404259734100105,0.00400554328654641,0.00400554328654641,0.00396848923209177,0.0038943811231825,0.00385732706872786,0.00374616490536394,0.00370911085090931,0.00363500274200003,0.00363500274200003,0.00359794868754539,0.00348678652418148,0.00348678652418148,0.00348678652418148,0.00344973246972684],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":5072.72470956794,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div id="htmlwidget-05e69793b162a1e38799" style="width:384px;height:384px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-05e69793b162a1e38799">{"x":{"word":["mexico","war","congress","duty","territory","act","treaty","nation","texas","amount","army","peace","minister","claim","part","citizen","receive","policy","time","treasury","secretary","republic","long","article","exist","place","demand","authorize","recommend","revenue","establish","adopt","mexican","navy","power","order","convention","give","day","term"],"freq":[0.020903789861494,0.0162791719091921,0.01044026879623,0.0101560743969266,0.00966519316176604,0.00935516290798044,0.00920014778108763,0.00728829454940978,0.00697826429562418,0.00684908502321351,0.00646154720598152,0.00591899426185672,0.00573814328048179,0.00568647157151752,0.00529893375428552,0.00524726204532126,0.00496306764601779,0.00496306764601779,0.00485972422808926,0.00480805251912499,0.00470470910119646,0.00454969397430366,0.00452385811982153,0.00447218641085726,0.00429133542948233,0.00426549957500019,0.00423966372051806,0.00411048444810739,0.00405881273914313,0.004032976884661,0.00400714103017886,0.00387796175776819,0.00385212590328606,0.00377461833983966,0.00369711077639326,0.00364543906742899,0.0035679315039826,0.00351625979501833,0.00351625979501833,0.00343875223157193],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":6888.70300333704,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <p>Let us now look more closely at the distribution of topics within individual documents. To this end, we visualize the distribution in 3 sample documents.</p>
 <p>Let us first take a look at the contents of three sample documents:</p>
 <pre class="r"><code>exampleIds &lt;- c(2, 100, 200)
@@ -701,26 +668,26 @@ topicNames &lt;- apply(lda::top.topic.words(beta, 5, by.score = T), 2, paste, co
 topicProportions &lt;- colSums(theta) / nrow(DTM)  # mean probablities over all paragraphs
 names(topicProportions) &lt;- topicNames     # assign the topic names we created before
 sort(topicProportions, decreasing = TRUE) # show summed proportions in decreased order</code></pre>
-<pre><code>##  [1] &quot;0.23413 : subject interest power part time&quot;                   
-##  [2] &quot;0.11458 : great nation people world peace&quot;                    
-##  [3] &quot;0.10631 : america job american tonight child&quot;                 
-##  [4] &quot;0.07695 : program increase continue billion energy&quot;           
-##  [5] &quot;0.07061 : increase present law interest report&quot;               
-##  [6] &quot;0.06077 : object commerce great improvement estimate&quot;         
-##  [7] &quot;0.05507 : treaty congress article minister spain&quot;             
-##  [8] &quot;0.04335 : program economic recommend expenditure increase&quot;    
-##  [9] &quot;0.03116 : report indian subject work land&quot;                    
-## [10] &quot;0.02619 : treaty commission international convention american&quot;
-## [11] &quot;0.02522 : america terrorist iraq freedom terror&quot;              
-## [12] &quot;0.02517 : problem agriculture public action policy&quot;           
-## [13] &quot;0.02349 : defense communist freedom fight production&quot;         
-## [14] &quot;0.02156 : war force enemy arm army&quot;                           
-## [15] &quot;0.01791 : department bureau development business navy&quot;        
-## [16] &quot;0.0171 : constitution union people slavery territory&quot;         
-## [17] &quot;0.01413 : bank currency deposit paper circulation&quot;            
-## [18] &quot;0.01381 : man law corporation work good&quot;                      
-## [19] &quot;0.01176 : mexico texas war mexican territory&quot;                 
-## [20] &quot;0.01073 : gold silver bond amount note&quot;</code></pre>
+<pre><code>##  [1] &quot;0.28866 : congress subject interest time present&quot;       
+##  [2] &quot;0.13285 : world nation people american congress&quot;        
+##  [3] &quot;0.09016 : object nation treaty commerce vessel&quot;         
+##  [4] &quot;0.0735 : job work child tonight american&quot;               
+##  [5] &quot;0.06572 : program increase congress economic federal&quot;   
+##  [6] &quot;0.04931 : law work increase commission legislation&quot;     
+##  [7] &quot;0.04438 : nation great people world man&quot;                
+##  [8] &quot;0.02754 : treaty island cuba convention commission&quot;     
+##  [9] &quot;0.02535 : program energy administration major nuclear&quot;  
+## [10] &quot;0.02502 : report indian person acre increase&quot;           
+## [11] &quot;0.02462 : defense communist freedom strength military&quot;  
+## [12] &quot;0.02239 : public agriculture relief problem large&quot;      
+## [13] &quot;0.0207 : terrorist america iraq tonight iraqi&quot;          
+## [14] &quot;0.01999 : constitution union territory president power&quot; 
+## [15] &quot;0.0196 : war enemy fight man production&quot;                
+## [16] &quot;0.01724 : bank currency institution bill treasury&quot;      
+## [17] &quot;0.01646 : gold silver amount cent bond&quot;                 
+## [18] &quot;0.01603 : mexico texas war army mexican&quot;                
+## [19] &quot;0.01361 : man law corporation good public&quot;              
+## [20] &quot;0.00688 : american department statute estimate republic&quot;</code></pre>
 <p>We recognize some topics that are way more likely to occur in the corpus than others. These describe rather general thematic coherences. Other topics correspond more to specific contents.</p>
 <p><strong>Approach 2:</strong> We count how often a topic appears as a primary topic within a paragraph This method is also called Rank-1.</p>
 <pre class="r"><code>countsOfPrimaryTopics &lt;- rep(0, K)
@@ -732,26 +699,26 @@ for (i in 1:nrow(DTM)) {
   countsOfPrimaryTopics[primaryTopic] &lt;- countsOfPrimaryTopics[primaryTopic] + 1
 }
 sort(countsOfPrimaryTopics, decreasing = TRUE)</code></pre>
-<pre><code>##  [1] &quot;103 : subject interest power part time&quot;                 
-##  [2] &quot;30 : america job american tonight child&quot;                
-##  [3] &quot;25 : great nation people world peace&quot;                   
-##  [4] &quot;22 : program increase continue billion energy&quot;          
-##  [5] &quot;10 : problem agriculture public action policy&quot;          
-##  [6] &quot;7 : america terrorist iraq freedom terror&quot;              
-##  [7] &quot;7 : program economic recommend expenditure increase&quot;    
-##  [8] &quot;7 : man law corporation work good&quot;                      
-##  [9] &quot;5 : defense communist freedom fight production&quot;         
-## [10] &quot;5 : increase present law interest report&quot;               
-## [11] &quot;5 : treaty commission international convention american&quot;
-## [12] &quot;2 : treaty congress article minister spain&quot;             
-## [13] &quot;2 : war force enemy arm army&quot;                           
-## [14] &quot;1 : report indian subject work land&quot;                    
-## [15] &quot;1 : department bureau development business navy&quot;        
-## [16] &quot;1 : gold silver bond amount note&quot;                       
-## [17] &quot;0 : mexico texas war mexican territory&quot;                 
-## [18] &quot;0 : bank currency deposit paper circulation&quot;            
-## [19] &quot;0 : object commerce great improvement estimate&quot;         
-## [20] &quot;0 : constitution union people slavery territory&quot;</code></pre>
+<pre><code>##  [1] &quot;113 : congress subject interest time present&quot;     
+##  [2] &quot;39 : world nation people american congress&quot;       
+##  [3] &quot;19 : job work child tonight american&quot;             
+##  [4] &quot;14 : program increase congress economic federal&quot;  
+##  [5] &quot;11 : nation great people world man&quot;               
+##  [6] &quot;9 : public agriculture relief problem large&quot;      
+##  [7] &quot;7 : man law corporation good public&quot;              
+##  [8] &quot;4 : terrorist america iraq tonight iraqi&quot;         
+##  [9] &quot;4 : object nation treaty commerce vessel&quot;         
+## [10] &quot;3 : defense communist freedom strength military&quot;  
+## [11] &quot;3 : program energy administration major nuclear&quot;  
+## [12] &quot;3 : war enemy fight man production&quot;               
+## [13] &quot;2 : treaty island cuba convention commission&quot;     
+## [14] &quot;1 : american department statute estimate republic&quot;
+## [15] &quot;1 : law work increase commission legislation&quot;     
+## [16] &quot;0 : bank currency institution bill treasury&quot;      
+## [17] &quot;0 : gold silver amount cent bond&quot;                 
+## [18] &quot;0 : mexico texas war army mexican&quot;                
+## [19] &quot;0 : constitution union territory president power&quot; 
+## [20] &quot;0 : report indian person acre increase&quot;</code></pre>
 <p>We see that sorting topics by the Rank-1 method places topics with rather specific thematic coherences in upper ranks of the list.</p>
 <p>This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most important topics or the filtering of the original collection based on specific sub-topics.</p>
 </div>
@@ -768,8 +735,27 @@ filteredCorpus &lt;- sotu_corpus %&gt;% corpus_subset(subset = selectedDocumentI
 
 # show length of filtered corpus
 filteredCorpus</code></pre>
-<pre><code>## Corpus consisting of 6 documents and 0 docvars.</code></pre>
-<p>Our filtered corpus contains 6 documents related to the topic 1 to at least 10 %.</p>
+<pre><code>## Corpus consisting of 8 documents.
+## 56 :
+## &quot;To the Senate and House of Representatives of the United Sta...&quot;
+## 
+## 57 :
+## &quot;Fellow-Citizens of the Senate and of the House of Representa...&quot;
+## 
+## 58 :
+## &quot;Fellow-Citizens of the Senate and of the House of Representa...&quot;
+## 
+## 59 :
+## &quot;Fellow-Citizens of the Senate and of the House of Representa...&quot;
+## 
+## 60 :
+## &quot;Fellow-Citizens of the Senate and of the House of Representa...&quot;
+## 
+## 61 :
+## &quot;Fellow-Citizens of the Senate and House of Representatives: ...&quot;
+## 
+## [ reached max_ndoc ... 2 more documents ]</code></pre>
+<p>Our filtered corpus contains 8 documents related to the topic 12 to at least 10 %.</p>
 </div>
 <div id="topic-proportions-over-time" class="section level1">
 <h1><span class="header-section-number">6</span> Topic proportions over time</h1>
@@ -799,14 +785,14 @@ ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) +
 <ol style="list-style-type: decimal">
 <li>Create a list of all documents that have a thematic context with <em>economy</em>.</li>
 <li>Repeat the exercises with a different K value (e.g., K = 5, 30, 50). What do you think of the results?</li>
-<li>Split the original text source into paragraphs (e.g. use <code>strsplit(textdata$text, &quot;\n\n&quot;)</code>) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?</li>
+<li>Split the original text source into paragraphs (e.g. use <code>strsplit(textdata$text, "\n\n")</code>) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?</li>
 </ol>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
 <div id="ref-blei_latent_2003">
-<p>1. Blei, D., Ng, A., Jordan, M.: Latent dirichlet allocation. The Journal of Machine Learning Research. 3, 993–1022 (2003).</p>
+<p>1. Blei, D.M., Ng, A.Y., Jordan, M.I.: Latent dirichlet allocation. The Journal of Machine Learning Research. 3, 993–1022 (2003).</p>
 </div>
 <div id="ref-Chang.2012">
 <p>2. Chang, J.: Lda: Collapsed gibbs sampling methods for topic models. (2012).</p>
@@ -836,6 +822,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

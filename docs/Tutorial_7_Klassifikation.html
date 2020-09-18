@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-15" />
+<meta name="date" content="2020-09-18" />
 
 <title>Tutorial 7: Classification</title>
 
@@ -93,7 +93,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -242,6 +241,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -254,48 +254,9 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -309,6 +270,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -460,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 7: Classification</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-15</h4>
+<h4 class="date">2020-09-18</h4>
 
 </div>
 
@@ -533,7 +500,7 @@ DTM &lt;- corpus_token %&gt;%
 
 # How many features do we have?
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10948</code></pre>
+<pre><code>## [1] 21334 10950</code></pre>
 </div>
 <div id="classification" class="section level1">
 <h1><span class="header-section-number">3</span> Classification</h1>
@@ -561,7 +528,7 @@ summary(model)</code></pre>
 <pre><code>##            Length Class  Mode     
 ## TypeDetail     1  -none- character
 ## Type           1  -none- numeric  
-## W          10949  -none- numeric  
+## W          10951  -none- numeric  
 ## Bias           1  -none- numeric  
 ## ClassNames     2  factor numeric  
 ## NbClass        1  -none- numeric</code></pre>
@@ -576,8 +543,8 @@ print(contingencyTable) </code></pre>
 ##        FOREIGN        21      10</code></pre>
 <pre class="r"><code>accuracy &lt;- sum(diag(contingencyTable)) / length(testLabels)
 print(accuracy) # share of correctly classified paragraphs</code></pre>
-<pre><code>## [1] 0.567</code></pre>
-<p>The accuracy of 0.567 appears moderate for a first try. But how does it actually relate to a base line? Think of the imbalanced class proportions in our training set. Let us create a pseudo classification as base line, in which we do not classify at all, but simply assume the label “DOMESTIC” or “FOREIGN” for each paragraph.</p>
+<pre><code>## [1] 0.5666667</code></pre>
+<p>The accuracy of 0.5666667 appears moderate for a first try. But how does it actually relate to a base line? Think of the imbalanced class proportions in our training set. Let us create a pseudo classification as base line, in which we do not classify at all, but simply assume the label “DOMESTIC” or “FOREIGN” for each paragraph.</p>
 <p>We further employ a function called <code>F.measure</code> which gives more differentiated measures than simple accuracy (<code>A</code>) to determine the classification quality. The F.measure (<code>F</code>) is the harmonic mean of Precision (<code>P</code>) and Recall (<code>R</code>) (see <a href="https://en.wikipedia.org/wiki/Precision_and_recall#Definition_.28classification_context.29" class="uri">https://en.wikipedia.org/wiki/Precision_and_recall#Definition_.28classification_context.29</a> for Details).</p>
 <pre class="r"><code># Create pseudo classification
 pseudoLabelsDOM &lt;- factor(rep(&quot;DOMESTIC&quot;, length(testLabels)), levels(testLabels))
@@ -585,15 +552,15 @@ pseudoLabelsFOR &lt;- factor(rep(&quot;FOREIGN&quot;, length(testLabels)), level
 
 # Evaluation of former LR classification with F-measures
 F.measure(predictedLabels, testLabels, positiveClassName = &quot;DOMESTIC&quot;)</code></pre>
-<pre><code>##      P      R      S      F      A   Pos. 
-##  0.828  0.533  0.667  0.649  0.567 45.000</code></pre>
+<pre><code>##          P          R          S          F          A       Pos. 
+##  0.8275862  0.5333333  0.6666667  0.6486486  0.5666667 45.0000000</code></pre>
 <pre class="r"><code>F.measure(predictedLabels, testLabels, positiveClassName = &quot;FOREIGN&quot;)</code></pre>
-<pre><code>##      P      R      S      F      A   Pos. 
-##  0.323  0.667  0.533  0.435  0.567 15.000</code></pre>
+<pre><code>##          P          R          S          F          A       Pos. 
+##  0.3225806  0.6666667  0.5333333  0.4347826  0.5666667 15.0000000</code></pre>
 <pre class="r"><code># Evaluation of pseudo classification with F-measures
 F.measure(pseudoLabelsDOM, testLabels, positiveClassName = &quot;DOMESTIC&quot;)</code></pre>
-<pre><code>##      P      R      S      F      A   Pos. 
-##  0.750  1.000  0.000  0.857  0.750 45.000</code></pre>
+<pre><code>##          P          R          S          F          A       Pos. 
+##  0.7500000  1.0000000  0.0000000  0.8571429  0.7500000 45.0000000</code></pre>
 <pre class="r"><code>F.measure(pseudoLabelsFOR, testLabels, positiveClassName = &quot;FOREIGN&quot;)</code></pre>
 <pre><code>##     P     R     S     F     A  Pos. 
 ##  0.25  1.00  0.00  0.40  0.25 15.00</code></pre>
@@ -619,14 +586,11 @@ F.measure(pseudoLabelsDOM, testLabels, positiveClassName = &quot;DOMESTIC&quot;)
 
 # Example usage
 get_k_fold_logical_indexes(1, k = 10, n = 12)</code></pre>
-<pre><code>##  [1]  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE
-## [12] FALSE</code></pre>
+<pre><code>##  [1]  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE FALSE</code></pre>
 <pre class="r"><code>get_k_fold_logical_indexes(2, k = 10, n = 12)</code></pre>
-<pre><code>##  [1] FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
-## [12]  TRUE</code></pre>
+<pre><code>##  [1] FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE</code></pre>
 <pre class="r"><code>get_k_fold_logical_indexes(3, k = 10, n = 12)</code></pre>
-<pre><code>##  [1] FALSE FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
-## [12] FALSE</code></pre>
+<pre><code>##  [1] FALSE FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE</code></pre>
 <p>Now we run 1) splitting of the annotated data, 2) model computation and testing in one for-loop.</p>
 <pre class="r"><code>k &lt;- 10
 evalMeasures &lt;- NULL
@@ -656,21 +620,21 @@ for (j in 1:k) {
 }
 # Final evaluation values of k runs:
 print(evalMeasures)</code></pre>
-<pre><code>##                   P     R     S     F     A Pos.
-## kthEvaluation 0.333 0.400 0.600 0.364 0.533   10
-## kthEvaluation 0.737 0.875 0.643 0.800 0.767   16
-## kthEvaluation 0.333 0.429 0.739 0.375 0.667    7
-## kthEvaluation 0.467 0.778 0.619 0.583 0.667    9
-## kthEvaluation 0.333 0.571 0.652 0.421 0.633    7
-## kthEvaluation 0.312 0.714 0.522 0.435 0.567    7
-## kthEvaluation 0.471 0.727 0.526 0.571 0.600   11
-## kthEvaluation 0.500 0.833 0.792 0.625 0.800    6
-## kthEvaluation 0.526 1.000 0.550 0.690 0.700   10
-## kthEvaluation 0.385 0.625 0.636 0.476 0.633    8</code></pre>
+<pre><code>##                       P         R         S         F         A Pos.
+## kthEvaluation 0.3333333 0.4000000 0.6000000 0.3636364 0.5333333   10
+## kthEvaluation 0.7368421 0.8750000 0.6428571 0.8000000 0.7666667   16
+## kthEvaluation 0.3333333 0.4285714 0.7391304 0.3750000 0.6666667    7
+## kthEvaluation 0.4666667 0.7777778 0.6190476 0.5833333 0.6666667    9
+## kthEvaluation 0.3333333 0.5714286 0.6521739 0.4210526 0.6333333    7
+## kthEvaluation 0.3125000 0.7142857 0.5217391 0.4347826 0.5666667    7
+## kthEvaluation 0.4705882 0.7272727 0.5263158 0.5714286 0.6000000   11
+## kthEvaluation 0.5000000 0.8333333 0.7916667 0.6250000 0.8000000    6
+## kthEvaluation 0.5263158 1.0000000 0.5500000 0.6896552 0.7000000   10
+## kthEvaluation 0.3846154 0.6250000 0.6363636 0.4761905 0.6333333    8</code></pre>
 <pre class="r"><code># Average over all folds
 print(colMeans(evalMeasures))</code></pre>
-<pre><code>##     P     R     S     F     A  Pos. 
-## 0.440 0.695 0.628 0.534 0.657 9.100</code></pre>
+<pre><code>##         P         R         S         F         A      Pos. 
+## 0.4397528 0.6952670 0.6279294 0.5340079 0.6566667 9.1000000</code></pre>
 <p>Accuracy is around 0.66%, F-measure is around 0.53%. Let’s try some approaches to optimize the automatic classification.</p>
 </div>
 <div id="optimization" class="section level1">
@@ -705,7 +669,7 @@ axis(1,at=1:length(cParameterValues), labels = cParameterValues)</code></pre>
 <pre class="r"><code>bestC &lt;- cParameterValues[which.max(fValues)]
 print(paste0(&quot;Best C value: &quot;, bestC, &quot;, F1 = &quot;, max(fValues)))</code></pre>
 <pre><code>## [1] &quot;Best C value: 3, F1 = 0.542941816588523&quot;</code></pre>
-<p>From the empirical test, we can obtain C = 3 as optimal choice for the cost parameter. On the current training data set with the current features it achieves 0.543 F-score.</p>
+<p>From the empirical test, we can obtain C = 3 as optimal choice for the cost parameter. On the current training data set with the current features it achieves 0.5429418 F-score.</p>
 </div>
 <div id="optimized-preprocessing" class="section level2">
 <h2><span class="header-section-number">5.2</span> Optimized Preprocessing</h2>
@@ -731,7 +695,7 @@ DTM &lt;- corpus_token_sw %&gt;%
 
 # How many features do we have?
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 10446</code></pre>
+<pre><code>## [1] 21334 10448</code></pre>
 <pre class="r"><code># run cross validation
 annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
@@ -747,8 +711,8 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 100&quot;
 ## [1] &quot;Best C value: 0.03, F1 = 0.647465370415286&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
-<pre><code>##     P     R     S     F     A  Pos. 
-## 0.596 0.725 0.800 0.647 0.780 9.100</code></pre>
+<pre><code>##         P         R         S         F         A      Pos. 
+## 0.5959710 0.7254419 0.7995344 0.6474654 0.7800000 9.1000000</code></pre>
 <p><strong>Bigrams</strong></p>
 <p>Now let us see, if the use of bigrams, i.e. concatenations of sequences of two words can improve the result. Bigrams, and larger n-Grams can capture important sequential contexts from texts such as negation, at least to a certain extent. For instance, “is not funny” will result in the features “is_not” and “not_funny”.</p>
 <p>To extract n-gram features, the <code>tokens_ngrams()</code> of <code>quanteda</code> accepts a list of integers, e.g. <code>1:2</code> to create unigram and bigram features.</p>
@@ -767,14 +731,13 @@ DTM &lt;- corpus_token_bigrams  %&gt;%
 
 # How many features do we have now?
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 22799</code></pre>
+<pre><code>## [1] 21334 22800</code></pre>
 <pre class="r"><code># How do they look like?
 sample(colnames(DTM), 10)</code></pre>
-<pre><code>##  [1] &quot;provide_suitable&quot;      &quot;meeting&quot;              
-##  [3] &quot;sufficient_revenue&quot;    &quot;difficult_problems&quot;   
-##  [5] &quot;promptly&quot;              &quot;depressions&quot;          
-##  [7] &quot;adjudged&quot;              &quot;present_circumstances&quot;
-##  [9] &quot;made_report&quot;           &quot;world_change&quot;</code></pre>
+<pre><code>##  [1] &quot;energetic&quot;           &quot;acquired&quot;            &quot;government_made&quot;    
+##  [4] &quot;received_department&quot; &quot;holds&quot;               &quot;origins&quot;            
+##  [7] &quot;desirous&quot;            &quot;commission_power&quot;    &quot;involved_war&quot;       
+## [10] &quot;footing_favored&quot;</code></pre>
 <pre class="r"><code># run cross validation
 annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
@@ -790,8 +753,8 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 100&quot;
 ## [1] &quot;Best C value: 0.03, F1 = 0.644608227558143&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
-<pre><code>##     P     R     S     F     A  Pos. 
-## 0.591 0.725 0.795 0.645 0.777 9.100</code></pre>
+<pre><code>##         P         R         S         F         A      Pos. 
+## 0.5906138 0.7254419 0.7951865 0.6446082 0.7766667 9.1000000</code></pre>
 <p>In this case, bi-gram and tri-gram features seem to not contribute positively to the classification result.</p>
 <p><strong>Minimum feature frequency</strong></p>
 <p>Up to this point, we dropped features occurring less than five times in our data. Let’s see if we include more features by increasing the minimum frequency.</p>
@@ -803,7 +766,7 @@ DTM &lt;- corpus_token_sw  %&gt;%
   dfm_trim(min_docfreq = minimumFrequency, max_docfreq = Inf)
 
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 16674</code></pre>
+<pre><code>## [1] 21334 16689</code></pre>
 <pre class="r"><code>annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 <pre><code>## [1] &quot;C = 0.003&quot;
@@ -818,8 +781,8 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 100&quot;
 ## [1] &quot;Best C value: 0.03, F1 = 0.651274894224809&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
-<pre><code>##     P     R     S     F     A  Pos. 
-## 0.602 0.725 0.804 0.651 0.783 9.100</code></pre>
+<pre><code>##         P         R         S         F         A      Pos. 
+## 0.6020316 0.7254419 0.8042963 0.6512749 0.7833333 9.1000000</code></pre>
 <p>It seems that feeding more features into the classifier has a little positive effect on the result.</p>
 <p><strong>Lemmatization</strong></p>
 <p>As a last method, we utilize lemmatization to unify different variants of the same semantic form (such as <em>nation</em> and <em>nations</em>).</p>
@@ -839,7 +802,7 @@ DTM &lt;- corpus_token_lemma  %&gt;%
   dfm_trim(min_docfreq = minimumFrequency, max_docfreq = Inf)
 
 dim(DTM)</code></pre>
-<pre><code>## [1] 21334 11509</code></pre>
+<pre><code>## [1] 21334 11523</code></pre>
 <pre class="r"><code># run cross validation
 annotatedDTM &lt;- convertSlamToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
@@ -855,8 +818,8 @@ best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>
 ## [1] &quot;C = 100&quot;
 ## [1] &quot;Best C value: 0.03, F1 = 0.69005439005439&quot;</code></pre>
 <pre class="r"><code>k_fold_cross_validation(annotatedDTM, annotatedLabels, cost = best_C)</code></pre>
-<pre><code>##     P     R     S     F     A  Pos. 
-## 0.641 0.767 0.817 0.690 0.807 9.100</code></pre>
+<pre><code>##         P         R         S         F         A      Pos. 
+## 0.6409369 0.7668543 0.8170156 0.6900544 0.8066667 9.1000000</code></pre>
 <p>Each individual approach to optimize our text features for classification has some effect on the results. It takes some time to engineer an optimal feature set.</p>
 <p>Further, testing different features must be done for each new task / language individually, since there is no “one-size fits all” approach to this.</p>
 <p>GENERAL ADVISE: For this tutorial we utilized a rather small training set of 300 examples, 91 of them in the positive class. Better classification accuracy can be expected, if more training data is available. Hence, instead of spending too much time on feature optimization, it will probably be a better idea to invest into generation of more training data first.</p>
@@ -887,7 +850,7 @@ final_labels &lt;- predict(final_model, convertSlamToSparseM(DTM))$predictions
 table(final_labels) / sum(table(final_labels))</code></pre>
 <pre><code>## final_labels
 ## DOMESTIC  FOREIGN 
-##    0.595    0.405</code></pre>
+## 0.594497 0.405503</code></pre>
 <p>We see that the classifier puts the majority of the around 21,000 paragraphs into the DOMESTIC category. We can visualize the result as a bar chart with <code>ggplot2</code>. For better readability</p>
 <pre class="r"><code>speech_year &lt;- substr(textdata$date, 0, 4)
 speech_id &lt;- textdata$speech_doc_id
@@ -938,6 +901,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

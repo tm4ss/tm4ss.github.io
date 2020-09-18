@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2019-07-23" />
+<meta name="date" content="2020-09-18" />
 
 <title>Tutorial 1: Processing of textual data</title>
 
@@ -93,7 +93,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -242,6 +241,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -254,48 +254,9 @@ $(document).ready(function () {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -309,6 +270,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -460,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 1: Processing of textual data</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2019-07-23</h4>
+<h4 class="date">2020-09-18</h4>
 
 </div>
 
@@ -508,7 +475,7 @@ cat(substr(extracted_texts$text[2] , 0, 300))</code></pre>
 options(stringsAsFactors = FALSE)</code></pre>
 <p>The <code>read.csv</code> command reads a <strong>CSV</strong> (Comma Separated Value) file from disk. Such files represent a table whose rows are represented by single lines in the files and columns are marked by a <em>separator</em> character within lines. Arguments of the command can be set to specify whether the CSV file contains a line with column names (header = <code>TRUE</code> or <code>FALSE</code>) and the character set.</p>
 <p>We read a CSV containing 233 “State of the Union” addresses of the presidents of the United States. The texts are freely available from <a href="http://stateoftheunion.onetwothree.net" class="uri">http://stateoftheunion.onetwothree.net</a>.</p>
-<p>Our CSV file has the format: <code>&quot;doc_id&quot;;&quot;speech_type&quot;;&quot;president&quot;;&quot;date&quot;;&quot;text&quot;</code>. Text is encapsualted into quotes (<code>&quot;</code>). Since sepration is marked by <code>;</code> instead of <code>,</code>, we need to specify the separator char.</p>
+<p>Our CSV file has the format: <code>"doc_id";"speech_type";"president";"date";"text"</code>. Text is encapsualted into quotes (<code>"</code>). Since sepration is marked by <code>;</code> instead of <code>,</code>, we need to specify the separator char.</p>
 <pre class="r"><code># read csv into a data.frame
 textdata &lt;- read.csv(&quot;data/sotu.csv&quot;, header = TRUE, sep = &quot;;&quot;, encoding = &quot;UTF-8&quot;)</code></pre>
 <p>The texts are now available in a <code>data.frame</code> together with some metadata (document id, speech type, president). Let us first see how many documents and metadata we have read.</p>
@@ -518,7 +485,7 @@ dim(textdata)</code></pre>
 <pre class="r"><code># column names of text and metadata
 colnames(textdata)</code></pre>
 <pre><code>## [1] &quot;doc_id&quot;      &quot;speech_type&quot; &quot;president&quot;   &quot;date&quot;        &quot;text&quot;</code></pre>
-<p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
+<p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
 <pre class="r"><code>table(textdata[, &quot;president&quot;])</code></pre>
 <pre><code>## 
 ##       Abraham Lincoln        Andrew Jackson        Andrew Johnson 
@@ -538,110 +505,106 @@ summary(sotu_corpus)</code></pre>
 <pre><code>## Corpus consisting of 233 documents, showing 100 documents:
 ## 
 ##  Text Types Tokens Sentences
-##     1   460   1170        24
-##     2   593   1504        40
-##     3   816   2477        60
-##     4   772   2288        61
-##     5   803   2122        56
-##     6  1137   3198        79
-##     7   821   2155        53
-##     8  1005   3096        78
-##     9   732   2239        58
-##    10   833   2368        54
-##    11   597   1624        35
+##     1   460   1167        24
+##     2   593   1504        39
+##     3   816   2476        59
+##     4   772   2287        60
+##     5   803   2121        55
+##     6  1137   3197        78
+##     7   821   2154        52
+##     8  1005   3095        79
+##     9   732   2236        59
+##    10   833   2368        58
+##    11   597   1624        36
 ##    12   562   1489        40
 ##    13  1098   3493        90
-##    14   823   2398        62
+##    14   823   2397        62
 ##    15   837   2463        48
-##    16   746   2287        50
+##    16   746   2286        50
 ##    17   984   3171        78
-##    18   969   3114        76
+##    18   969   3113        76
 ##    19   858   2606        62
-##    20   956   2922        72
+##    20   956   2921        72
 ##    21   699   1950        40
 ##    22   893   2615        61
 ##    23   829   2439        46
-##    24  1126   3496        87
-##    25  1074   3521        67
+##    24  1126   3495        87
+##    25  1074   3521        69
 ##    26   831   2282        50
-##    27  1050   3390        59
-##    28  1086   3615        72
-##    29  1222   4815       122
-##    30  1243   4729       114
-##    31  1196   5091       131
-##    32  1070   3767        84
-##    33  1319   6323       149
-##    34  1265   5145       117
-##    35  1593   6927       184
-##    36  1750   9179       247
-##    37  2147   9809       212
-##    38  1817   8409       172
-##    39  1818   7586       165
-##    40  1830   7945       195
-##    41  2356  11418       299
-##    42  2767  16297       391
-##    43  1792   7719       165
-##    44  1916   8480       199
-##    45  1741   8497       181
-##    46  2581  14463       318
-##    47  2240  11573       239
-##    48  2421  13223       294
-##    49  2368  12355       281
-##    50  2388  12439       264
-##    51  2638  14512       341
-##    52  2153   9715       182
-##    53  2002   8837       197
-##    54  2037   9035       205
-##    55  1958   8645       193
-##    56  2115  10026       267
-##    57  2689  17529       446
-##    58  2782  19861       476
-##    59  2687  17790       440
-##    60  3289  23296       597
-##    61  1863   8223       210
-##    62  2061   9008       232
-##    63  2696  14332       351
-##    64  2379  10712       284
-##    65  2292  10379       231
-##    66  2427  10990       267
-##    67  2458  12583       274
-##    68  2325  11392       255
-##    69  2575  14932       406
-##    70  2912  17830       518
-##    71  2453  13598       396
-##    72  2638  15376       484
-##    73  1872   7661       213
-##    74  2061   9390       319
-##    75  1719   6645       200
-##    76  1755   6587       207
-##    77  2153  10090       276
-##    78  1871   7797       202
-##    79  2668  13177       381
-##    80  2352  10863       281
-##    81  1924   8488       247
-##    82  2173   9587       266
-##    83  1758   7020       211
-##    84  1162   4338       112
-##    85  2377  11013       292
-##    86  2143  10100       273
-##    87  2574  13408       347
-##    88  1787   7438       192
-##    89  1965   8707       218
-##    90  2040   8643       237
-##    91  2443  12647       313
-##    92  1768   7215       191
-##    93  1351   4098       118
-##    94  1062   3299        92
-##    95  1315   4082       108
-##    96  2355   9670       288
-##    97  3812  21381       559
-##    98  3110  16359       416
-##    99  1394   5723       123
-##   100  2402   9798       239
-## 
-## Source: Z:/Promotion/Courses/Gesis BM III 2019/Tutorials/* on x86 by rioreiser
-## Created: Tue Jul 23 15:31:36 2019
-## Notes:</code></pre>
+##    27  1050   3389        59
+##    28  1086   3614        72
+##    29  1222   4814       123
+##    30  1243   4728       118
+##    31  1196   5091       132
+##    32  1070   3762        85
+##    33  1319   6323       158
+##    34  1265   5145       118
+##    35  1593   6926       187
+##    36  1750   9175       248
+##    37  2147   9798       213
+##    38  1817   8406       172
+##    39  1819   7578       168
+##    40  1832   7937       195
+##    41  2356  11408       299
+##    42  2767  16271       393
+##    43  1792   7716       168
+##    44  1916   8476       200
+##    45  1741   8494       182
+##    46  2581  14454       318
+##    47  2240  11567       240
+##    48  2421  13212       294
+##    49  2368  12341       282
+##    50  2388  12426       265
+##    51  2638  14498       342
+##    52  2153   9700       183
+##    53  2002   8836       198
+##    54  2037   9018       205
+##    55  1958   8635       193
+##    56  2115  10019       267
+##    57  2689  17517       447
+##    58  2782  19849       476
+##    59  2687  17782       440
+##    60  3289  23273       597
+##    61  1863   8222       210
+##    62  2061   9004       234
+##    63  2696  14328       353
+##    64  2379  10705       284
+##    65  2292  10375       232
+##    66  2427  10985       268
+##    67  2458  12581       274
+##    68  2325  11379       255
+##    69  2575  14929       406
+##    70  2912  17828       520
+##    71  2453  13596       396
+##    72  2638  15360       484
+##    73  1872   7651       213
+##    74  2061   9367       319
+##    75  1719   6643       200
+##    76  1755   6585       207
+##    77  2153  10077       276
+##    78  1871   7790       202
+##    79  2668  13156       383
+##    80  2352  10846       287
+##    81  1924   8481       249
+##    82  2173   9577       271
+##    83  1758   7016       211
+##    84  1162   4336       113
+##    85  2377  11007       292
+##    86  2143  10074       274
+##    87  2574  13397       348
+##    88  1787   7429       194
+##    89  1965   8706       218
+##    90  2040   8641       238
+##    91  2443  12643       314
+##    92  1768   7209       192
+##    93  1351   4095       119
+##    94  1062   3295        92
+##    95  1315   4079       108
+##    96  2355   9667       291
+##    97  3813  21377       560
+##    98  3110  16350       416
+##    99  1394   5722       123
+##   100  2402   9794       239</code></pre>
 <p>A corpus is an extension of R list objects. With the <code>[[]]</code> brackets, we can access single list elements, here documents, within a corpus. We print the text of the first element of the corpus using the <code>texts</code> command.</p>
 <pre class="r"><code># getting a single text documents content
 cat(texts(sotu_corpus[1]))</code></pre>
@@ -662,11 +625,20 @@ cat(texts(sotu_corpus[1]))</code></pre>
 DTM &lt;- dfm(sotu_corpus)
 # Show some information
 DTM</code></pre>
-<pre><code>## Document-feature matrix of: 233 documents, 30,308 features (94.3% sparse).</code></pre>
+<pre><code>## Document-feature matrix of: 233 documents, 30,359 features (94.3% sparse).
+##     features
+## docs fellow-citizens  of the senate and house representatives :  i embrace
+##    1               1  69  97      2  41     3               3 3 11       1
+##    2               1  89 122      2  45     3               3 3  8       0
+##    3               1 159 242      3  73     3               3 4  6       0
+##    4               1 139 195      2  56     3               3 3 21       0
+##    5               1 132 180      2  49     3               3 3 12       0
+##    6               1 187 273      2  86     4               3 3 18       0
+## [ reached max_ndoc ... 227 more documents, reached max_nfeat ... 30,349 more features ]</code></pre>
 <pre class="r"><code># Dimensionality of the DTM
 dim(DTM)</code></pre>
-<pre><code>## [1]   233 30308</code></pre>
-<p>The dimensions of the DTM, 233 rows and 30308 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
+<pre><code>## [1]   233 30359</code></pre>
+<p>The dimensions of the DTM, 233 rows and 30359 columns, match the number of documents in the corpus and the number of different word forms (types) of the vocabulary.</p>
 <p>A first impression of text statistics we can get from a word list. Such a word list represents the frequency counts of all words in all documents. We can get that information easily from the DTM by summing all of its column vectors.</p>
 <p>A so-called <strong>sparse matrix</strong> data structure is used for the document term matrix in the quanteda package (quanteda inherits the <code>Matrix</code> package for sparse matrices). Since most entries in a document term vector are 0, it would be very inefficient to actually store all these values. A sparse data structure instead stores only those values of a vector/matrix different from zero. The <em>Matrix</em> package provides arithmetic operations on sparse DTMs.</p>
 <pre class="r"><code># sum columns for word counts
@@ -681,25 +653,25 @@ wordlist &lt;- wordlist[wordIndexes, ]
 # show the most frequent words
 head(wordlist, 25)</code></pre>
 <pre><code>##       words  freqs
-## the     the 151021
-## of       of  97397
+## the     the 151018
+## of       of  97395
 ## ,         ,  85384
-## .         .  63804
-## and     and  61567
+## .         .  63784
+## and     and  61565
 ## to       to  61304
 ## in       in  38980
-## a         a  28352
+## a         a  28351
 ## that   that  21960
 ## for     for  19183
 ## be       be  18787
 ## our     our  17678
 ## is       is  17197
 ## it       it  15321
-## by       by  15075
+## by       by  15074
 ## we       we  12377
 ## which which  12354
 ## as       as  12277
-## this   this  12216
+## this   this  12215
 ## have   have  12172
 ## with   with  12119
 ## will   will   9615
@@ -712,7 +684,7 @@ head(wordlist, 25)</code></pre>
 <p>The distribution follows an extreme power law distribution (very few words occur very often, very many words occur very rare). The Zipf law says that the frequency of a word is reciprocal to its rank (1 / r). To make the plot more readable, the axes can be logarithmized.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, log=&quot;xy&quot;, lwd=2, main = &quot;Rank-Frequency Plot&quot;, xlab=&quot;log-Rank&quot;, ylab =&quot;log-Frequency&quot;)</code></pre>
 <p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-16-1.png" width="768" /></p>
-<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 30308 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
+<p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 30359 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
 <p>Hence, ignoring very rare / frequent words has many advantages:</p>
 <ul>
 <li>reducing the dimensionality of the vocabulary (saves memory)</li>
@@ -741,21 +713,21 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 </ol>
 <pre><code>##                 words freqs
 ## ,                   , 85384
-## .                   . 63804
-## -                   -  8008
+## .                   . 63784
 ## government government  6884
 ## states         states  6502
 ## congress     congress  5023
 ## united         united  4847
 ## ;                   ;  4478
 ## can               can  4378
+## -                   -  4196
 ## people         people  4014
 ## upon             upon  3958
 ## year             year  3850
 ## $                   $  3659
 ## may               may  3408
-## country       country  3392
-## must             must  3330
+## country       country  3390
+## must             must  3329
 ## great           great  3275
 ## made             made  3151
 ## now               now  3110
@@ -769,11 +741,11 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 <li>If you look at the result, are there any corpus specific terms that should also be considered as stop word?</li>
 <li>What is the share of terms regarding the entire vocabulary which occur only once in the corpus?</li>
 </ol>
-<pre><code>## [1] 0.3933615</code></pre>
+<pre><code>## [1] 0.3941171</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Compute the type-token ratio (TTR) of the corpus. the TTR is the fraction of the number of tokens divided by the number of types.</li>
 </ol>
-<pre><code>## [1] 0.01546221</code></pre>
+<pre><code>## [1] 0.01551871</code></pre>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
@@ -803,6 +775,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

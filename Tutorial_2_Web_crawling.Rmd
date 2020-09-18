@@ -39,6 +39,25 @@ options(stringsAsFactors = F)
 getwd()
 ```
 
+# Prepare scraping of dynamic web pages
+
+Modern websites often do not contain the full content displayed in the browser in their corresponding source files which are served by the webserver. Instead, the browser loads additional content dynamically via javascript code contained in the original source file. To be able to scrape such content, we rely on a headless browser "phantomJS" which renders a site for a given URL for us, before we start the actual scraping, i.e. the extraction of certain identifiable elements from the rendered site. 
+
+If not done yet, please install the `webdriver` package for R and install the [phantomJS](https://phantomjs.org) headless browser. This needs to be done only once.
+
+```{r installPJS, eval=F}
+install.packages("webdriver")
+library(webdriver)
+install_phantomjs()
+```
+
+Now we can start an instance of PhantomJS and create a new browser session that awaits to load URLs to render the corresponding websites.
+
+```{r startPJS, eval=T}
+require(webdriver)
+pjs_instance <- run_phantomjs()
+pjs_session <- Session$new(port = pjs_instance$port)
+```
 
 # Crawl single webpage
 
@@ -52,9 +71,23 @@ require("rvest")
 
 A convenient method to download and parse a webpage provides the function `read_html` which accepts a URL as a parameter. The function downloads the page and interprets the html source code as an HTML / XML object. 
 
+## Dynamic web pages
+
+To make sure that we get the dynamically rendered HTML content of the website, we pass the original source code dowloaded from the URL to our PhantomJS session first, and the use the rendered source.
+
+*NOTICE*: In case the website does not fetch or alter the to-be-scraped content dynamically, you can omit the PhantomJS webdriver and just download the the static HTML source code to retrieve the information from there. In this case, replace the following block of code with a simple call of `html_document <- read_html(url)` where the `read_html()` function downloads the page source for you. 
+
 ```{r}
-html_document <- read_html(url)
+# load URL to phantomJS session
+pjs_session$go(url)
+# retrieve the rendered source code of the page
+rendered_source <- pjs_session$getSource()
+# parse the dynamically rendered source code
+html_document <- read_html(rendered_source)
 ```
+
+
+## Scrape information from XHTML
 
 HTML / XML objects are a structured representation of HTML / XML source code, which allows to extract single elements (headlines e.g. `<h1>`, paragraphs `<p>`, links `<a>`, ...), their attributes (e.g. `<a href="http://...">`) or text wrapped in between elements (e.g. `<p>my text...</p>`). Elements can be extracted in XML objects with XPATH-expressions. 
 
@@ -71,7 +104,7 @@ title_text <- html_document %>%
   html_text(trim = T)
 ```
 
-Let's see, what the title_text contains:
+Let's see, what the `title_text` contains:
 
 ```{r}
 cat(title_text)
@@ -122,7 +155,12 @@ Usually, we do not want download a single document, but a series of documents. I
 
 ```{r}
 url <- "https://www.theguardian.com/world/angela-merkel"
-html_document <- read_html(url)
+
+# go to URL, download and render page
+pjs_session$go(url)
+rendered_source <- pjs_session$getSource()
+# parse the source code into an XML object
+html_document <- read_html(rendered_source)
 ```
 
 Second, we download and scrape each individual article page. For this, we extract all `href`-attributes from `a`-elements fitting a certain CSS-class. To select the right contents via XPATH-selectors, you need to investigate the HTML-structure of your specific page. Modern browsers such as Firefox and Chrome support you in that task by a function called "Inspect Element" (or similar), available through a right-click on the page element.
@@ -155,8 +193,10 @@ Now we can iterate over all URLs of tag overview pages, to collect more/all link
 ```{r}
 all_links <- NULL
 for (url in paging_urls) {
-  # download and parse single ta overview page
-  html_document <- read_html(url)
+  # download and parse single overview page
+  pjs_session$go(url)
+  rendered_source <- pjs_session$getSource()
+  html_document <- read_html(rendered_source)
 
   # extract links to articles
   links <- html_document %>%
@@ -173,7 +213,9 @@ An effective way of programming is to encapsulate repeatedly used code in a spec
 ```{r}
 scrape_guardian_article <- function(url) {
   
-  html_document <- read_html(url)
+  pjs_session$go(url)
+  rendered_source <- pjs_session$getSource()
+  html_document <- read_html(rendered_source)
   
   title_xpath <- "//h1[contains(@class, 'content__headline')]"
   title_text <- html_document %>%

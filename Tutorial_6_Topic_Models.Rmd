@@ -100,17 +100,15 @@ As an unsupervised machine learning method, topic models are suitable for the ex
 
 For parameterized models such as Latent Dirichlet Allocation (LDA), the number of topics `K` is the most important parameter to define in advance. How an optimal `K` should be selected depends on various factors. If `K` is too small, the collection is divided into a few very general semantic contexts. If `K` is too large, the collection is divided into too many topics of which some may overlap and others are hardly interpretable.
 
-For our first analysis we choose a thematic "resolution" of `K = 20` topics. In contrast to a resolution of 100 or more, this number of topics can be evaluated qualitatively very easy.
+For our first analysis we choose a thematic "resolution" of `K = 20` topics. In contrast to a resolution of 100 or more, this number of topics can be evaluated qualitatively very easy. We also set the seed for the random number generator to ensure reproducible results between repeated model inferences.
 
 ``` {r LDA, cache=TRUE, results='hide', message=FALSE, warning=FALSE}
 # load package topicmodels
 require(topicmodels)
 # number of topics
 K <- 20
-# set random number generator seed
-set.seed(9161)
-# compute the LDA model, inference via 1000 iterations of Gibbs sampling
-topicModel <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, verbose = 25))
+# compute the LDA model, inference via n iterations of Gibbs sampling
+topicModel <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, seed = 1, verbose = 25))
 ```
 
 Depending on the size of the vocabulary, the collection size and the number K, the inference of topic models can take a very long time. This calculation may take several minutes. If it takes too long, reduce the vocabulary in the DTM by increasing the minimum frequency in the previous step.
@@ -228,7 +226,7 @@ attr(topicModel, "alpha")
 ```
 
 ``` {r LDA2, cache=TRUE, message=FALSE, results='hide'}
-topicModel2 <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, verbose = 25, alpha = 0.2))
+topicModel2 <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, verbose = 25, seed = 1, alpha = 0.2))
 tmResult <- posterior(topicModel2)
 theta <- tmResult$topics
 beta <- tmResult$terms
@@ -347,8 +345,120 @@ For more details about topic modeling and some best practice advise, see also @M
 
 # Optional exercises
 
-1. Create a list of all documents that have a thematic context with *economy*.
+1. Create a list of all documents that contain a share of *war*-related topics of at least 50 % (possible approach: sub-select topics which contain the term *war* among the top 15 terms).
+
+```{r ex1, echo=FALSE, warning=F, message=F, cache=T, error=T}
+regex_pattern <- "^war$|-war$"
+top15words <- lda::top.topic.words(beta, 15, by.score = T)
+relevant_terms <- apply(top15words, 2, FUN = function(x) grepl(regex_pattern, x))
+relevant_topics <- which(colSums(relevant_terms) > 0)
+cat("Selected topics:")
+print(topicNames[relevant_topics])
+
+# subselect
+topicThreshold <- 0.5
+summed_share <- rowSums(theta[, relevant_topics]) 
+selectedDocumentIndexes <- summed_share >= topicThreshold
+filteredCorpus <- sotu_corpus %>% corpus_subset(subset = selectedDocumentIndexes)
+
+# show beginnings of filtered speeches
+cat("Beginnings of filtered speeches:")
+filteredCorpus
+
+# show metadata of filtered corpus
+metadata <- textdata[selectedDocumentIndexes, -which(names(textdata) %in% c("text", "speech_type"))]
+metadata$topic_share <- summed_share[selectedDocumentIndexes]
+cat("Metadata of filtered speeches:")
+print(metadata)
+```
+
 2. Repeat the exercises with a different K value (e.g., K = 5, 30, 50). What do you think of the results?
-3. Split the original text source into paragraphs (e.g. use `strsplit(textdata$text, "\n\n")`) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?
+
+
+3. Split the original text source into paragraphs (e.g. use `corpus_reshape(x, to = "paragraphs")`) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?
+
+```{r ex3, echo=FALSE, warning=F, message=F, cache=T, error=T}
+sotu_corpus <- corpus(
+  textdata$text, 
+  docnames = textdata$doc_id, 
+  docvars = data.frame(decade = paste0(substr(textdata$date, 0, 3), "0"))
+)
+
+corpus_paragraphs <- corpus_reshape(sotu_corpus, to = "paragraphs")
+
+cat("Length of the corpus split into paragraphs:")
+length(corpus_paragraphs)
+
+# Create a DTM (may take a while)
+corpus_tokens <- corpus_paragraphs %>% 
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE) %>% 
+  tokens_tolower() %>% 
+  tokens_replace(lemma_data$inflected_form, lemma_data$lemma, valuetype = "fixed") %>% 
+  tokens_remove(pattern = stopwords_extended, padding = T) %>%
+  tokens_compound(sotu_collocations)
+
+# Create DTM, but remove terms which occur in less than 1% of all documents
+# due to paragraphs, we need a much lower min-docfreq threshold
+DTM <- corpus_tokens %>% 
+  tokens_remove("") %>%
+  dfm() %>% 
+  dfm_trim(min_docfreq = 0.0001, max_docfreq = Inf, docfreq_type = "prop")
+
+top10_terms <- c( "unite_state", "past_year", "year_ago", "year_end", "government", "state", "country", "year", "make", "seek")
+
+DTM <- DTM[, !(colnames(DTM) %in% top10_terms)]
+
+sel_idx <- rowSums(DTM) > 0
+DTM <- DTM[sel_idx, ]
+corpus_paragraphs <- corpus_paragraphs[sel_idx]
+
+K <- 20
+
+topicModel3 <- LDA(DTM, K, method="Gibbs", control=list(iter = 500, seed = 1, alpha = 0.2))
+tmResult <- posterior(topicModel3)
+theta <- tmResult$topics
+beta <- tmResult$terms
+topicNames <- apply(lda::top.topic.words(beta, 5, by.score = T), 2, paste, collapse = " ")
+
+# stacked bar chart
+# -----------------
+
+# append decade information for aggregation
+paragraph_decade <- docvars(corpus_paragraphs)$decade
+# get mean topic proportions per decade
+topic_proportion_per_decade <- aggregate(theta, by = list(decade = paragraph_decade), mean)
+# set topic names to aggregated columns
+colnames(topic_proportion_per_decade)[2:(K+1)] <- topicNames
+
+# reshape data frame
+vizDataFrame <- melt(topic_proportion_per_decade, id.vars = "decade")
+
+# plot topic proportions per deacde as bar plot
+require(pals)
+ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) + 
+  geom_bar(stat = "identity") + ylab("proportion") + 
+  scale_fill_manual(values = paste0(alphabet(K), "FF"), name = "decade") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+4. Use the LDAvis package by @sievert_ldavis:_2014 to visualize the latest model you computed.
+
+```{r ex4, eval=F, echo=T, warning=F, message=F, cache=T, error=T}
+# LDAvis browser
+library(LDAvis)
+library("tsne")
+svd_tsne <- function(x) tsne(svd(x)$u)
+json <- createJSON(
+  phi = tmResult$beta, 
+  theta = tmResult$theta, 
+  doc.length = rowSums(DTM), 
+  vocab = colnames(DTM), 
+  term.frequency = colSums(DTM),
+  mds.method = svd_tsne,
+  plot.opts = list(xlab="", ylab="")
+)
+serVis(json)
+```
+![LDAvis example](resources/ldavis.PNG)
 
 # References

@@ -1,8 +1,10 @@
 ---
-title: "Tutorial 2: Web crawling and scraping"
+title: "Tutorial 1: Web crawling and scraping"
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: 
+  pdf_document:
+    toc: yes
   html_document:
     toc: true
     theme: united
@@ -17,15 +19,15 @@ klippy::klippy()
 ```
 This tutorial covers how to extract and process text data from web pages or other documents for later analysis.
 The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called **Scraping**. For these tasks, we use the package "rvest".
-In a third exercise, we will extract text data from various formats such as PDF, DOC, DOCX and TXT files with the "readtext" package.
 
 1. Download a single web page and extract its content
-2. Extract links from a overview page and extract articles
-3. Extract text data from PDF and other formats on disk
+2. Extract links from a overview page 
+3. Extract all articles to corresponding links from step 2
+
 
 # Preparation
 
-Create a new R script (File -> New File -> R Script) named "Tutorial_2.R". In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.
+Create a new R script (File -> New File -> R Script) named "Tutorial_1.R". In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.
 
 Tip: Copy individual sections of the source code directly into the console (2) and run it step by step. Get familiar with the function calls included in the Help function.
 
@@ -39,7 +41,7 @@ options(stringsAsFactors = F)
 getwd()
 ```
 
-# Prepare scraping of dynamic web pages
+# Scraping of dynamic web pages
 
 Modern websites often do not contain the full content displayed in the browser in their corresponding source files which are served by the webserver. Instead, the browser loads additional content dynamically via javascript code contained in the original source file. To be able to scrape such content, we rely on a headless browser "phantomJS" which renders a site for a given URL for us, before we start the actual scraping, i.e. the extraction of certain identifiable elements from the rendered site. 
 
@@ -75,8 +77,6 @@ A convenient method to download and parse a webpage provides the function `read_
 
 To make sure that we get the dynamically rendered HTML content of the website, we pass the original source code dowloaded from the URL to our PhantomJS session first, and the use the rendered source.
 
-*NOTICE*: In case the website does not fetch or alter the to-be-scraped content dynamically, you can omit the PhantomJS webdriver and just download the the static HTML source code to retrieve the information from there. In this case, replace the following block of code with a simple call of `html_document <- read_html(url)` where the `read_html()` function downloads the page source for you. 
-
 ```{r}
 # load URL to phantomJS session
 pjs_session$go(url)
@@ -86,6 +86,7 @@ rendered_source <- pjs_session$getSource()
 html_document <- read_html(rendered_source)
 ```
 
+*NOTICE*: In case the website does not fetch or alter the to-be-scraped content dynamically, you can omit the PhantomJS webdriver and just download the the static HTML source code to retrieve the information from there. In this case, replace the following block of code with a simple call of `html_document <- read_html(url)` where the `read_html()` function downloads the unrendered page source code directly. 
 
 ## Scrape information from XHTML
 

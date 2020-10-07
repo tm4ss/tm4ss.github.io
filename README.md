@@ -4,12 +4,12 @@ This course consists of 8 tutorials written in R-markdown and further described 
 
 You can use *knitr* to create the tutorial sheets as HTML notebooks from the [R-markdown source code](https://github.com/tm4ss/tm4ss.github.io).
 
-In the /docs folder, you have access to the **[rendered tutorials](https://tm4ss.github.io/docs)**.
+In the `/docs` folder, you have access to the **[rendered tutorials](https://tm4ss.github.io/docs)**.
 
 ## Tutorials
 
-1. Data import and web scraping
-2. Text as data
+1. Web crawling and scraping
+2. Text data import in R
 3. Frequency analysis
 4. Key term extraction
 5. Co-occurrence analysis
@@ -18,6 +18,20 @@ In the /docs folder, you have access to the **[rendered tutorials](https://tm4ss
 8. Part-of-Speech tagging / Named Entity Recognition
 
 Click **[here for the rendered tutorials](https://tm4ss.github.io/docs)**.
+
+## Render from source
+
+Clone the repository
+
+```
+git clone https://github.com/tm4ss/tm4ss.github.io.git
+```
+
+Open the `Tutorials.Rproj` R-project file and run
+
+```
+rmarkdown::render_site(output_format = "html_document")
+```
 
 ## License & Citation
 

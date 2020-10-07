@@ -93,7 +93,7 @@ Let us compute TF-IDF weights for all terms in the first speech of Barack Obama.
 # Compute IDF: log(N / n_i)
 number_of_docs <- nrow(DTM)
 term_in_docs <- colSums(DTM > 0)
-idf <- log2(number_of_docs / term_in_docs)
+idf <- log(number_of_docs / term_in_docs)
 
 # Compute TF
 first_obama_speech <- which(textdata$president == "Barack Obama")[1]
@@ -303,7 +303,7 @@ for (president in presidents) {
 source("calculateLogLikelihood.R")
 
 frq <- sort(colSums(targetDTM), decreasing = T)[1:25]
-tfidf <- sort(colSums(targetDTM) * log2(nrow(targetDTM) / colSums(targetDTM > 0)), decreasing = T)[1:25]
+tfidf <- sort(colSums(targetDTM) * log(nrow(targetDTM) / colSums(targetDTM > 0)), decreasing = T)[1:25]
 ll <- sort(calculateLogLikelihood(colSums(targetDTM), colSums(comparisonDTM)), decreasing = T)[1:25]
 
 df <- data.frame(

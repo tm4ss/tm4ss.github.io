@@ -182,10 +182,10 @@ The standard output is sorted by president's names alphabetically. We can make u
 
 ```{r buildTS6, warning=F}
 # order by positive sentiments
-ggplot(data = df, aes(x = reorder(president, df$value, head, 1), y = value, fill = variable)) + geom_bar(stat="identity", position=position_dodge()) + coord_flip()
+ggplot(data = df, aes(x = reorder(president, value, head, 1), y = value, fill = variable)) + geom_bar(stat="identity", position=position_dodge()) + coord_flip()
 
 # order by negative sentiments
-ggplot(data = df, aes(x = reorder(president, df$value, tail, 1), y = value, fill = variable)) + geom_bar(stat="identity", position=position_dodge()) + coord_flip()
+ggplot(data = df, aes(x = reorder(president, value, tail, 1), y = value, fill = variable)) + geom_bar(stat="identity", position=position_dodge()) + coord_flip()
 ```
 
 # Heatmaps
@@ -207,9 +207,125 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 
 # Optional exercises
 
-1. Run the time series analysis with the terms "environment", "climate", "planet", "space".
+1. Create the time series plot with the terms "environment", "climate", "planet", "space" as shown above. Then, try to use the  ggplot2 library for the line plot (e.g. the function `geom_line()`).
+
+```{r ex1, echo=F, results='hide', message=FALSE, warning=FALSE}
+# code from above
+terms_to_observe <- c("environment", "climate", "planet", "space")
+DTM_reduced <- as.matrix(DTM[, terms_to_observe])
+counts_per_decade <- aggregate(DTM_reduced, by = list(decade = textdata$decade), sum)
+
+# ggplot2 version
+df <- melt(counts_per_decade, id.vars = "decade")
+ggplot(data = df, aes(x = decade, y = value, group=variable, color = variable)) + 
+  geom_line()
+
+```
+
 2. Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.
+
+```{r ex2, echo=F, results='hide', message=FALSE, warning=FALSE}
+relative_sentiment_frequencies <- data.frame(
+  positive = counts_positive / (counts_positive + counts_negative),
+  negative = counts_negative / (counts_positive + counts_negative)
+)
+sentiments_per_president <- aggregate(relative_sentiment_frequencies, by = list(president = textdata$president), mean)
+df <- melt(sentiments_per_president, id.vars = "president")
+ggplot(data = df, aes(x = reorder(president, value, head, 1), y = value, fill = variable)) + geom_bar(stat="identity", position="stack") + coord_flip()
+```
+
+
 3. The AFINN sentiment lexicon provides not only negative/positive terms, but also a valence value for each term ranging from [-5;+5]. Instead of counting sentiment terms only, use the valence values for sentiment scoring.
-4. Draw a `heatmap` of the terms "i", "you", "he", "she", "we", "they" aggregated per president. Caution: you need to modify the preprocessing in a certain way!
+
+```{r ex3, echo=F, results='hide', message=FALSE, warning=FALSE}
+corpus_afinn <- sotu_corpus %>%
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols =
+           TRUE) %>%
+  tokens_tolower() %>%
+  tokens_remove(pattern = stopwords())
+
+# AFINN sentiment lexicon by Nielsen 2011
+afinn_terms <- read.csv("data/AFINN-111.txt", header = F, sep = "\t")
+
+pos_idx <- afinn_terms$V2 > 0
+positive_terms_score <- afinn_terms$V2[pos_idx]
+names(positive_terms_score) <- afinn_terms$V1[pos_idx]
+
+neg_idx <- afinn_terms$V2 < 0
+negative_terms_score <- afinn_terms$V2[neg_idx] * -1
+names(negative_terms_score) <- afinn_terms$V1[neg_idx]
+
+
+pos_DTM <- corpus_afinn %>%
+  tokens_keep(names(positive_terms_score)) %>%
+  dfm()
+positive_terms_score <- positive_terms_score[colnames(pos_DTM)]
+# caution: to multiply all rows of a matrix with a vector of
+#ncol(matrix) length
+# you need to transpose the left matrix and then the result again
+pos_DTM <- t(t(as.matrix(pos_DTM)) * positive_terms_score)
+counts_positive <- rowSums(pos_DTM)
+
+neg_DTM <- corpus_afinn %>%
+  tokens_keep(names(negative_terms_score)) %>%
+  dfm()
+negative_terms_score <- negative_terms_score[colnames(neg_DTM)]
+# caution: to multiply all rows of a matrix with a vector of ncol(matrix) length
+# you need to transpose the left matrix and then the result again
+neg_DTM <- t(t(as.matrix(neg_DTM)) * negative_terms_score)
+counts_negative <- rowSums(neg_DTM)
+
+counts_all_terms <- corpus_afinn %>% dfm() %>% rowSums()
+
+relative_sentiment_frequencies <- data.frame(
+  positive = counts_positive / (counts_positive + counts_negative),
+  negative = counts_negative / (counts_positive + counts_negative)
+)
+
+sentiments_per_president <- aggregate(
+  relative_sentiment_frequencies, 
+  by = list(president = textdata$president), 
+  mean)
+
+head(sentiments_per_president)
+
+df <- melt(sentiments_per_president, id.vars = "president")
+# order by positive sentiments
+ggplot(data = df, aes(x = reorder(president, value, head, 1), y = value, fill = variable)) + geom_bar(stat="identity", position="stack") + coord_flip()
+```
+
+
+4. Draw a heatmap of the terms "i", "you", "he", "she", "we", "they" aggregated per president. Caution: you need to modify the preprocessing in a certain way! Also consider setting the parameter `scale='none'` when calling the `heatmap` function.
+
+```{r ex4, echo=F, results='hide', message=FALSE, warning=FALSE}
+# do not use stop word removal!
+DTM <- sotu_corpus %>%
+  tokens(remove_punct = TRUE, remove_numbers = TRUE, remove_symbols =
+           TRUE) %>%
+  tokens_tolower() %>%
+  dfm()
+
+# aggregate relative counts per president
+terms_to_observe <- c("i", "you", "he", "she", "we", "they")
+DTM_reduced <- as.matrix(DTM[, terms_to_observe])
+abs_counts_per_president <- aggregate(
+  DTM_reduced, 
+  by = list(president = textdata$president), 
+  sum)
+lengths_speeches_per_president <- aggregate(
+  rowSums(DTM), 
+  by = list(president = textdata$president), 
+  sum)
+rel_counts_per_president <- abs_counts_per_president[, -1] / lengths_speeches_per_president[, -1]
+rownames(rel_counts_per_president) <- abs_counts_per_president$president
+
+# temporal re-ordering
+temporally_ordered_presidents <- unique(textdata$president)
+rel_counts_per_president <- rel_counts_per_president[temporally_ordered_presidents, ]
+
+# plot
+heatmap(t(rel_counts_per_president), Colv=NA, col = rev(heat.colors(256)),
+        keep.dendro= FALSE, margins = c(5, 10), scale = "none")
+```
 
 # References

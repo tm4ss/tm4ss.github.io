@@ -84,7 +84,7 @@ corpus_tokens <- tokens_compound(corpus_tokens, sotu_collocations)
 Again, we create a document-term-matrix. Only word forms which occur at least 10 times should be taken into account. An upper limit is not set (`Inf` = infinite).
 
 Additionally, we are interested in the joint occurrence of words in a sentence. For this, we do not need the exact count of how often the terms occur, but only the information whether they occur together or not. This can be encoded in a binary document-term-matrix. The parameter `weighting` in the control options calls the ` weightBin` function. This writes a 1 into the DTM if the term is contained in a sentence and 0 if not.
- 
+
 ```{r binDTM, cache=TRUE}
 minimumFrequency <- 10
 
@@ -142,12 +142,12 @@ mutualInformationSig <- mutualInformationSig[order(mutualInformationSig, decreas
 ########## DICE: 2 X&Y / X + Y ##############
 dicesig <- 2 * kij / (ki + kj)
 dicesig <- dicesig[order(dicesig, decreasing=TRUE)]
-  
+
 ########## Log Likelihood ###################
 logsig <- 2 * ((k * log(k)) - (ki * log(ki)) - (kj * log(kj)) + (kij * log(kij)) 
-          + (k - ki - kj + kij) * log(k - ki - kj + kij) 
-          + (ki - kij) * log(ki - kij) + (kj - kij) * log(kj - kij) 
-          - (k - ki) * log(k - ki) - (k - kj) * log(k - kj))
+               + (k - ki - kj + kij) * log(k - ki - kj + kij) 
+               + (ki - kij) * log(ki - kij) + (kj - kij) * log(kj - kij) 
+               - (k - ki) * log(k - ki) - (k - kj) * log(k - kj))
 logsig <- logsig[order(logsig, decreasing=T)]
 ```
 
@@ -254,50 +254,48 @@ The package iGraph offers multiple graph visualizations for graph objects. Graph
 ```{r fig.width=10, fig.height=8, message=FALSE}
 require(igraph)
 
-# Set the graph and type
+# set seed for graph plot
+set.seed(1)
+
+# Create the graph object as undirected graph
 graphNetwork <- graph.data.frame(resultGraph, directed = F)
 
 # Identification of all nodes with less than 2 edges
-graphVs <- V(graphNetwork)[degree(graphNetwork) < 2]
+verticesToRemove <- V(graphNetwork)[degree(graphNetwork) < 2]
 # These edges are removed from the graph
-graphNetwork <- delete.vertices(graphNetwork, graphVs) 
+graphNetwork <- delete.vertices(graphNetwork, verticesToRemove) 
 
-# Assign colors to edges and nodes (searchterm blue, rest orange)
+# Assign colors to nodes (search term blue, others orange)
 V(graphNetwork)$color <- ifelse(V(graphNetwork)$name == coocTerm, 'cornflowerblue', 'orange') 
 
-# Edges with a significance of at least 50% of the maximum sig- nificance in the graph are drawn in orange
-halfMaxSig <- max(E(graphNetwork)$sig) * 0.5
-E(graphNetwork)$color <- ifelse(E(graphNetwork)$sig > halfMaxSig, "coral", "azure3")
+# Set edge colors
+E(graphNetwork)$color <- adjustcolor("DarkGray", alpha.f = .5)
+# scale significance between 1 and 10 for edge width
+E(graphNetwork)$width <- scales::rescale(E(graphNetwork)$sig, to = c(1, 10))
 
-# Disable edges with radius
-E(graphNetwork)$curved <- 0 
-# Size the nodes by their degree of networking
-V(graphNetwork)$size <- log(degree(graphNetwork)) * 5
-
-# All nodes must be assigned a standard minimum-size
-V(graphNetwork)$size[V(graphNetwork)$size < 5] <- 3 
-
-# edge thickness
-E(graphNetwork)$width <- 2
+# Set edges with radius
+E(graphNetwork)$curved <- 0.15 
+# Size the nodes by their degree of networking (scaled between 5 and 15)
+V(graphNetwork)$size <- scales::rescale(log(degree(graphNetwork)), to = c(5, 15))
 
 # Define the frame and spacing for the plot
 par(mai=c(0,0,1,0)) 
 
-# Finaler Plot
-plot(graphNetwork,				
-     layout = layout.fruchterman.reingold,	# Force Directed Layout 
-     main = paste(coocTerm, ' Graph'),
-     vertex.label.family = "sans",
-     vertex.label.cex = 0.8,
-     vertex.shape = "circle",
-     vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
-     vertex.frame.color = 'darkolivegreen',
-     vertex.label.color = 'black',		# Color of node names
-     vertex.label.font = 2,			# Font of node names
-     vertex.label = V(graphNetwork)$name,		# node names
-     vertex.label.cex = 1 # font size of node names 
+# Final Plot
+plot(
+  graphNetwork,				
+  layout = layout.fruchterman.reingold,	# Force Directed Layout 
+  main = paste(coocTerm, ' Graph'),
+  vertex.label.family = "sans",
+  vertex.label.cex = 0.8,
+  vertex.shape = "circle",
+  vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
+  vertex.frame.color = adjustcolor("darkgray", alpha.f = .5),
+  vertex.label.color = 'black',		# Color of node names
+  vertex.label.font = 2,			# Font of node names
+  vertex.label = V(graphNetwork)$name,		# node names
+  vertex.label.cex = 1 # font size of node names
 )
-
 ```
 
 # Optional exercises
@@ -306,58 +304,55 @@ plot(graphNetwork,
 2. For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. 
 ```{r optionalEx2, eval=T,cache=T,message=F,warning=F,echo=F,fig.width=10,fig.height=8}
 
-# Set the graph and type. In this case, "F" means "Force Directed"
+# set seed for graph plot
+set.seed(1)
+
+# Create the graph object as undirected graph
 graphNetwork <- graph.data.frame(resultGraph, directed = F)
 
-# Identification of all nodes with less than 2 edges
-graphVs <- V(graphNetwork)[degree(graphNetwork) < 1]
-# These edges are removed from the graph
-graphNetwork <- delete.vertices(graphNetwork, graphVs) 
-
-# Assign colors to edges and nodes (searchterm blue, rest orange)
+# Assign colors to nodes (search term blue, others orange)
 V(graphNetwork)$color <- ifelse(V(graphNetwork)$name == coocTerm, 'cornflowerblue', 'orange') 
 
-# Edges with a significance of at least 50% of the maximum sig- nificance in the graph are drawn in orange
-halfMaxSig <- max(E(graphNetwork)$sig) * 0.5
-E(graphNetwork)$color <- ifelse(E(graphNetwork)$sig > halfMaxSig, "coral", "azure3")
+# Set edge colors
+E(graphNetwork)$color <- adjustcolor("DarkGray", alpha.f = .5)
+# scale significance between 1 and 10 for edge width
+E(graphNetwork)$width <- scales::rescale(E(graphNetwork)$sig, to = c(1, 10))
 
-# Disable edges with radius
-E(graphNetwork)$curved <- 0 
-# Size the nodes by their degree of networking
-V(graphNetwork)$size <- log(degree(graphNetwork)) * 5
-
-# All nodes must be assigned a standard minimum-size
-V(graphNetwork)$size[V(graphNetwork)$size < 5] <- 3 
-
-# edge thickness
-E(graphNetwork)$width <- 2
+# Set edges with radius
+E(graphNetwork)$curved <- 0.15 
+# Size the nodes by their degree of networking (scaled between 5 and 15)
+V(graphNetwork)$size <- scales::rescale(log(degree(graphNetwork)), to = c(5, 15))
 
 # Define the frame and spacing for the plot
 par(mai=c(0,0,1,0)) 
 
-# Finaler Plot
-plot(graphNetwork,				
-     layout = layout.fruchterman.reingold,	# Force Directed Layout 
-     main = paste(coocTerm, ' Graph'),
-     vertex.label.family = "sans",
-     vertex.label.cex = 0.8,
-     vertex.shape = "circle",
-     vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
-     vertex.frame.color = 'darkolivegreen',
-     vertex.label.color = 'black',		# Color of node names
-     vertex.label.font = 2,			# Font of node names
-     vertex.label = V(graphNetwork)$name,		# node names
-     vertex.label.cex = 1 # font size of node names 
+# Final Plot
+plot(
+  graphNetwork,				
+  layout = layout.fruchterman.reingold,	# Force Directed Layout 
+  main = paste(coocTerm, ' Graph'),
+  vertex.label.family = "sans",
+  vertex.label.cex = 0.8,
+  vertex.shape = "circle",
+  vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
+  vertex.frame.color = adjustcolor("darkgray", alpha.f = .5),
+  vertex.label.color = 'black',		# Color of node names
+  vertex.label.font = 2,			# Font of node names
+  vertex.label = V(graphNetwork)$name,		# node names
+  vertex.label.cex = 1 # font size of node names 
 )
 ```
 The plot may get very messy. Try lower values for `numberOfCoocs` to create a less dense network plot.
 
 
-3. Separate the DTM into two time periods (year < 1950; year > = 1950). Represent the graphs for the term "california" for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (`get_binDTM <- function(mycorpus)`) and for visualizing a co-occurrence network (`vis_cooc_network <- function(binDTM, coocTerm)`).
+3. Separate the DTM into two time periods (year < 1968; year > = 1968). Represent the graphs for the term "family" for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (`get_binDTM <- function(mycorpus)`) and for visualizing a co-occurrence network (`vis_cooc_network <- function(binDTM, coocTerm)`).
 ```{r optionalEx, eval=T,cache=T,message=F,warning=F,echo=F,fig.width=10,fig.height=8}
 vis_cooc_network <- function(binDTM, coocTerm, graph_title) {
   
   require(igraph)
+  
+  # set seed for graph plot
+  set.seed(1)
   
   coocs <- calculateCoocStatistics(coocTerm, binDTM, measure="LOGLIK")
   
@@ -397,59 +392,55 @@ vis_cooc_network <- function(binDTM, coocTerm, graph_title) {
     #Append the result to the result graph
     resultGraph <- rbind(resultGraph, tmpGraph[2:length(tmpGraph[, 1]), ])
   }
-
-  # Set the graph and type. In this case, "F" means "Force Directed"
+  
+  # Create the graph object as undirected graph
   graphNetwork <- graph.data.frame(resultGraph, directed = F)
   
   # Identification of all nodes with less than 2 edges
-  graphVs <- V(graphNetwork)[degree(graphNetwork) < 2]
+  verticesToRemove <- V(graphNetwork)[degree(graphNetwork) < 2]
   # These edges are removed from the graph
-  graphNetwork <- delete.vertices(graphNetwork, graphVs) 
+  graphNetwork <- delete.vertices(graphNetwork, verticesToRemove) 
   
-  # Assign colors to edges and nodes (searchterm blue, rest orange)
+  # Assign colors to nodes (search term blue, others orange)
   V(graphNetwork)$color <- ifelse(V(graphNetwork)$name == coocTerm, 'cornflowerblue', 'orange') 
   
-  # Edges with a significance of at least 50% of the maximum sig- nificance in the graph are drawn in orange
-  halfMaxSig <- max(E(graphNetwork)$sig) * 0.5
-  E(graphNetwork)$color <- ifelse(E(graphNetwork)$sig > halfMaxSig, "coral", "azure3")
+  # Set edge colors
+  E(graphNetwork)$color <- adjustcolor("DarkGray", alpha.f = .5)
+  # scale significance between 1 and 10 for edge width
+  E(graphNetwork)$width <- scales::rescale(E(graphNetwork)$sig, to = c(1, 10))
   
-  # Disable edges with radius
-  E(graphNetwork)$curved <- 0 
-  # Size the nodes by their degree of networking
-  V(graphNetwork)$size <- log(degree(graphNetwork)) * 5
-  
-  # All nodes must be assigned a standard minimum-size
-  V(graphNetwork)$size[V(graphNetwork)$size < 5] <- 3 
-  
-  # edge thickness
-  E(graphNetwork)$width <- 2
+  # Set edges with radius
+  E(graphNetwork)$curved <- 0.15 
+  # Size the nodes by their degree of networking (scaled between 5 and 15)
+  V(graphNetwork)$size <- scales::rescale(log(degree(graphNetwork)), to = c(5, 15))
   
   # Define the frame and spacing for the plot
   par(mai=c(0,0,1,0)) 
   
-  # Finaler Plot
-  plot(graphNetwork,				
-       layout = layout.fruchterman.reingold,	# Force Directed Layout 
-       main = graph_title,
-       vertex.label.family = "sans",
-       vertex.label.cex = 0.8,
-       vertex.shape = "circle",
-       vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
-       vertex.frame.color = 'darkolivegreen',
-       vertex.label.color = 'black',		# Color of node names
-       vertex.label.font = 2,			# Font of node names
-       vertex.label = V(graphNetwork)$name,		# node names
-       vertex.label.cex = 1 # font size of node names 
+  # Final Plot
+  plot(
+    graphNetwork,				
+    layout = layout.fruchterman.reingold,	# Force Directed Layout 
+    main = graph_title,
+    vertex.label.family = "sans",
+    vertex.label.cex = 0.8,
+    vertex.shape = "circle",
+    vertex.label.dist = 0.5,			# Labels of the nodes moved slightly
+    vertex.frame.color = adjustcolor("darkgray", alpha.f = .5),
+    vertex.label.color = 'black',		# Color of node names
+    vertex.label.font = 2,			# Font of node names
+    vertex.label = V(graphNetwork)$name,		# node names
+    vertex.label.cex = 1 # font size of node names 
   )
 }
 
 numberOfCoocs <- 15
 minimumFrequency <- 10
 
-binDTM1 <- binDTM[docvars(corpus_sentences)$year < "1950", ]
-binDTM2 <- binDTM[docvars(corpus_sentences)$year >= "1950", ]
+binDTM1 <- binDTM[docvars(corpus_sentences)$year < "1968", ]
+binDTM2 <- binDTM[docvars(corpus_sentences)$year >= "1968", ]
 
 source("calculateCoocStatistics.R")
-vis_cooc_network(binDTM1, "california", "California (year < 1950)")
-vis_cooc_network(binDTM2, "california", "California (year >= 1950)")
+vis_cooc_network(binDTM1, "family", "Family (year < 1968)")
+vis_cooc_network(binDTM2, "family", "Family (year >= 1968)")
 ```

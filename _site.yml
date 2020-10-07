@@ -1,6 +1,6 @@
-# name: "A five day text mining course for humanists and social scientists in R"
-name: "Text mining for humanists and social scientists in R"
+name: "Text mining in R for social sciences and digital humanities"
 output_dir: "docs"
+include: ["utils.R", "calculateCoocStatistics.R", "calculateLogLikelihood.R"]
 navbar:
   # title: "Course plan:"
   left:
@@ -33,7 +33,6 @@ navbar:
     - text: "Tutorial 8"
       href: Tutorial_8_NER_POS.html
       icon: ion-android-bulb
-
 output:
   html_document:
     toc: true

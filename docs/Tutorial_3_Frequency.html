@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-09-25" />
+<meta name="date" content="2020-10-07" />
 
 <title>Tutorial 3: Frequency analysis</title>
 
@@ -427,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 3: Frequency analysis</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-09-25</h4>
+<h4 class="date">2020-10-07</h4>
 
 </div>
 
@@ -544,10 +544,10 @@ ggplot(data = df, aes(x = president, y = value, fill = variable)) +
 <p><img src="Tutorial_3_Frequency_files/figure-html/buildTS5-1.png" width="672" /></p>
 <p>The standard output is sorted by president’s names alphabetically. We can make use of the reorder command, to sort by positive / negative sentiment score:</p>
 <pre class="r"><code># order by positive sentiments
-ggplot(data = df, aes(x = reorder(president, df$value, head, 1), y = value, fill = variable)) + geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
+ggplot(data = df, aes(x = reorder(president, value, head, 1), y = value, fill = variable)) + geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
 <p><img src="Tutorial_3_Frequency_files/figure-html/buildTS6-1.png" width="672" /></p>
 <pre class="r"><code># order by negative sentiments
-ggplot(data = df, aes(x = reorder(president, df$value, tail, 1), y = value, fill = variable)) + geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
+ggplot(data = df, aes(x = reorder(president, value, tail, 1), y = value, fill = variable)) + geom_bar(stat=&quot;identity&quot;, position=position_dodge()) + coord_flip()</code></pre>
 <p><img src="Tutorial_3_Frequency_files/figure-html/buildTS6-2.png" width="672" /></p>
 </div>
 <div id="heatmaps" class="section level1">
@@ -567,11 +567,21 @@ heatmap(t(DTM_reduced), Colv=NA, col = rev(heat.colors(256)), keep.dendro= FALSE
 <div id="optional-exercises" class="section level1">
 <h1><span class="header-section-number">5</span> Optional exercises</h1>
 <ol style="list-style-type: decimal">
-<li>Run the time series analysis with the terms “environment”, “climate”, “planet”, “space”.</li>
-<li>Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.</li>
-<li>The AFINN sentiment lexicon provides not only negative/positive terms, but also a valence value for each term ranging from [-5;+5]. Instead of counting sentiment terms only, use the valence values for sentiment scoring.</li>
-<li>Draw a <code>heatmap</code> of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way!</li>
+<li>Create the time series plot with the terms “environment”, “climate”, “planet”, “space” as shown above. Then, try to use the ggplot2 library for the line plot (e.g. the function <code>geom_line()</code>).</li>
 </ol>
+<p><img src="Tutorial_3_Frequency_files/figure-html/ex1-1.png" width="672" /></p>
+<ol start="2" style="list-style-type: decimal">
+<li>Use a different relative measure for the sentiment analysis: Instead computing the proportion of positive/negative terms regarding all terms, compute the share of positive/negative terms regarding all sentiment terms only.</li>
+</ol>
+<p><img src="Tutorial_3_Frequency_files/figure-html/ex2-1.png" width="672" /></p>
+<ol start="3" style="list-style-type: decimal">
+<li>The AFINN sentiment lexicon provides not only negative/positive terms, but also a valence value for each term ranging from [-5;+5]. Instead of counting sentiment terms only, use the valence values for sentiment scoring.</li>
+</ol>
+<p><img src="Tutorial_3_Frequency_files/figure-html/ex3-1.png" width="672" /></p>
+<ol start="4" style="list-style-type: decimal">
+<li>Draw a heatmap of the terms “i”, “you”, “he”, “she”, “we”, “they” aggregated per president. Caution: you need to modify the preprocessing in a certain way! Also consider setting the parameter <code>scale='none'</code> when calling the <code>heatmap</code> function.</li>
+</ol>
+<p><img src="Tutorial_3_Frequency_files/figure-html/ex4-1.png" width="672" /></p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>

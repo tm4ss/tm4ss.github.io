@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-09-18" />
+<meta name="date" content="2020-10-07" />
 
 <title>Tutorial 5: Co-occurrence analysis</title>
 
@@ -427,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 5: Co-occurrence analysis</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-09-18</h4>
+<h4 class="date">2020-10-07</h4>
 
 </div>
 
@@ -528,12 +528,12 @@ mutualInformationSig &lt;- mutualInformationSig[order(mutualInformationSig, decr
 ########## DICE: 2 X&amp;Y / X + Y ##############
 dicesig &lt;- 2 * kij / (ki + kj)
 dicesig &lt;- dicesig[order(dicesig, decreasing=TRUE)]
-  
+
 ########## Log Likelihood ###################
 logsig &lt;- 2 * ((k * log(k)) - (ki * log(ki)) - (kj * log(kj)) + (kij * log(kij)) 
-          + (k - ki - kj + kij) * log(k - ki - kj + kij) 
-          + (ki - kij) * log(ki - kij) + (kj - kij) * log(kj - kij) 
-          - (k - ki) * log(k - ki) - (k - kj) * log(k - kj))
+               + (k - ki - kj + kij) * log(k - ki - kj + kij) 
+               + (ki - kij) * log(ki - kij) + (kj - kij) * log(kj - kij) 
+               - (k - ki) * log(k - ki) - (k - kj) * log(k - kj))
 logsig &lt;- logsig[order(logsig, decreasing=T)]</code></pre>
 <p>The result of the four variants for the statistical extraction of co-occurrence terms is shown in a data frame below. It can be seen that frequency is a bad indicator of meaning constitution. Mutual information emphasizes rather rare events in the data. Dice and Log-likelihood yield very well interpretable contexts.</p>
 <pre class="r"><code># Put all significance statistics in one Data-Frame
@@ -545,28 +545,17 @@ resultOverView &lt;- data.frame(
   row.names = NULL)
 colnames(resultOverView) &lt;- c(&quot;Freq-terms&quot;, &quot;Freq&quot;, &quot;MI-terms&quot;, &quot;MI&quot;, &quot;Dice-Terms&quot;, &quot;Dice&quot;, &quot;LL-Terms&quot;, &quot;LL&quot;)
 print(resultOverView)</code></pre>
-<pre><code>##     Freq-terms Freq    MI-terms       MI Dice-Terms       Dice    LL-Terms
-## 1        spain  444       spain 4.951918      spain 1.00000000        cuba
-## 2  unite_state  138     amistad 4.035627       cuba 0.14324324 unite_state
-## 3   government  125    antilles 4.035627    spanish 0.10702341     spanish
-## 4       treaty   59      madrid 3.893311     france 0.08386277  government
-## 5         make   57    catholic 3.887207     colony 0.07329843      treaty
-## 6         cuba   53       queen 3.853305     island 0.07114625      france
-## 7         part   48    autonomy 3.565623    florida 0.07076350       claim
-## 8        claim   47        cede 3.546575     madrid 0.06896552      madrid
-## 9          war   46  adventurer 3.516833      claim 0.06685633      island
-## 10     country   43 spoliations 3.411473     treaty 0.06448087     florida
-##           LL
-## 1  256.28278
-## 2  245.89001
-## 3  163.48543
-## 4  124.63260
-## 5  121.05902
-## 6  116.16941
-## 7  106.86636
-## 8  106.19479
-## 9   98.19931
-## 10  95.82471</code></pre>
+<pre><code>##     Freq-terms Freq    MI-terms   MI Dice-Terms   Dice    LL-Terms    LL
+## 1        spain  444       spain 4.95      spain 1.0000        cuba 256.3
+## 2  unite_state  138     amistad 4.04       cuba 0.1432 unite_state 245.9
+## 3   government  125    antilles 4.04    spanish 0.1070     spanish 163.5
+## 4       treaty   59      madrid 3.89     france 0.0839  government 124.6
+## 5         make   57    catholic 3.89     colony 0.0733      treaty 121.1
+## 6         cuba   53       queen 3.85     island 0.0711      france 116.2
+## 7         part   48    autonomy 3.57    florida 0.0708       claim 106.9
+## 8        claim   47        cede 3.55     madrid 0.0690      madrid 106.2
+## 9          war   46  adventurer 3.52      claim 0.0669      island  98.2
+## 10     country   43 spoliations 3.41     treaty 0.0645     florida  95.8</code></pre>
 </div>
 <div id="visualization-of-co-occurrence" class="section level1">
 <h1><span class="header-section-number">4</span> Visualization of co-occurrence</h1>
@@ -583,12 +572,10 @@ coocTerm &lt;- &quot;california&quot;</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
 <pre class="r"><code># Display the numberOfCoocs main terms
 print(coocs[1:numberOfCoocs])</code></pre>
-<pre><code>##      oregon      mexico       texas     mineral       upper   territory 
-##   255.87021   157.83198    55.36257    54.44800    51.53089    47.36293 
-##   wisconsin     arizona acquisition  possession       coast        mine 
-##    42.66294    41.63449    40.59820    36.63567    35.96802    35.83549 
-##      grande        york       maine 
-##    35.75060    34.93237    33.78352</code></pre>
+<pre><code>##      oregon      mexico       texas     mineral       upper   territory   wisconsin     arizona acquisition  possession       coast 
+##       255.9       157.8        55.4        54.4        51.5        47.4        42.7        41.6        40.6        36.6        36.0 
+##        mine      grande        york       maine 
+##        35.8        35.8        34.9        33.8</code></pre>
 <p>To acquire an extended semantic environment of the target term, ‘secondary co-occurrence’ terms can be computed for each co-occurrence term of the target term. This results in a graph that can be visualized with special layout algorithms (e.g. Force Directed Graph).</p>
 <p>Network graphs can be evaluated and visualized in R with the <code>igraph</code>-package. Any graph object can be created from a three-column data-frame. Each row in that data-frame is a triple. Each triple encodes an edge-information of two nodes (source, sink) and an edge-weight value.</p>
 <p>For a term co-occurrence network, each triple consists of the target word, a co-occurring word and the significance of their joint occurrence. We denote the values with <em>from, to, sig</em>.</p>
@@ -633,58 +620,57 @@ for (i in 1:numberOfCoocs){
 <p>As a result, <code>resultGraph</code> now contains all <code>numberOfCoocs * numberOfCoocs</code> edges of a term co-occurrence network.</p>
 <pre class="r"><code># Sample of some examples from resultGraph
 resultGraph[sample(nrow(resultGraph), 6), ]</code></pre>
-<pre><code>##           from        to       sig
-## 47   wisconsin minnesota  51.84874
-## 814       york  virginia  35.72554
-## 46   territory    mexico 162.11607
-## 1211     coast       bay  80.88702
-## 157  wisconsin    oregon  24.91645
-## 36   territory    indian 209.46222</code></pre>
+<pre><code>##           from        to  sig
+## 7   california wisconsin 42.7
+## 915      maine     armor 34.3
+## 71      oregon   hudsons 35.9
+## 87   wisconsin      ohio 39.3
+## 714       york      port 36.1
+## 107  wisconsin     maine 32.6</code></pre>
 <p>The package iGraph offers multiple graph visualizations for graph objects. Graph objects can be created from triple lists, such as those we just generated. In the next step we load the package iGraph and create a visualization of all nodes and edges from the object <code>resultGraph</code>.</p>
 <pre class="r"><code>require(igraph)
 
-# Set the graph and type
+# set seed for graph plot
+set.seed(1)
+
+# Create the graph object as undirected graph
 graphNetwork &lt;- graph.data.frame(resultGraph, directed = F)
 
 # Identification of all nodes with less than 2 edges
-graphVs &lt;- V(graphNetwork)[degree(graphNetwork) &lt; 2]
+verticesToRemove &lt;- V(graphNetwork)[degree(graphNetwork) &lt; 2]
 # These edges are removed from the graph
-graphNetwork &lt;- delete.vertices(graphNetwork, graphVs) 
+graphNetwork &lt;- delete.vertices(graphNetwork, verticesToRemove) 
 
-# Assign colors to edges and nodes (searchterm blue, rest orange)
+# Assign colors to nodes (search term blue, others orange)
 V(graphNetwork)$color &lt;- ifelse(V(graphNetwork)$name == coocTerm, &#39;cornflowerblue&#39;, &#39;orange&#39;) 
 
-# Edges with a significance of at least 50% of the maximum sig- nificance in the graph are drawn in orange
-halfMaxSig &lt;- max(E(graphNetwork)$sig) * 0.5
-E(graphNetwork)$color &lt;- ifelse(E(graphNetwork)$sig &gt; halfMaxSig, &quot;coral&quot;, &quot;azure3&quot;)
+# Set edge colors
+E(graphNetwork)$color &lt;- adjustcolor(&quot;DarkGray&quot;, alpha.f = .5)
+# scale significance between 1 and 10 for edge width
+E(graphNetwork)$width &lt;- scales::rescale(E(graphNetwork)$sig, to = c(1, 10))
 
-# Disable edges with radius
-E(graphNetwork)$curved &lt;- 0 
-# Size the nodes by their degree of networking
-V(graphNetwork)$size &lt;- log(degree(graphNetwork)) * 5
-
-# All nodes must be assigned a standard minimum-size
-V(graphNetwork)$size[V(graphNetwork)$size &lt; 5] &lt;- 3 
-
-# edge thickness
-E(graphNetwork)$width &lt;- 2
+# Set edges with radius
+E(graphNetwork)$curved &lt;- 0.15 
+# Size the nodes by their degree of networking (scaled between 5 and 15)
+V(graphNetwork)$size &lt;- scales::rescale(log(degree(graphNetwork)), to = c(5, 15))
 
 # Define the frame and spacing for the plot
 par(mai=c(0,0,1,0)) 
 
-# Finaler Plot
-plot(graphNetwork,              
-     layout = layout.fruchterman.reingold,  # Force Directed Layout 
-     main = paste(coocTerm, &#39; Graph&#39;),
-     vertex.label.family = &quot;sans&quot;,
-     vertex.label.cex = 0.8,
-     vertex.shape = &quot;circle&quot;,
-     vertex.label.dist = 0.5,           # Labels of the nodes moved slightly
-     vertex.frame.color = &#39;darkolivegreen&#39;,
-     vertex.label.color = &#39;black&#39;,      # Color of node names
-     vertex.label.font = 2,         # Font of node names
-     vertex.label = V(graphNetwork)$name,       # node names
-     vertex.label.cex = 1 # font size of node names 
+# Final Plot
+plot(
+  graphNetwork,             
+  layout = layout.fruchterman.reingold, # Force Directed Layout 
+  main = paste(coocTerm, &#39; Graph&#39;),
+  vertex.label.family = &quot;sans&quot;,
+  vertex.label.cex = 0.8,
+  vertex.shape = &quot;circle&quot;,
+  vertex.label.dist = 0.5,          # Labels of the nodes moved slightly
+  vertex.frame.color = adjustcolor(&quot;darkgray&quot;, alpha.f = .5),
+  vertex.label.color = &#39;black&#39;,     # Color of node names
+  vertex.label.font = 2,            # Font of node names
+  vertex.label = V(graphNetwork)$name,      # node names
+  vertex.label.cex = 1 # font size of node names
 )</code></pre>
 <p><img src="Tutorial_5_Co-occurrence_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
 </div>
@@ -693,11 +679,11 @@ plot(graphNetwork,
 <ol style="list-style-type: decimal">
 <li><p>Create term networks for “civil”, “germany”, “tax”</p></li>
 <li><p>For visualization, at one point we filter for all nodes with less than 2 edges. By this, the network plot gets less dense, but we loose also a lot of co-occurring terms connected only to one term. Re-draw the network without this filtering. <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx2-1.png" width="960" /> The plot may get very messy. Try lower values for <code>numberOfCoocs</code> to create a less dense network plot.</p></li>
-<li><p>Separate the DTM into two time periods (year &lt; 1950; year &gt; = 1950). Represent the graphs for the term “california” for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (<code>get_binDTM &lt;- function(mycorpus)</code>) and for visualizing a co-occurrence network (<code>vis_cooc_network &lt;- function(binDTM, coocTerm)</code>). <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-1.png" width="960" /><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-2.png" width="960" /></p></li>
+<li><p>Separate the DTM into two time periods (year &lt; 1968; year &gt; = 1968). Represent the graphs for the term “family” for both time periods. Hint: Define functions for the sub processes of creating a binary DTM from a corpus object (<code>get_binDTM &lt;- function(mycorpus)</code>) and for visualizing a co-occurrence network (<code>vis_cooc_network &lt;- function(binDTM, coocTerm)</code>). <img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-1.png" width="960" /><img src="Tutorial_5_Co-occurrence_files/figure-html/optionalEx-2.png" width="960" /></p></li>
 </ol>
 </div>
 
-<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+<p>2020, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
 
 
 </div>

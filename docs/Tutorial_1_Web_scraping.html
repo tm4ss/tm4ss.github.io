@@ -11,9 +11,9 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-09-18" />
+<meta name="date" content="2020-10-07" />
 
-<title>Tutorial 2: Web crawling and scraping</title>
+<title>Tutorial 1: Web crawling and scraping</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -425,9 +425,9 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Tutorial 2: Web crawling and scraping</h1>
+<h1 class="title toc-ignore">Tutorial 1: Web crawling and scraping</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-09-18</h4>
+<h4 class="date">2020-10-07</h4>
 
 </div>
 
@@ -435,15 +435,15 @@ div.tocify {
 <p><script>
   addClassKlippyTo("pre.r, pre.markdown");
   addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
-</script> This tutorial covers how to extract and process text data from web pages or other documents for later analysis. The automated download of HTML pages is called <strong>Crawling</strong>. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called <strong>Scraping</strong>. For these tasks, we use the package “rvest”. In a third exercise, we will extract text data from various formats such as PDF, DOC, DOCX and TXT files with the “readtext” package.</p>
+</script> This tutorial covers how to extract and process text data from web pages or other documents for later analysis. The automated download of HTML pages is called <strong>Crawling</strong>. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code (or the DOM document object model of the website) is called <strong>Scraping</strong>. For these tasks, we use the package “rvest”.</p>
 <ol style="list-style-type: decimal">
 <li>Download a single web page and extract its content</li>
-<li>Extract links from a overview page and extract articles</li>
-<li>Extract text data from PDF and other formats on disk</li>
+<li>Extract links from a overview page</li>
+<li>Extract all articles to corresponding links from step 2</li>
 </ol>
 <div id="preparation" class="section level1">
 <h1><span class="header-section-number">1</span> Preparation</h1>
-<p>Create a new R script (File -&gt; New File -&gt; R Script) named “Tutorial_2.R”. In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.</p>
+<p>Create a new R script (File -&gt; New File -&gt; R Script) named “Tutorial_1.R”. In this script you will enter and execute all commands. If you want to run the complete script in RStudio, you can use Ctrl-A to select the complete source code and execute with Ctrl-Return. If you want to execute only one line, you can simply press Ctrl-Return on the respective line. If you want to execute a block of several lines, select the block and press Ctrl-Return.</p>
 <p>Tip: Copy individual sections of the source code directly into the console (2) and run it step by step. Get familiar with the function calls included in the Help function.</p>
 <p>First, make sure your working directory is the data directory we provided for the exercises.</p>
 <pre class="r"><code># important option for text analysis
@@ -452,8 +452,8 @@ options(stringsAsFactors = F)
 # zip file. If necessary, use `setwd(&quot;your-tutorial-folder-path&quot;)` to change it.
 getwd()</code></pre>
 </div>
-<div id="prepare-scraping-of-dynamic-web-pages" class="section level1">
-<h1><span class="header-section-number">2</span> Prepare scraping of dynamic web pages</h1>
+<div id="scraping-of-dynamic-web-pages" class="section level1">
+<h1><span class="header-section-number">2</span> Scraping of dynamic web pages</h1>
 <p>Modern websites often do not contain the full content displayed in the browser in their corresponding source files which are served by the webserver. Instead, the browser loads additional content dynamically via javascript code contained in the original source file. To be able to scrape such content, we rely on a headless browser “phantomJS” which renders a site for a given URL for us, before we start the actual scraping, i.e. the extraction of certain identifiable elements from the rendered site.</p>
 <p>If not done yet, please install the <code>webdriver</code> package for R and install the <a href="https://phantomjs.org">phantomJS</a> headless browser. This needs to be done only once.</p>
 <pre class="r"><code>install.packages(&quot;webdriver&quot;)
@@ -474,13 +474,13 @@ require(&quot;rvest&quot;)</code></pre>
 <div id="dynamic-web-pages" class="section level2">
 <h2><span class="header-section-number">3.1</span> Dynamic web pages</h2>
 <p>To make sure that we get the dynamically rendered HTML content of the website, we pass the original source code dowloaded from the URL to our PhantomJS session first, and the use the rendered source.</p>
-<p><em>NOTICE</em>: In case the website does not fetch or alter the to-be-scraped content dynamically, you can omit the PhantomJS webdriver and just download the the static HTML source code to retrieve the information from there. In this case, replace the following block of code with a simple call of <code>html_document &lt;- read_html(url)</code> where the <code>read_html()</code> function downloads the page source for you.</p>
 <pre class="r"><code># load URL to phantomJS session
 pjs_session$go(url)
 # retrieve the rendered source code of the page
 rendered_source &lt;- pjs_session$getSource()
 # parse the dynamically rendered source code
 html_document &lt;- read_html(rendered_source)</code></pre>
+<p><em>NOTICE</em>: In case the website does not fetch or alter the to-be-scraped content dynamically, you can omit the PhantomJS webdriver and just download the the static HTML source code to retrieve the information from there. In this case, replace the following block of code with a simple call of <code>html_document &lt;- read_html(url)</code> where the <code>read_html()</code> function downloads the unrendered page source code directly.</p>
 </div>
 <div id="scrape-information-from-xhtml" class="section level2">
 <h2><span class="header-section-number">3.2</span> Scrape information from XHTML</h2>
@@ -536,9 +536,9 @@ html_document &lt;- read_html(rendered_source)</code></pre>
   html_attr(name = &quot;href&quot;)</code></pre>
 <p>Now, <code>links</code> contains a list of 20 hyperlinks to single articles tagged with Angela Merkel.</p>
 <pre class="r"><code>head(links, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/world/2020/sep/16/ursula-von-der-leyen-says-polands-lgbt-free-zones-have-no-place-in-eu&quot;           
-## [2] &quot;https://www.theguardian.com/world/2020/sep/13/party-disputes-thwart-angela-merkels-hopes-of-an-orderly-succession&quot;             
-## [3] &quot;https://www.theguardian.com/books/2020/sep/07/why-the-germans-do-it-better-by-john-kampfner-review-in-praise-of-the-powerhouse&quot;</code></pre>
+<pre><code>## [1] &quot;https://www.theguardian.com/world/2020/oct/04/belarus-opposition-leader-to-ask-merkel-about-upping-pressure-on-lukashenko-svetlana-tikhanovskaya&quot;
+## [2] &quot;https://www.theguardian.com/world/2020/oct/01/merkel-and-belarus-opposition-leader-svetlana-tikhanovskaya-to-meet-in-berlin&quot;                     
+## [3] &quot;https://www.theguardian.com/world/2020/oct/01/alexei-navalny-says-he-believes-vladimir-putin-was-behind-poisoning&quot;</code></pre>
 <p>But stop! There is not only one page of links to tagged articles. If you have a look on the page in your browser, the tag overview page has several more than 60 sub pages, accessible via a paging navigator at the bottom. By clicking on the second page, we see a different URL-structure, which now contains a link to a specific paging number. We can use that format to create links to all sub pages by combining the base URL with the page numbers.</p>
 <pre class="r"><code>page_numbers &lt;- 1:3
 base_url &lt;- &quot;https://www.theguardian.com/world/angela-merkel?page=&quot;
@@ -546,8 +546,7 @@ paging_urls &lt;- paste0(base_url, page_numbers)
 
 # View first 3 urls
 head(paging_urls, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/world/angela-merkel?page=1&quot;
-## [2] &quot;https://www.theguardian.com/world/angela-merkel?page=2&quot;
+<pre><code>## [1] &quot;https://www.theguardian.com/world/angela-merkel?page=1&quot; &quot;https://www.theguardian.com/world/angela-merkel?page=2&quot;
 ## [3] &quot;https://www.theguardian.com/world/angela-merkel?page=3&quot;</code></pre>
 <p>Now we can iterate over all URLs of tag overview pages, to collect more/all links to articles tagged with Angela Merkel. We iterate with a for-loop over all URLs and append results from each single URL to a vector of all links.</p>
 <pre class="r"><code>all_links &lt;- NULL
@@ -612,9 +611,9 @@ for (i in 1:length(all_links)) {
   # Append current article data.frame to the data.frame of all articles
   all_articles &lt;- rbind(all_articles, article)
 }</code></pre>
-<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2020/sep/16/ursula-von-der-leyen-says-polands-lgbt-free-zones-have-no-place-in-eu 
-## Downloading 2 of 60 URL: https://www.theguardian.com/world/2020/sep/13/party-disputes-thwart-angela-merkels-hopes-of-an-orderly-succession 
-## Downloading 3 of 60 URL: https://www.theguardian.com/books/2020/sep/07/why-the-germans-do-it-better-by-john-kampfner-review-in-praise-of-the-powerhouse</code></pre>
+<pre><code>## Downloading 1 of 60 URL: https://www.theguardian.com/world/2020/oct/04/belarus-opposition-leader-to-ask-merkel-about-upping-pressure-on-lukashenko-svetlana-tikhanovskaya 
+## Downloading 2 of 60 URL: https://www.theguardian.com/world/2020/oct/01/merkel-and-belarus-opposition-leader-svetlana-tikhanovskaya-to-meet-in-berlin 
+## Downloading 3 of 60 URL: https://www.theguardian.com/world/2020/oct/01/alexei-navalny-says-he-believes-vladimir-putin-was-behind-poisoning</code></pre>
 <pre class="r"><code># View first articles
 head(all_articles, 3)
 
@@ -628,7 +627,7 @@ write.csv2(all_articles, file = &quot;data/guardian_merkel.csv&quot;)</code></pr
 <p>For this, investigate the URL patterns of the page and look into the source code with the `inspect element’ functionality of your browser to find appropriate XPATH expressions.</p>
 </div>
 
-<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+<p>2020, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
 
 
 </div>

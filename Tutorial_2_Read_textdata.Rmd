@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial 1: Processing of textual data'
+title: 'Tutorial 2: Processing of textual data'
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output:
@@ -23,7 +23,7 @@ In this tutorial, we demonstrate how to read text data in R, tokenize texts and 
 2. From text to a corpus,
 3. Create a document-term matrix and investigate Zipf's law
 
-First, let's create a new R Project (File -> New Project -> Existing directory) in the provided tutorial folder. Then we create a new R File (File -> New File -> R script) and save it as "Tutorial_1.R".
+First, let's create a new R Project (File -> New Project -> Existing directory) in the provided tutorial folder. Then we create a new R File (File -> New File -> R script) and save it as "Tutorial_2.R".
 
 # Reading txt, pdf, html, docx, ...
 

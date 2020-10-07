@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-09-18" />
+<meta name="date" content="2020-10-07" />
 
 <title>Tutorial 4: Key term extraction</title>
 
@@ -432,7 +432,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 4: Key term extraction</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-09-18</h4>
+<h4 class="date">2020-10-07</h4>
 
 </div>
 
@@ -477,60 +477,60 @@ corpus_tokens &lt;- sotu_corpus %&gt;%
 sotu_collocations &lt;- textstat_collocations(corpus_tokens, min_count = 25)
 # check top collocations
 head(sotu_collocations, 25)</code></pre>
-<pre><code>##                collocation count count_nested length   lambda         z
-## 1              unite state  4518            0      2 8.395541 157.29421
-## 2              fiscal year   768            0      2 7.583299  78.51133
-## 3           annual message   204            0      2 7.828254  77.37738
-## 4                 end june   223            0      2 6.940301  77.11687
-## 5              health care   203            0      2 7.221422  76.93788
-## 6       federal government   404            0      2 4.544404  75.98813
-## 7              public debt   272            0      2 5.690552  75.06564
-## 8          social security   196            0      2 7.087790  73.02629
-## 9          american people   392            0      2 4.046391  72.38153
-## 10               past year   304            0      2 4.943967  69.99222
-## 11             public land   265            0      2 4.912102  69.91895
-## 12                year end   315            0      2 4.637880  69.68863
-## 13          billion dollar   156            0      2 7.294152  69.39996
-## 14          million dollar   150            0      2 6.224826  63.62280
-## 15                year ago   338            0      2 6.867225  61.38467
-## 16            soviet union   124            0      2 7.165439  58.70689
-## 17          fellow citizen   170            0      2 7.310121  58.34103
-## 18             middle east   104            0      2 9.584658  56.72270
-## 19         economic growth   105            0      2 6.275296  54.87303
-## 20               arm force   123            0      2 5.694789  54.57566
-## 21  commercial intercourse    90            0      2 6.784517  53.65924
-## 22           supreme court   113            0      2 8.288363  53.64775
-## 23     interstate commerce   107            0      2 7.542659  53.23666
-## 24 favorable consideration    99            0      2 6.592456  53.19728
-## 25         central america   107            0      2 6.574363  52.72343</code></pre>
+<pre><code>##                collocation count count_nested length lambda     z
+## 1              unite state  4518            0      2   8.40 157.3
+## 2              fiscal year   768            0      2   7.58  78.5
+## 3           annual message   204            0      2   7.83  77.4
+## 4                 end june   223            0      2   6.94  77.1
+## 5              health care   203            0      2   7.22  76.9
+## 6       federal government   404            0      2   4.54  76.0
+## 7              public debt   272            0      2   5.69  75.1
+## 8          social security   196            0      2   7.09  73.0
+## 9          american people   392            0      2   4.05  72.4
+## 10               past year   304            0      2   4.94  70.0
+## 11             public land   265            0      2   4.91  69.9
+## 12                year end   315            0      2   4.64  69.7
+## 13          billion dollar   156            0      2   7.29  69.4
+## 14          million dollar   150            0      2   6.22  63.6
+## 15                year ago   338            0      2   6.87  61.4
+## 16            soviet union   124            0      2   7.17  58.7
+## 17          fellow citizen   170            0      2   7.31  58.3
+## 18             middle east   104            0      2   9.58  56.7
+## 19         economic growth   105            0      2   6.28  54.9
+## 20               arm force   123            0      2   5.69  54.6
+## 21  commercial intercourse    90            0      2   6.78  53.7
+## 22           supreme court   113            0      2   8.29  53.6
+## 23     interstate commerce   107            0      2   7.54  53.2
+## 24 favorable consideration    99            0      2   6.59  53.2
+## 25         central america   107            0      2   6.57  52.7</code></pre>
 <pre class="r"><code># check bottom collocations
 tail(sotu_collocations, 25)</code></pre>
-<pre><code>##                collocation count count_nested length     lambda         z
-## 471          good interest    34            0      2  1.9251069 11.178311
-## 472         saddam hussein    27            0      2 16.5243661 11.165596
-## 473           buenos ayres    31            0      2 16.2806741 11.137023
-## 474           make america    34            0      2  1.9046521 11.033229
-## 475               al qaeda    36            0      2 15.6588567 10.867452
-## 476            state court    29            0      2  2.0357362 10.834054
-## 477             rio grande    51            0      2 15.4825754 10.817713
-## 478          santo domingo    29            0      2 15.3983100 10.675754
-## 479       state government   104            0      2  1.0133438 10.228278
-## 480       congress provide    30            0      2  1.8271227  9.973020
-## 481              good work    30            0      2  1.8232227  9.966034
-## 482      ballistic missile    25            0      2 14.0792996  9.824775
-## 483     government program    29            0      2  1.6992837  9.104070
-## 484             great work    31            0      2  1.6110202  8.955492
-## 485       state department    36            0      2  1.4770997  8.810098
-## 486             bering sea    26            0      2 12.3537818  8.648948
-## 487          present state    45            0      2  1.2860546  8.575828
-## 488 government expenditure    25            0      2  1.7003709  8.471792
-## 489            great power    29            0      2  1.4807590  7.973290
-## 490       present congress    26            0      2  1.3011176  6.645858
-## 491        american nation    25            0      2  1.2502131  6.268877
-## 492          foreign state    25            0      2  1.1772336  5.888721
-## 493              make good    30            0      2  1.0402716  5.703590
-## 494         american state    37            0      2  0.7564323  4.598005
-## 495    american government    30            0      2  0.6793261  3.728279</code></pre>
+<pre><code>##                collocation count count_nested length lambda     z
+## 471          good interest    34            0      2  1.925 11.18
+## 472         saddam hussein    27            0      2 16.524 11.17
+## 473           buenos ayres    31            0      2 16.281 11.14
+## 474           make america    34            0      2  1.905 11.03
+## 475               al qaeda    36            0      2 15.659 10.87
+## 476            state court    29            0      2  2.036 10.83
+## 477             rio grande    51            0      2 15.483 10.82
+## 478          santo domingo    29            0      2 15.398 10.68
+## 479       state government   104            0      2  1.013 10.23
+## 480       congress provide    30            0      2  1.827  9.97
+## 481              good work    30            0      2  1.823  9.97
+## 482      ballistic missile    25            0      2 14.079  9.82
+## 483     government program    29            0      2  1.699  9.10
+## 484             great work    31            0      2  1.611  8.96
+## 485       state department    36            0      2  1.477  8.81
+## 486             bering sea    26            0      2 12.354  8.65
+## 487          present state    45            0      2  1.286  8.58
+## 488 government expenditure    25            0      2  1.700  8.47
+## 489            great power    29            0      2  1.481  7.97
+## 490       present congress    26            0      2  1.301  6.65
+## 491        american nation    25            0      2  1.250  6.27
+## 492          foreign state    25            0      2  1.177  5.89
+## 493              make good    30            0      2  1.040  5.70
+## 494         american state    37            0      2  0.756  4.60
+## 495    american government    30            0      2  0.679  3.73</code></pre>
 <p>Caution: For the calculation of collocation statistics being aware of deleted stop words, you need to add the paramter <code>padding = T</code> to the <code>tokens_remove</code> function above.</p>
 <p>If you do not like all of the suggested collocation pairs to be considered as MWUs in the subsequent analysis, you can simply remove rows containing unwanted pairs from the sotu_collocations object.</p>
 <pre class="r"><code># We will treat the top 250 collocations as MWU
@@ -551,7 +551,7 @@ DTM &lt;- corpus_tokens %&gt;%
 <pre class="r"><code># Compute IDF: log(N / n_i)
 number_of_docs &lt;- nrow(DTM)
 term_in_docs &lt;- colSums(DTM &gt; 0)
-idf &lt;- log2(number_of_docs / term_in_docs)
+idf &lt;- log(number_of_docs / term_in_docs)
 
 # Compute TF
 first_obama_speech &lt;- which(textdata$president == &quot;Barack Obama&quot;)[1]
@@ -562,14 +562,10 @@ tf_idf &lt;- tf * idf
 names(tf_idf) &lt;- colnames(DTM)</code></pre>
 <p>The last operation is to append the column names again to the resulting term weight vector. If we now sort the tf-idf weights decreasingly, we get the most important terms for the Obama speech, according to this weight.</p>
 <pre class="r"><code>sort(tf_idf, decreasing = T)[1:20]</code></pre>
-<pre><code>## health_care    re-start         job        lend     tonight    recovery 
-##    39.54990    31.45674    28.29379    23.89260    23.80121    22.34426 
-##      layoff      ensure     college   renewable   recession      budget 
-##    20.59256    20.05307    19.81543    18.16903    16.16557    15.90033 
-##      crisis     inherit   long-term high_school accountable     quitter 
-##    15.81714    15.45674    15.03980    14.32093    13.88747    13.72837 
-##        auto        iraq 
-##    13.62677    13.61902</code></pre>
+<pre><code>## health_care    re-start         job        lend     tonight    recovery      layoff      ensure     college   renewable   recession 
+##       27.41       21.80       19.61       16.56       16.50       15.49       14.27       13.90       13.74       12.59       11.21 
+##      budget      crisis     inherit   long-term high_school accountable     quitter        auto        iraq 
+##       11.02       10.96       10.71       10.42        9.93        9.63        9.52        9.45        9.44</code></pre>
 <p>If we would have just relied upon term frequency, we would have obtained a list of stop words as most important terms. By re-weighting with inverse document frequency, we can see a heavy focus on business terms in the first speech. By the way, the quanteda-package provides a convenient function for computing tf-idf weights of a given DTM: <code>dfm_tfidf(DTM)</code>.</p>
 </div>
 <div id="log-likelihood" class="section level1">
@@ -620,7 +616,7 @@ logLikelihood &lt;- 2 * (t1 + t2)
 
 print(logLikelihood)</code></pre>
 <pre><code>## health_care 
-##    121.2715</code></pre>
+##         121</code></pre>
 <p>The LL value indicates whether the term occurs significantly more frequently / less frequently in the target counts than we would expect from the observation in the comparative counts. Specific significance thresholds are defined for the LL values:</p>
 <ul>
 <li>95th percentile; 5% level; p &lt; 0.05; critical value = 3.84</li>
@@ -635,16 +631,11 @@ print(logLikelihood)</code></pre>
 uniqueTerms &lt;- setdiff(names(termCountsTarget), names(termCountsComparison))
 # Have a look into a random selection of terms unique in the target corpus
 sample(uniqueTerms, 20)</code></pre>
-<pre><code>##  [1] &quot;speculator&quot;                 &quot;tax-free&quot;                  
-##  [3] &quot;re-finance&quot;                 &quot;plug-in&quot;                   
-##  [5] &quot;fastest-growing&quot;            &quot;equivocation&quot;              
-##  [7] &quot;ty&#39;sheoma&quot;                  &quot;wisely&quot;                    
-##  [9] &quot;recovery.gov&quot;               &quot;mismanagement&quot;             
-## [11] &quot;paycheck&quot;                   &quot;health_insurance&quot;          
-## [13] &quot;peril&quot;                      &quot;decency&quot;                   
-## [15] &quot;lifeblood&quot;                  &quot;out-compete&quot;               
-## [17] &quot;speaker_mr_versa_president&quot; &quot;quitter&quot;                   
-## [19] &quot;payroll&quot;                    &quot;candor&quot;</code></pre>
+<pre><code>##  [1] &quot;re-finance&quot;                 &quot;recovery.gov&quot;               &quot;speaker_mr_versa_president&quot; &quot;orrin&quot;                     
+##  [5] &quot;health_insurance&quot;           &quot;equivocation&quot;               &quot;inaction&quot;                   &quot;re-tooled&quot;                 
+##  [9] &quot;tax-free&quot;                   &quot;global_economy&quot;             &quot;ty&#39;sheoma&quot;                  &quot;fastest-growing&quot;           
+## [13] &quot;peril&quot;                      &quot;accountable&quot;                &quot;war-era&quot;                    &quot;paycheck&quot;                  
+## [17] &quot;short-cuts&quot;                 &quot;clean_energy&quot;               &quot;hardest-working&quot;            &quot;lifeblood&quot;</code></pre>
 <p>Now we calculate the statistics the same way as above, but with vectors. But, since there might be terms in the targetCounts which we did not observe in the comparison corpus, we need to make both vocabularies matching. For this, we append unique terms from the target as zero counts to the comparison frequency vector.</p>
 <p>Moreover, we use a little trick to check for zero counts of frequency values in a or b when computing t1 or t2. If a count is zero the log function would produce an NaN value, which we want to avoid. In this case the <code>a == 0</code> resp. <code>b == 0</code> expression add 1 to the expression which yields a 0 value after applying the log function.</p>
 <pre class="r"><code># Create vector of zeros to append to comparison counts
@@ -674,36 +665,28 @@ logLikelihood[relA &lt; relB] &lt;- logLikelihood[relA &lt; relB] * -1</code></p
 <p>Let’s take a look at the results: The 50 more frequently used / less frequently used terms, and then the more frequently used terms compared to their frequency. We also see terms that have comparatively low frequencies are identified by the LL test as statistically significant compared to the reference corpus.</p>
 <pre class="r"><code># top terms (overuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=TRUE)[1:50]</code></pre>
-<pre><code>##     health_care        american         economy             job         tonight 
-##       121.27152       111.09920       101.42564        87.77818        85.10567 
-##         america          budget        recovery          crisis            lend 
-##        68.03598        67.69853        66.22830        65.41726        62.80270 
-##         deficit            plan          reform            cost  responsibility 
-##        58.05062        55.41751        55.07021        53.91788        53.15813 
-##          nation        congress          energy       education          afford 
-##        51.15632        48.36563        45.88633        42.93756        42.44945 
-##       recession american_people      confidence            bank     accountable 
-##        41.86846        40.33123        40.12650        39.51670        38.94089 
-##        re-start       long-term          invest            loan          ensure 
-##        38.94089        36.50677        34.91321        34.44234        34.23389 
-##         tax_cut          dollar      prosperity            debt        medicare 
-##        33.95231        33.55079        31.47642        30.62958        29.20567 
-##             bad         country          future        taxpayer       renewable 
-##        29.04338        27.88442        25.68259        25.57332        25.57332 
-##           money             buy          layoff           spend         college 
-##        25.43415        24.98572        24.72243        23.10236        22.34588 
-##        business        economic         inherit       financial      investment 
-##        21.96554        20.68099        20.59143        20.23530        20.14307</code></pre>
+<pre><code>##     health_care        american         economy             job         tonight         america          budget        recovery 
+##           121.3           111.1           101.4            87.8            85.1            68.0            67.7            66.2 
+##          crisis            lend         deficit            plan          reform            cost  responsibility          nation 
+##            65.4            62.8            58.1            55.4            55.1            53.9            53.2            51.2 
+##        congress          energy       education          afford       recession american_people      confidence            bank 
+##            48.4            45.9            42.9            42.4            41.9            40.3            40.1            39.5 
+##     accountable        re-start       long-term          invest            loan          ensure         tax_cut          dollar 
+##            38.9            38.9            36.5            34.9            34.4            34.2            34.0            33.6 
+##      prosperity            debt        medicare             bad         country          future        taxpayer       renewable 
+##            31.5            30.6            29.2            29.0            27.9            25.7            25.6            25.6 
+##           money             buy          layoff           spend         college        business        economic         inherit 
+##            25.4            25.0            24.7            23.1            22.3            22.0            20.7            20.6 
+##       financial      investment 
+##            20.2            20.1</code></pre>
 <pre class="r"><code># bottom terms (underuse in targetCorpus compared to comparisonCorpus)
 sort(logLikelihood, decreasing=FALSE)[1:25]</code></pre>
-<pre><code>##       game       city     follow      early        win       numb      state 
-## -3.7137153 -3.5481962 -2.5079026 -2.4418237 -1.8437659 -1.7716564 -1.6728308 
-##      point      leave       show       book     record       area    include 
-## -1.6395071 -1.5555754 -1.2348422 -1.0914189 -1.0551661 -1.0097212 -0.9909093 
-## university       type     design    control        age        run      local 
-## -0.8111396 -0.7860877 -0.7612646 -0.6407610 -0.4548558 -0.4498322 -0.4339512 
-##      fight    general    produce    attempt 
-## -0.4133740 -0.3931327 -0.3931327 -0.3472598</code></pre>
+<pre><code>##       game       city     follow      early        win       numb      state      point      leave       show       book     record 
+##     -3.714     -3.548     -2.508     -2.442     -1.844     -1.772     -1.673     -1.640     -1.556     -1.235     -1.091     -1.055 
+##       area    include university       type     design    control        age        run      local      fight    general    produce 
+##     -1.010     -0.991     -0.811     -0.786     -0.761     -0.641     -0.455     -0.450     -0.434     -0.413     -0.393     -0.393 
+##    attempt 
+##     -0.347</code></pre>
 <pre class="r"><code>llTop100 &lt;- sort(logLikelihood, decreasing=TRUE)[1:100]
 frqTop100 &lt;- termCountsTarget[names(llTop100)]
 frqLLcomparison &lt;- data.frame(llTop100, frqTop100)
@@ -721,8 +704,8 @@ sum(logLikelihood &gt; 6.63)</code></pre>
 top50 &lt;- sort(logLikelihood, decreasing = TRUE)[1:50]
 top50_df &lt;- data.frame(word = names(top50), count = top50, row.names = NULL)
 wordcloud2(top50_df, shuffle = F, size = 0.5)</code></pre>
-<div id="htmlwidget-6cc2a9acd31ec8504398" style="width:480px;height:480px;" class="wordcloud2 html-widget"></div>
-<script type="application/json" data-for="htmlwidget-6cc2a9acd31ec8504398">{"x":{"word":["health_care","american","economy","job","tonight","america","budget","recovery","crisis","lend","deficit","plan","reform","cost","responsibility","nation","congress","energy","education","afford","recession","american_people","confidence","bank","accountable","re-start","long-term","invest","loan","ensure","tax_cut","dollar","prosperity","debt","medicare","bad","country","future","taxpayer","renewable","money","buy","layoff","spend","college","business","economic","inherit","financial","investment"],"freq":[121.271521327076,111.099201487858,101.425640643625,87.7781761101491,85.1056686290494,68.0359804614043,67.6985307785822,66.2282967419335,65.4172639237443,62.802696461066,58.0506242836455,55.4175113037831,55.0702055914203,53.9178837963292,53.1581287701823,51.1563189807954,48.365626096161,45.8863272167759,42.9375644876114,42.4494545624366,41.8684643073773,40.3312276057181,40.1264960776301,39.5166980793792,38.9408928430752,38.9408928430752,36.5067670553748,34.913212629465,34.4423407793661,34.2338902942495,33.9523115037272,33.5507939166569,31.4764197193334,30.6295817810695,29.2056696323064,29.0433756584603,27.8844179107959,25.6825939087201,25.5733168790933,25.5733168790933,25.4341529494811,24.985721432008,24.7224313713898,23.1023633050438,22.3458832040127,21.9655353415203,20.6809851467895,20.5914349765633,20.2352988434683,20.1430680644743],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":0.742136315394814,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div id="htmlwidget-0cf97c5ae3db200631bc" style="width:480px;height:480px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0cf97c5ae3db200631bc">{"x":{"word":["health_care","american","economy","job","tonight","america","budget","recovery","crisis","lend","deficit","plan","reform","cost","responsibility","nation","congress","energy","education","afford","recession","american_people","confidence","bank","accountable","re-start","long-term","invest","loan","ensure","tax_cut","dollar","prosperity","debt","medicare","bad","country","future","taxpayer","renewable","money","buy","layoff","spend","college","business","economic","inherit","financial","investment"],"freq":[121.271521327076,111.099201487858,101.425640643625,87.7781761101491,85.1056686290494,68.0359804614043,67.6985307785822,66.2282967419335,65.4172639237443,62.802696461066,58.0506242836455,55.4175113037831,55.0702055914203,53.9178837963292,53.1581287701823,51.1563189807954,48.365626096161,45.8863272167759,42.9375644876114,42.4494545624366,41.8684643073773,40.3312276057181,40.1264960776301,39.5166980793792,38.9408928430752,38.9408928430752,36.5067670553748,34.913212629465,34.4423407793661,34.2338902942495,33.9523115037272,33.5507939166569,31.4764197193334,30.6295817810695,29.2056696323064,29.0433756584603,27.8844179107959,25.6825939087201,25.5733168790933,25.5733168790933,25.4341529494811,24.985721432008,24.7224313713898,23.1023633050438,22.3458832040127,21.9655353415203,20.6809851467895,20.5914349765633,20.2352988434683,20.1430680644743],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":0.742136315394814,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 </div>
 <div id="alternative-reference-corpora" class="section level1">
 <h1><span class="header-section-number">5</span> Alternative reference corpora</h1>
@@ -760,23 +743,23 @@ for (president in presidents) {
 <ol style="list-style-type: decimal">
 <li>Create a table (data.frame), which displays the top 25 terms of all speeches by frequency, tf-idf and log likelihood in columns.</li>
 </ol>
-<pre><code>##       word.frq  frq word.tfidf     tfidf     word.ll        ll
-## 1   government 6595    program 1452.3750    congress 3084.6524
-## 2         make 5871    tonight 1235.4992  government 2732.1669
-## 3     congress 5040        job 1107.9252 unite_state 2015.6550
-## 4  unite_state 4518     mexico  979.7494      nation 1684.5062
-## 5        state 4314    america  887.1629     country 1510.5314
-## 6      country 4283  territory  794.5879         law 1066.6701
-## 7         year 4132   economic  781.1532       peace  959.8129
-## 8       people 3766       bank  774.2042        duty  918.3188
-## 9        great 3555       cent  752.0329       great  916.3752
-## 10      nation 3319    subject  740.0194    interest  898.3612</code></pre>
+<pre><code>##       word.frq  frq word.tfidf tfidf     word.ll   ll
+## 1   government 6595    program  1007    congress 3085
+## 2         make 5871    tonight   856  government 2732
+## 3     congress 5040        job   768 unite_state 2016
+## 4  unite_state 4518     mexico   679      nation 1685
+## 5        state 4314    america   615     country 1511
+## 6      country 4283  territory   551         law 1067
+## 7         year 4132   economic   541       peace  960
+## 8       people 3766       bank   537        duty  918
+## 9        great 3555       cent   521       great  916
+## 10      nation 3319    subject   513    interest  898</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Create a wordcloud which compares Obama’s last speech with all his other speeches. <img src="Tutorial_4_Term_extraction_files/figure-html/extra2-1.png" width="672" /></li>
 </ol>
 </div>
 
-<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+<p>2020, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
 
 
 </div>

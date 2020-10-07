@@ -11,9 +11,9 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-09-18" />
+<meta name="date" content="2020-10-07" />
 
-<title>Tutorial 1: Processing of textual data</title>
+<title>Tutorial 2: Processing of textual data</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -425,9 +425,9 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Tutorial 1: Processing of textual data</h1>
+<h1 class="title toc-ignore">Tutorial 2: Processing of textual data</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-09-18</h4>
+<h4 class="date">2020-10-07</h4>
 
 </div>
 
@@ -441,7 +441,7 @@ div.tocify {
 <li>From text to a corpus,</li>
 <li>Create a document-term matrix and investigate Zipf’s law</li>
 </ol>
-<p>First, let’s create a new R Project (File -&gt; New Project -&gt; Existing directory) in the provided tutorial folder. Then we create a new R File (File -&gt; New File -&gt; R script) and save it as “Tutorial_1.R”.</p>
+<p>First, let’s create a new R Project (File -&gt; New Project -&gt; Existing directory) in the provided tutorial folder. Then we create a new R File (File -&gt; New File -&gt; R script) and save it as “Tutorial_2.R”.</p>
 <div id="reading-txt-pdf-html-docx" class="section level1">
 <h1><span class="header-section-number">1</span> Reading txt, pdf, html, docx, …</h1>
 <p>In case you have already a collection of document files on your disk, you can import them into R in a very convenient way provided by the <code>readtext</code> package. The package depends on some other programs or libraries in your system, e.g. to provide extraction of text from Word- and PDF-documents.</p>
@@ -488,14 +488,10 @@ colnames(textdata)</code></pre>
 <p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
 <pre class="r"><code>table(textdata[, &quot;president&quot;])</code></pre>
 <pre><code>## 
-##       Abraham Lincoln        Andrew Jackson        Andrew Johnson 
-##                     4                     8                     4 
-##          Barack Obama     Benjamin Harrison       Calvin Coolidge 
-##                     8                     4                     6 
-##     Chester A. Arthur       Donald J. Trump  Dwight D. Eisenhower 
-##                     4                     3                     9 
-## Franklin D. Roosevelt       Franklin Pierce      George H.W. Bush 
-##                    12                     4                     4</code></pre>
+##       Abraham Lincoln        Andrew Jackson        Andrew Johnson          Barack Obama     Benjamin Harrison       Calvin Coolidge 
+##                     4                     8                     4                     8                     4                     6 
+##     Chester A. Arthur       Donald J. Trump  Dwight D. Eisenhower Franklin D. Roosevelt       Franklin Pierce      George H.W. Bush 
+##                     4                     3                     9                    12                     4                     4</code></pre>
 <p>Now we want to transfer the loaded text source into a <strong>corpus object</strong> of the <code>quanteda</code>-package. Quanteda provides a large number of highly efficient convenience functions to process text in R <span class="citation">[1]</span>. First we load the package.</p>
 <pre class="r"><code>require(quanteda)</code></pre>
 <p>A corpus object is created with the <code>corpus</code> command. As parameter, the command gets the fulltext of the documents. In our case, this is the <code>text</code>-column of the <code>textdata</code>-data.frame. The docnames-parameter of the corpus function defines which unique identifier is given to each text example in the input (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).</p>
@@ -680,10 +676,10 @@ head(wordlist, 25)</code></pre>
 ## has     has   9104</code></pre>
 <p>The words in this sorted list have a ranking depending on the position in this list. If the word ranks are plotted on the x axis and all frequencies on the y axis, then the Zipf distribution is obtained. This is a typical property of language data and its distribution is similar for all languages.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, lwd=2, main = &quot;Rank frequency Plot&quot;, xlab=&quot;Rank&quot;, ylab =&quot;Frequency&quot;)</code></pre>
-<p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-15-1.png" width="768" /></p>
+<p><img src="Tutorial_2_Read_textdata_files/figure-html/unnamed-chunk-15-1.png" width="768" /></p>
 <p>The distribution follows an extreme power law distribution (very few words occur very often, very many words occur very rare). The Zipf law says that the frequency of a word is reciprocal to its rank (1 / r). To make the plot more readable, the axes can be logarithmized.</p>
 <pre class="r"><code>plot(wordlist$freqs , type = &quot;l&quot;, log=&quot;xy&quot;, lwd=2, main = &quot;Rank-Frequency Plot&quot;, xlab=&quot;log-Rank&quot;, ylab =&quot;log-Frequency&quot;)</code></pre>
-<p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-16-1.png" width="768" /></p>
+<p><img src="Tutorial_2_Read_textdata_files/figure-html/unnamed-chunk-16-1.png" width="768" /></p>
 <p>In the plot, two extreme ranges can be determined. Words in ranks between ca. 10,000 and 30359 can be observed only 10 times or less. Words below rank 100 can be oberved more than 1000 times in the documents. The goal of text mining is to automatically find structures in documents. Both mentioned extreme ranges of the vocabulary often are not suitable for this. Words which occur rarely, on very few documents, and words which occur extremely often, in almost every document, do not contribute much to the meaning of a text.</p>
 <p>Hence, ignoring very rare / frequent words has many advantages:</p>
 <ul>
@@ -703,7 +699,7 @@ low_frequent_idx &lt;- which(wordlist$freqs &lt; 10)
 insignificant_idx &lt;- union(stopwords_idx, low_frequent_idx)
 meaningful_range_idx &lt;- setdiff(1:nrow(wordlist), insignificant_idx)
 lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;green&quot;, lwd=2, type=&quot;p&quot;, pch=20)</code></pre>
-<p><img src="Tutorial_1_Read_textdata_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<p><img src="Tutorial_2_Read_textdata_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
 <p>The green range marks the range of meaningful terms for the collection.</p>
 </div>
 <div id="optional-exercises" class="section level1">
@@ -756,7 +752,7 @@ lines(meaningful_range_idx, wordlist$freqs[meaningful_range_idx], col = &quot;gr
 </div>
 </div>
 
-<p>2019, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
+<p>2020, Andreas Niekler and Gregor Wiedemann. GPLv3. <a href="https://tm4ss.github.io">tm4ss.github.io</a></p>
 
 
 </div>

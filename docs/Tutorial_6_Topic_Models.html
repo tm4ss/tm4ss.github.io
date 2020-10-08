@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-10-07" />
+<meta name="date" content="2020-10-08" />
 
 <title>Tutorial 6: Topic Models</title>
 
@@ -363,14 +363,14 @@ div.tocify {
   <a href="index.html">Intro</a>
 </li>
 <li>
-  <a href="Tutorial_1_Read_textdata.html">
+  <a href="Tutorial_1_Web_scraping.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 1
   </a>
 </li>
 <li>
-  <a href="Tutorial_2_Web_crawling.html">
+  <a href="Tutorial_2_Read_textdata.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 2
@@ -432,7 +432,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 6: Topic Models</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-10-07</h4>
+<h4 class="date">2020-10-08</h4>
 
 </div>
 
@@ -537,23 +537,34 @@ dim(theta)               # nDocs(DTM) distributions over K topics</code></pre>
 ##  1  1  1  1  1  1  1  1  1  1</code></pre>
 <p>Let’s take a look at the 10 most likely terms within the term probabilities <code>beta</code> of the inferred topics (only the first 8 are shown below).</p>
 <pre class="r"><code>terms(topicModel, 10)</code></pre>
-<pre><code>##       Topic 1       Topic 2     Topic 3          Topic 4       Topic 5    Topic 6     Topic 7    Topic 8      
-##  [1,] &quot;increase&quot;    &quot;public&quot;    &quot;administration&quot; &quot;gold&quot;        &quot;congress&quot; &quot;america&quot;   &quot;program&quot;  &quot;man&quot;        
-##  [2,] &quot;law&quot;         &quot;bank&quot;      &quot;policy&quot;         &quot;amount&quot;      &quot;act&quot;      &quot;american&quot;  &quot;congress&quot; &quot;law&quot;        
-##  [3,] &quot;report&quot;      &quot;subject&quot;   &quot;work&quot;           &quot;silver&quot;      &quot;treaty&quot;   &quot;nation&quot;    &quot;american&quot; &quot;work&quot;       
-##  [4,] &quot;congress&quot;    &quot;interest&quot;  &quot;effort&quot;         &quot;treasury&quot;    &quot;duty&quot;     &quot;terrorist&quot; &quot;increase&quot; &quot;good&quot;       
-##  [5,] &quot;work&quot;        &quot;duty&quot;      &quot;development&quot;    &quot;issue&quot;       &quot;subject&quot;  &quot;freedom&quot;   &quot;billion&quot;  &quot;business&quot;   
-##  [6,] &quot;indian&quot;      &quot;general&quot;   &quot;system&quot;         &quot;bond&quot;        &quot;present&quot;  &quot;great&quot;     &quot;federal&quot;  &quot;corporation&quot;
-##  [7,] &quot;legislation&quot; &quot;attention&quot; &quot;continue&quot;       &quot;circulation&quot; &quot;citizen&quot;  &quot;act&quot;       &quot;nation&quot;   &quot;power&quot;      
-##  [8,] &quot;secretary&quot;   &quot;system&quot;    &quot;national&quot;       &quot;note&quot;        &quot;claim&quot;    &quot;iraq&quot;      &quot;energy&quot;   &quot;nation&quot;     
-##  [9,] &quot;land&quot;        &quot;time&quot;      &quot;support&quot;        &quot;present&quot;     &quot;time&quot;     &quot;world&quot;     &quot;world&quot;    &quot;great&quot;      
-## [10,] &quot;department&quot;  &quot;measure&quot;   &quot;international&quot;  &quot;pay&quot;         &quot;part&quot;     &quot;fight&quot;     &quot;continue&quot; &quot;condition&quot;</code></pre>
+<pre><code>##       Topic 1       Topic 2     Topic 3          Topic 4        Topic 5    Topic 6    Topic 7   
+##  [1,] &quot;law&quot;         &quot;bank&quot;      &quot;program&quot;        &quot;law&quot;          &quot;congress&quot; &quot;work&quot;     &quot;world&quot;   
+##  [2,] &quot;increase&quot;    &quot;public&quot;    &quot;continue&quot;       &quot;territory&quot;    &quot;subject&quot;  &quot;american&quot; &quot;nation&quot;  
+##  [3,] &quot;report&quot;      &quot;great&quot;     &quot;energy&quot;         &quot;constitution&quot; &quot;interest&quot; &quot;america&quot;  &quot;great&quot;   
+##  [4,] &quot;indian&quot;      &quot;duty&quot;      &quot;increase&quot;       &quot;property&quot;     &quot;treaty&quot;   &quot;job&quot;      &quot;peace&quot;   
+##  [5,] &quot;congress&quot;    &quot;subject&quot;   &quot;congress&quot;       &quot;republic&quot;     &quot;duty&quot;     &quot;people&quot;   &quot;freedom&quot; 
+##  [6,] &quot;legislation&quot; &quot;require&quot;   &quot;federal&quot;        &quot;congress&quot;     &quot;power&quot;    &quot;child&quot;    &quot;people&quot;  
+##  [7,] &quot;work&quot;        &quot;general&quot;   &quot;administration&quot; &quot;union&quot;        &quot;act&quot;      &quot;good&quot;     &quot;defense&quot; 
+##  [8,] &quot;great&quot;       &quot;people&quot;    &quot;policy&quot;         &quot;act&quot;          &quot;time&quot;     &quot;family&quot;   &quot;free&quot;    
+##  [9,] &quot;land&quot;        &quot;object&quot;    &quot;billion&quot;        &quot;treaty&quot;       &quot;part&quot;     &quot;time&quot;     &quot;economic&quot;
+## [10,] &quot;attention&quot;   &quot;principle&quot; &quot;provide&quot;        &quot;amount&quot;       &quot;receive&quot;  &quot;tonight&quot;  &quot;congress&quot;
+##       Topic 8      
+##  [1,] &quot;man&quot;        
+##  [2,] &quot;law&quot;        
+##  [3,] &quot;great&quot;      
+##  [4,] &quot;work&quot;       
+##  [5,] &quot;good&quot;       
+##  [6,] &quot;nation&quot;     
+##  [7,] &quot;business&quot;   
+##  [8,] &quot;power&quot;      
+##  [9,] &quot;corporation&quot;
+## [10,] &quot;condition&quot;</code></pre>
 <p>For the next steps, we want to give the topics more descriptive names than just numbers. Therefore, we simply concatenate the five most likely terms of each topic to a string that represents a pseudo-name for each topic.</p>
 <pre class="r"><code>top5termsPerTopic &lt;- terms(topicModel, 5)
 topicNames &lt;- apply(top5termsPerTopic, 2, paste, collapse=&quot; &quot;)</code></pre>
 </div>
-<div id="visualization-of-words-and-topics" class="section level1">
-<h1><span class="header-section-number">2</span> Visualization of Words and Topics</h1>
+<div id="visualization" class="section level1">
+<h1><span class="header-section-number">2</span> Visualization</h1>
 <p>Although wordclouds may not be optimal for scientific purposes they can provide a quick visual overview of a set of terms. Let’s look at some topics as wordcloud.</p>
 <p>In the following code, you can change the variable <strong>topicToViz</strong> with values between 1 and 20 to display other topics.</p>
 <pre class="r"><code>require(wordcloud2)
@@ -567,8 +578,8 @@ words &lt;- names(top40terms)
 probabilities &lt;- sort(tmResult$terms[topicToViz,], decreasing=TRUE)[1:40]
 # visualize the terms as wordcloud
 wordcloud2(data.frame(words, probabilities), shuffle = FALSE, size = 0.8)</code></pre>
-<div id="htmlwidget-b6d99c97ec4a1f7688e8" style="width:384px;height:384px;" class="wordcloud2 html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b6d99c97ec4a1f7688e8">{"x":{"word":["mexico","war","texas","army","amount","policy","revenue","large","peace","treasury","territory","land","great","price","establish","nation","secretary","mexican","increase","recommend","measure","people","california","loan","world","american","mile","command","system","reduce","month","remain","numb","term","rate","coast","military","extend","oregon","estimate"],"freq":[0.0283255490555117,0.0176229254565907,0.00997819431450424,0.00903170379215068,0.00834003764120001,0.00783038889839424,0.00753916104536238,0.00742995060047543,0.00710231926581458,0.00655626704137983,0.00648346007812187,0.00630144266997696,0.00601021481694509,0.00582819740880018,0.00568258348228424,0.00564618000065526,0.00553696955576832,0.00550056607413933,0.00542775911088136,0.0051365312578495,0.0046996894783017,0.00462688251504374,0.00462688251504374,0.00444486510689882,0.00444486510689882,0.00437205814364086,0.00419004073549594,0.00415363725386696,0.00404442680898001,0.00400802332735103,0.00393521636409306,0.00389881288246408,0.00378960243757713,0.00371679547431916,0.0036439885110612,0.00360758502943221,0.00357118154780323,0.00353477806617425,0.00353477806617425,0.00349837458454526],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":5083.74964657499,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<div id="htmlwidget-ee5594fbee4b35d00129" style="width:768px;height:576px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-ee5594fbee4b35d00129">{"x":{"word":["mexico","war","texas","peace","army","territory","large","amount","recommend","land","establish","policy","law","revenue","mexican","great","act","secretary","people","exist","california","order","increase","require","price","pay","treasury","force","command","month","public","officer","general","rate","oregon","world","loan","operation","port","hold"],"freq":[0.0283645665109524,0.0171285708608362,0.00990285018552038,0.00874673487746984,0.00838544884370405,0.00780739118967878,0.00679579029513456,0.0067235330883814,0.00665127588162824,0.00661514727825167,0.00639837565799219,0.00636224705461561,0.00614547543435613,0.00582031800396692,0.00574806079721376,0.00560354638370745,0.00513387453981191,0.00491710291955244,0.00466420269591638,0.00466420269591638,0.00455581688578665,0.00451968828241007,0.00448355967903349,0.00433904526552717,0.00430291666215059,0.00419453085202085,0.0039416306283848,0.0039416306283848,0.00386937342163164,0.00383324481825506,0.00379711621487848,0.0037609876115019,0.00361647319799558,0.00361647319799558,0.00361647319799558,0.00350808738786585,0.00347195878448927,0.00347195878448927,0.00347195878448927,0.00347195878448927],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":5076.75659151701,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":false,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
 <p>Let us now look more closely at the distribution of topics within individual documents. To this end, we visualize the distribution in 3 sample documents.</p>
 <p>Let us first take a look at the contents of three sample documents:</p>
 <pre class="r"><code>exampleIds &lt;- c(2, 100, 200)
@@ -655,16 +666,26 @@ topicNames &lt;- apply(lda::top.topic.words(beta, 5, by.score = T), 2, paste, co
 topicProportions &lt;- colSums(theta) / nrow(DTM)  # mean probablities over all paragraphs
 names(topicProportions) &lt;- topicNames     # assign the topic names we created before
 sort(topicProportions, decreasing = TRUE) # show summed proportions in decreased order</code></pre>
-<pre><code>##  [1] &quot;0.20355 : congress time treaty act subject&quot;                &quot;0.12296 : congress american america good nation&quot;          
-##  [3] &quot;0.12152 : public people great power subject&quot;               &quot;0.07574 : object nation commerce spain war&quot;               
-##  [5] &quot;0.07112 : nation great world life time&quot;                    &quot;0.06418 : work job child america tonight&quot;                 
-##  [7] &quot;0.05948 : program economic federal expenditure congress&quot;   &quot;0.05331 : world defense peace strength effort&quot;            
-##  [9] &quot;0.03185 : department american court commission board&quot;      &quot;0.02459 : program energy administration policy continue&quot;  
-## [11] &quot;0.02267 : terrorist america iraq iraqi terror&quot;             &quot;0.02087 : island international cuba july commission&quot;      
-## [13] &quot;0.02018 : person report legislation claim show&quot;            &quot;0.01849 : war fight enemy man victory&quot;                    
-## [15] &quot;0.0183 : man corporation law good business&quot;                &quot;0.01611 : indian report increase work total&quot;              
-## [17] &quot;0.01604 : constitution union territory congress president&quot; &quot;0.01324 : gold bond silver coin amount&quot;                   
-## [19] &quot;0.01299 : mexico texas war mexican army&quot;                   &quot;0.01279 : bank currency deposit credit public_money&quot;</code></pre>
+<pre><code>##  [1] &quot;0.18071 : congress present great time law&quot;                
+##  [2] &quot;0.11748 : congress treaty act claim duty&quot;                 
+##  [3] &quot;0.11551 : world nation people great time&quot;                 
+##  [4] &quot;0.09603 : public subject object measure attention&quot;        
+##  [5] &quot;0.08662 : work job tonight family america&quot;                
+##  [6] &quot;0.07038 : problem congress economic development world&quot;    
+##  [7] &quot;0.05456 : war great million sea nation&quot;                   
+##  [8] &quot;0.05422 : program increase federal continue billion&quot;      
+##  [9] &quot;0.02894 : report indian work increase legislation&quot;        
+## [10] &quot;0.02522 : international island treaty convention american&quot;
+## [11] &quot;0.0244 : war communist fight defense unite_nation&quot;        
+## [12] &quot;0.02327 : program expenditure war price fiscal_year&quot;      
+## [13] &quot;0.02235 : america terrorist iraq tonight american&quot;        
+## [14] &quot;0.01849 : department american court board cent&quot;           
+## [15] &quot;0.01714 : man work corporation business great&quot;            
+## [16] &quot;0.01596 : constitution union people slavery territory&quot;    
+## [17] &quot;0.01297 : judge nation justice law court&quot;                 
+## [18] &quot;0.01226 : bank currency deposit paper credit&quot;             
+## [19] &quot;0.01195 : gold silver bond treasury amount&quot;               
+## [20] &quot;0.01152 : mexico texas war mexican army&quot;</code></pre>
 <p>We recognize some topics that are way more likely to occur in the corpus than others. These describe rather general thematic coherences. Other topics correspond more to specific contents.</p>
 <p><strong>Approach 2:</strong> We count how often a topic appears as a primary topic within a paragraph This method is also called Rank-1.</p>
 <pre class="r"><code>countsOfPrimaryTopics &lt;- rep(0, K)
@@ -676,16 +697,26 @@ for (i in 1:nrow(DTM)) {
   countsOfPrimaryTopics[primaryTopic] &lt;- countsOfPrimaryTopics[primaryTopic] + 1
 }
 sort(countsOfPrimaryTopics, decreasing = TRUE)</code></pre>
-<pre><code>##  [1] &quot;85 : congress time treaty act subject&quot;               &quot;33 : congress american america good nation&quot;         
-##  [3] &quot;19 : program economic federal expenditure congress&quot;  &quot;18 : nation great world life time&quot;                  
-##  [5] &quot;17 : work job child america tonight&quot;                 &quot;15 : object nation commerce spain war&quot;              
-##  [7] &quot;10 : world defense peace strength effort&quot;            &quot;8 : public people great power subject&quot;              
-##  [9] &quot;7 : man corporation law good business&quot;               &quot;6 : terrorist america iraq iraqi terror&quot;            
-## [11] &quot;4 : department american court commission board&quot;      &quot;3 : program energy administration policy continue&quot;  
-## [13] &quot;3 : war fight enemy man victory&quot;                     &quot;2 : indian report increase work total&quot;              
-## [15] &quot;2 : gold bond silver coin amount&quot;                    &quot;1 : constitution union territory congress president&quot;
-## [17] &quot;0 : bank currency deposit credit public_money&quot;       &quot;0 : person report legislation claim show&quot;           
-## [19] &quot;0 : mexico texas war mexican army&quot;                   &quot;0 : island international cuba july commission&quot;</code></pre>
+<pre><code>##  [1] &quot;64 : congress present great time law&quot;               
+##  [2] &quot;33 : world nation people great time&quot;                
+##  [3] &quot;27 : congress treaty act claim duty&quot;                
+##  [4] &quot;22 : work job tonight family america&quot;               
+##  [5] &quot;19 : problem congress economic development world&quot;   
+##  [6] &quot;17 : public subject object measure attention&quot;       
+##  [7] &quot;14 : war great million sea nation&quot;                  
+##  [8] &quot;8 : program increase federal continue billion&quot;      
+##  [9] &quot;8 : america terrorist iraq tonight american&quot;        
+## [10] &quot;7 : international island treaty convention american&quot;
+## [11] &quot;5 : war communist fight defense unite_nation&quot;       
+## [12] &quot;4 : man work corporation business great&quot;            
+## [13] &quot;2 : mexico texas war mexican army&quot;                  
+## [14] &quot;1 : gold silver bond treasury amount&quot;               
+## [15] &quot;1 : program expenditure war price fiscal_year&quot;      
+## [16] &quot;1 : judge nation justice law court&quot;                 
+## [17] &quot;0 : report indian work increase legislation&quot;        
+## [18] &quot;0 : department american court board cent&quot;           
+## [19] &quot;0 : bank currency deposit paper credit&quot;             
+## [20] &quot;0 : constitution union people slavery territory&quot;</code></pre>
 <p>We see that sorting topics by the Rank-1 method places topics with rather specific thematic coherences in upper ranks of the list.</p>
 <p>This sorting of topics can be used for further analysis steps such as the semantic interpretation of topics found in the collection, the analysis of time series of the most important topics or the filtering of the original collection based on specific sub-topics.</p>
 </div>
@@ -717,7 +748,7 @@ filteredCorpus</code></pre>
 ## 
 ## 60 :
 ## &quot;Fellow-Citizens of the Senate and of the House of Representa...&quot;</code></pre>
-<p>Our filtered corpus contains 5 documents related to the topic 17 to at least 10 %.</p>
+<p>Our filtered corpus contains 5 documents related to the topic 13 to at least 10 %.</p>
 </div>
 <div id="topic-proportions-over-time" class="section level1">
 <h1><span class="header-section-number">6</span> Topic proportions over time</h1>
@@ -748,52 +779,46 @@ ggplot(vizDataFrame, aes(x=decade, y=value, fill=variable)) +
 <li>Create a list of all documents that contain a share of <em>war</em>-related topics of at least 50 % (possible approach: sub-select topics which contain the term <em>war</em> among the top 15 terms).</li>
 </ol>
 <pre><code>## Selected topics:</code></pre>
-<pre><code>##                                 10                                 17                                 18 
-## &quot;object nation commerce spain war&quot;    &quot;mexico texas war mexican army&quot;     &quot;nation great world life time&quot; 
-##                                 19 
-##      &quot;war fight enemy man victory&quot;</code></pre>
+<pre><code>##                                            10                                            13 
+##                &quot;war great million sea nation&quot;               &quot;mexico texas war mexican army&quot; 
+##                                            15                                            17 
+##   &quot;program expenditure war price fiscal_year&quot; &quot;constitution union people slavery territory&quot; 
+##                                            19 
+##    &quot;war communist fight defense unite_nation&quot;</code></pre>
 <pre><code>## Beginnings of filtered speeches:</code></pre>
-<pre><code>## Corpus consisting of 12 documents.
-## 24 :
-## &quot;Fellow-Citizens of the Senate and House of Representatives: ...&quot;
-## 
+<pre><code>## Corpus consisting of 6 documents.
 ## 25 :
 ## &quot;Fellow-Citizens of the Senate and House of Representatives: ...&quot;
 ## 
 ## 26 :
 ## &quot;Fellow-Citizens of the Senate and House of Representatives: ...&quot;
 ## 
-## 125 :
-## &quot;Gentlemen of the Congress: In pursuance of my constitutional...&quot;
+## 153 :
+## &quot;In fulfilling my duty to report upon the State of the Union,...&quot;
 ## 
-## 126 :
-## &quot;GENTLEMEN OF THE CONGRESS: The session upon which you are no...&quot;
+## 154 :
+## &quot;Mr. Vice President, Mr. Speaker, Members of the Seventy-eigh...&quot;
 ## 
-## 127 :
-## &quot;GENTLEMEN OF THE CONGRESS: Since I last had the privilege of...&quot;
+## 156 :
+## &quot;To the Congress: In considering the State of the Union, the ...&quot;
 ## 
-## [ reached max_ndoc ... 6 more documents ]</code></pre>
+## 157 :
+## &quot;To the Congress of the United States: A quarter century ago ...&quot;</code></pre>
 <pre><code>## Metadata of filtered speeches:</code></pre>
 <pre><code>##     doc_id             president       date decade topic_share
-## 24      24         James Madison 1812-11-04   1810       0.553
-## 25      25         James Madison 1813-12-07   1810       0.603
-## 26      26         James Madison 1814-09-20   1810       0.636
-## 125    125        Woodrow Wilson 1913-12-02   1910       0.525
-## 126    126        Woodrow Wilson 1914-12-08   1910       0.647
-## 127    127        Woodrow Wilson 1915-12-07   1910       0.633
-## 129    129        Woodrow Wilson 1917-12-04   1910       0.705
-## 130    130        Woodrow Wilson 1918-12-02   1910       0.654
-## 153    153 Franklin D. Roosevelt 1942-01-06   1940       0.607
-## 154    154 Franklin D. Roosevelt 1943-01-07   1940       0.655
-## 155    155 Franklin D. Roosevelt 1944-01-11   1940       0.525
-## 156    156 Franklin D. Roosevelt 1945-01-06   1940       0.579</code></pre>
+## 25      25         James Madison 1813-12-07   1810       0.527
+## 26      26         James Madison 1814-09-20   1810       0.541
+## 153    153 Franklin D. Roosevelt 1942-01-06   1940       0.575
+## 154    154 Franklin D. Roosevelt 1943-01-07   1940       0.523
+## 156    156 Franklin D. Roosevelt 1945-01-06   1940       0.538
+## 157    157       Harry S. Truman 1946-01-21   1940       0.560</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li><p>Repeat the exercises with a different K value (e.g., K = 5, 30, 50). What do you think of the results?</p></li>
 <li><p>Split the original text source into paragraphs (e.g. use <code>corpus_reshape(x, to = "paragraphs")</code>) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?</p></li>
 </ol>
 <pre><code>## Length of the corpus split into paragraphs:</code></pre>
 <pre><code>## [1] 21611</code></pre>
-<p><img src="Tutorial_6_Topic_Models_files/figure-html/ex3-1.png" width="672" /></p>
+<p><img src="Tutorial_6_Topic_Models_files/figure-html/ex3-1.png" width="864" style="display: block; margin: auto;" /></p>
 <ol start="4" style="list-style-type: decimal">
 <li>Use the LDAvis package by <span class="citation">[4]</span> to visualize the latest model you computed.</li>
 </ol>

@@ -16,6 +16,7 @@ bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
 This exercise demonstrates the use of topic models on a text corpus for the extraction of latent semantic contexts in the documents. In this exercise we will:
 
@@ -153,13 +154,13 @@ top5termsPerTopic <- terms(topicModel, 5)
 topicNames <- apply(top5termsPerTopic, 2, paste, collapse=" ")
 ```
 
-# Visualization of Words and Topics
+# Visualization
 
 Although wordclouds may not be optimal for scientific purposes they can provide a quick visual overview of a set of terms. Let's look at some topics as wordcloud.
 
 In the following code, you can change the variable **topicToViz** with values between 1 and 20 to display other topics.
 
-``` {r, fig.width=4, fig.height=4, fig.align='center', message=FALSE, warning=F}
+``` {r, fig.width=8, fig.height=6, fig.align='center', message=FALSE, warning=F}
 require(wordcloud2)
 # visualize topics as word cloud
 topicToViz <- 11 # change for your own topic of interest
@@ -377,7 +378,7 @@ print(metadata)
 
 3. Split the original text source into paragraphs (e.g. use `corpus_reshape(x, to = "paragraphs")`) and compute a topic model on paragraphs instead of full speeches. How does the smaller context unit affect the result?
 
-```{r ex3, echo=FALSE, warning=F, message=F, cache=T, error=T}
+```{r ex3, fig.width=9, fig.height=6, fig.align='center', echo=FALSE, warning=F, message=F, cache=T, error=T}
 sotu_corpus <- corpus(
   textdata$text, 
   docnames = textdata$doc_id, 

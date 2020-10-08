@@ -16,6 +16,7 @@ bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
 This exercise will demonstrate how to perform co-occurrence analysis with **R** and the quanteda-package. It is shown how different significance measures can be used to extract semantic links between words. 
 

@@ -16,6 +16,7 @@ bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
 This tutorial shows how to extract key terms from document and (sub-)collections with TF-IDF and the log-likelihood statistic and a reference corpus. We also show how it is possible to hande multi-word units such as `United States' with the quanteda package.
 

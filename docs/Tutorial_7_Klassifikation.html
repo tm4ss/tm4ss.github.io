@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-10-07" />
+<meta name="date" content="2020-10-08" />
 
 <title>Tutorial 7: Classification</title>
 
@@ -358,14 +358,14 @@ div.tocify {
   <a href="index.html">Intro</a>
 </li>
 <li>
-  <a href="Tutorial_1_Read_textdata.html">
+  <a href="Tutorial_1_Web_scraping.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 1
   </a>
 </li>
 <li>
-  <a href="Tutorial_2_Web_crawling.html">
+  <a href="Tutorial_2_Read_textdata.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 2
@@ -427,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 7: Classification</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-10-07</h4>
+<h4 class="date">2020-10-08</h4>
 
 </div>
 
@@ -734,9 +734,9 @@ dim(DTM)</code></pre>
 <pre><code>## [1] 21334 22800</code></pre>
 <pre class="r"><code># How do they look like?
 sample(colnames(DTM), 10)</code></pre>
-<pre><code>##  [1] &quot;chamber&quot;                  &quot;congratulations&quot;          &quot;exempt&quot;                   &quot;made_equal&quot;              
-##  [5] &quot;sacrifices&quot;               &quot;doubt_entertained&quot;        &quot;settlement_international&quot; &quot;promote_general&quot;         
-##  [9] &quot;number_ships&quot;             &quot;frozen&quot;</code></pre>
+<pre><code>##  [1] &quot;accessible&quot;          &quot;means_national&quot;      &quot;great_moment&quot;        &quot;logic&quot;              
+##  [5] &quot;idealism&quot;            &quot;government_congress&quot; &quot;advisory&quot;            &quot;joint_commission&quot;   
+##  [9] &quot;number_ships&quot;        &quot;buy&quot;</code></pre>
 <pre class="r"><code># run cross validation
 annotatedDTM &lt;- convertMatrixToSparseM(DTM[trainingData[, &quot;ID&quot;], ])
 best_C &lt;- optimize_C(annotatedDTM, annotatedLabels)</code></pre>

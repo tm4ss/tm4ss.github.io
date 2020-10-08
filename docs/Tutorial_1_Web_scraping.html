@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-10-07" />
+<meta name="date" content="2020-10-08" />
 
 <title>Tutorial 1: Web crawling and scraping</title>
 
@@ -358,14 +358,14 @@ div.tocify {
   <a href="index.html">Intro</a>
 </li>
 <li>
-  <a href="Tutorial_1_Read_textdata.html">
+  <a href="Tutorial_1_Web_scraping.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 1
   </a>
 </li>
 <li>
-  <a href="Tutorial_2_Web_crawling.html">
+  <a href="Tutorial_2_Read_textdata.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 2
@@ -427,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 1: Web crawling and scraping</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-10-07</h4>
+<h4 class="date">2020-10-08</h4>
 
 </div>
 
@@ -460,9 +460,8 @@ getwd()</code></pre>
 library(webdriver)
 install_phantomjs()</code></pre>
 <p>Now we can start an instance of PhantomJS and create a new browser session that awaits to load URLs to render the corresponding websites.</p>
-<pre class="r"><code>require(webdriver)</code></pre>
-<pre><code>## Loading required package: webdriver</code></pre>
-<pre class="r"><code>pjs_instance &lt;- run_phantomjs()
+<pre class="r"><code>require(webdriver)
+pjs_instance &lt;- run_phantomjs()
 pjs_session &lt;- Session$new(port = pjs_instance$port)</code></pre>
 </div>
 <div id="crawl-single-webpage" class="section level1">
@@ -546,7 +545,8 @@ paging_urls &lt;- paste0(base_url, page_numbers)
 
 # View first 3 urls
 head(paging_urls, 3)</code></pre>
-<pre><code>## [1] &quot;https://www.theguardian.com/world/angela-merkel?page=1&quot; &quot;https://www.theguardian.com/world/angela-merkel?page=2&quot;
+<pre><code>## [1] &quot;https://www.theguardian.com/world/angela-merkel?page=1&quot;
+## [2] &quot;https://www.theguardian.com/world/angela-merkel?page=2&quot;
 ## [3] &quot;https://www.theguardian.com/world/angela-merkel?page=3&quot;</code></pre>
 <p>Now we can iterate over all URLs of tag overview pages, to collect more/all links to articles tagged with Angela Merkel. We iterate with a for-loop over all URLs and append results from each single URL to a vector of all links.</p>
 <pre class="r"><code>all_links &lt;- NULL

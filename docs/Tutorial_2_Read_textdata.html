@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-10-07" />
+<meta name="date" content="2020-10-08" />
 
 <title>Tutorial 2: Processing of textual data</title>
 
@@ -358,14 +358,14 @@ div.tocify {
   <a href="index.html">Intro</a>
 </li>
 <li>
-  <a href="Tutorial_1_Read_textdata.html">
+  <a href="Tutorial_1_Web_scraping.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 1
   </a>
 </li>
 <li>
-  <a href="Tutorial_2_Web_crawling.html">
+  <a href="Tutorial_2_Read_textdata.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 2
@@ -427,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 2: Processing of textual data</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-10-07</h4>
+<h4 class="date">2020-10-08</h4>
 
 </div>
 
@@ -488,10 +488,12 @@ colnames(textdata)</code></pre>
 <p><strong>How many speeches do we have per president?</strong> This can easily be counted with the command <code>table</code>, which can be used to create a cross table of different values. If we apply it to a column, e.g. <em>president</em> of our data frame, we get the counts of the unique <em>president</em> values.</p>
 <pre class="r"><code>table(textdata[, &quot;president&quot;])</code></pre>
 <pre><code>## 
-##       Abraham Lincoln        Andrew Jackson        Andrew Johnson          Barack Obama     Benjamin Harrison       Calvin Coolidge 
-##                     4                     8                     4                     8                     4                     6 
-##     Chester A. Arthur       Donald J. Trump  Dwight D. Eisenhower Franklin D. Roosevelt       Franklin Pierce      George H.W. Bush 
-##                     4                     3                     9                    12                     4                     4</code></pre>
+##       Abraham Lincoln        Andrew Jackson        Andrew Johnson          Barack Obama 
+##                     4                     8                     4                     8 
+##     Benjamin Harrison       Calvin Coolidge     Chester A. Arthur       Donald J. Trump 
+##                     4                     6                     4                     3 
+##  Dwight D. Eisenhower Franklin D. Roosevelt       Franklin Pierce      George H.W. Bush 
+##                     9                    12                     4                     4</code></pre>
 <p>Now we want to transfer the loaded text source into a <strong>corpus object</strong> of the <code>quanteda</code>-package. Quanteda provides a large number of highly efficient convenience functions to process text in R <span class="citation">[1]</span>. First we load the package.</p>
 <pre class="r"><code>require(quanteda)</code></pre>
 <p>A corpus object is created with the <code>corpus</code> command. As parameter, the command gets the fulltext of the documents. In our case, this is the <code>text</code>-column of the <code>textdata</code>-data.frame. The docnames-parameter of the corpus function defines which unique identifier is given to each text example in the input (values from other columns of the data frame could be imported as metadata to each document but we will not use them in this tutorial).</p>

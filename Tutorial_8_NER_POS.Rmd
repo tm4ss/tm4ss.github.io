@@ -16,8 +16,9 @@ csl: springer.csl
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
-This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package.
+This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package. The openNLP package relies on the `rjava` package. For this to work properly, you need a version of Java installed (e.g. open-jdk) which matches your R-version w.r.t either the 32- or 64-bit installation. Also the `JAVA_HOME` environment variable needs to be set, pointing to your Java installation directory.
 
 # Annotate POS
 

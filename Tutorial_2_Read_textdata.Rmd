@@ -16,6 +16,7 @@ bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
 In this tutorial, we demonstrate how to read text data in R, tokenize texts and create a document-term matrix.
 

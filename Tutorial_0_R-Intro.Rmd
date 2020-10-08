@@ -14,6 +14,7 @@ csl: springer.csl
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
 Start **RStudio** on your computer. **RStudio** is a so-called IDE - Integrated Development Environment. The interface provides easy access to **R**. The advantage of this application is that **R** programs and files as well as a project directory can be managed easily. The environment is capable of editing and running program code, viewing outputs and rendering graphics. Furthermore, it is possible to view variables and data objects of an R-script directly in the interface. The screen divides into the areas
 

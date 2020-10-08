@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andreas Niekler, Gregor Wiedemann" />
 
-<meta name="date" content="2020-10-07" />
+<meta name="date" content="2020-10-08" />
 
 <title>Tutorial 8: Part-of-Speech tagging / Named Entity Recognition</title>
 
@@ -358,14 +358,14 @@ div.tocify {
   <a href="index.html">Intro</a>
 </li>
 <li>
-  <a href="Tutorial_1_Read_textdata.html">
+  <a href="Tutorial_1_Web_scraping.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 1
   </a>
 </li>
 <li>
-  <a href="Tutorial_2_Web_crawling.html">
+  <a href="Tutorial_2_Read_textdata.html">
     <span class="ion ion-android-bulb"></span>
      
     Tutorial 2
@@ -427,7 +427,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Tutorial 8: Part-of-Speech tagging / Named Entity Recognition</h1>
 <h4 class="author">Andreas Niekler, Gregor Wiedemann</h4>
-<h4 class="date">2020-10-07</h4>
+<h4 class="date">2020-10-08</h4>
 
 </div>
 
@@ -435,7 +435,7 @@ div.tocify {
 <p><script>
   addClassKlippyTo("pre.r, pre.markdown");
   addKlippy('left', 'top', 'auto', '1', 'Copy code', 'Copied!');
-</script> This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package.</p>
+</script> This tutorial shows how to use Part-o-Speech-tagging (POS) with the openNLP package. The openNLP package relies on the <code>rjava</code> package. For this to work properly, you need a version of Java installed (e.g. open-jdk) which matches your R-version w.r.t either the 32- or 64-bit installation. Also the <code>JAVA_HOME</code> environment variable needs to be set, pointing to your Java installation directory.</p>
 <div id="annotate-pos" class="section level1">
 <h1><span class="header-section-number">1</span> Annotate POS</h1>
 <p>We extract proper nouns (tag NNP for singular and tag NNPS for plural proper nouns) from paragraphs of president’s speeches.</p>
@@ -514,10 +514,12 @@ source(&quot;calculateCoocStatistics.R&quot;)
 coocTerm &lt;- &quot;spain&quot;
 coocs &lt;- calculateCoocStatistics(coocTerm, binDTM, measure=&quot;LOGLIK&quot;)
 print(coocs[1:20])</code></pre>
-<pre><code>##     united     states   catholic    spanish    florida government    majesty     buenos      ayres     madrid      south    america 
-##      51.88      47.78      35.82      35.61      32.14      30.02      28.27      26.62      26.62      21.52      21.52      12.23 
-##   february       east  pensacola      state   floridas     france     amelia         st 
-##      11.63       9.54       8.10       7.69       6.96       5.78       5.37       4.54</code></pre>
+<pre><code>##     united     states   catholic    spanish    florida government    majesty     buenos 
+##      51.88      47.78      35.82      35.61      32.14      30.02      28.27      26.62 
+##      ayres     madrid      south    america   february       east  pensacola      state 
+##      26.62      21.52      21.52      12.23      11.63       9.54       8.10       7.69 
+##   floridas     france     amelia         st 
+##       6.96       5.78       5.37       4.54</code></pre>
 </div>
 <div id="german-language-support" class="section level1">
 <h1><span class="header-section-number">3</span> German language support</h1>

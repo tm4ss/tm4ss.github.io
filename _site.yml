@@ -10,10 +10,10 @@ navbar:
 #      href: Tutorial_0_R-Intro.html
 #      icon: ion-android-bulb
     - text: "Tutorial 1"
-      href: Tutorial_1_Read_textdata.html
+      href: Tutorial_1_Web_scraping.html
       icon: ion-android-bulb
     - text: "Tutorial 2"
-      href: Tutorial_2_Web_crawling.html
+      href: Tutorial_2_Read_textdata.html
       icon: ion-android-bulb
     - text: "Tutorial 3"
       href: Tutorial_3_Frequency.html
@@ -35,6 +35,8 @@ navbar:
       icon: ion-android-bulb
 output:
   html_document:
+#    theme: united
+#    highlight: tango
     toc: true
     toc_float: true
     include:

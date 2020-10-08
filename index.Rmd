@@ -1,5 +1,5 @@
 ---
-title: "Text mining for humanists and social scientists in R"
+title: "Text mining in R for the social sciences and digital humanities"
 author: "Andreas Niekler, Gregor Wiedemann"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: 
@@ -15,6 +15,7 @@ csl: springer.csl
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(width = 98)
 ```
 
 # Contents
@@ -59,5 +60,42 @@ You can use *knitr* to create the tutorial sheets as HTML notebooks from the [R-
 This course was created by Gregor Wiedemann and Andreas Niekler. It was freely released under GPLv3 in September 2017. If you use (parts of) it for your own teaching or analysis, please cite
 
 ```
-Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: a five day text mining course for humanists and social scientists in R. Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH@GSCL 2017), Berlin.
+Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: A five day text mining course for humanists and social scientists in R. Proceedings of the 1st Workshop on Teaching NLP for Digital Humanities (Teach4DH@GSCL 2017), Berlin.
+```
+
+# Session info
+
+The tutorials load some of the following packages.
+
+```{r packagelist, echo=T, message=F, warning=F, error=F, results='hide'}
+package_list <- c(
+  "dplyr",
+  "ggplot2",
+  "igraph",
+  "irr",
+  "LDAvis",
+  "LiblineaR",
+  "Matrix",
+  "NLP",
+  "openNLP",
+  "openNLPdata",
+  "pals",
+  "png",
+  "quanteda",
+  "readtext",
+  "reshape2",
+  "rvest",
+  "topicmodels",
+  "tsne",
+  "webdriver",
+  "wordcloud",
+  "wordcloud2"
+)
+lapply(package_list, require, character.only = TRUE)
+```
+
+These are the package versions, we used for this tutorial. 
+
+```{r sesinfo, echo=T}
+sessionInfo()
 ```

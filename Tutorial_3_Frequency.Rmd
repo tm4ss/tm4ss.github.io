@@ -16,6 +16,7 @@ bibliography: references.bib
 ---
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy()
+options(width = 98)
 ```
 This tutorial introduces frequency analysis with basic R functions. We further introduce some text preprocessing functionality provided by the `quanteda` package.
 

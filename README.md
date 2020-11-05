@@ -38,7 +38,7 @@ rmarkdown::render_site(output_format = "html_document")
 This course was created by Gregor Wiedemann and Andreas Niekler. It was freely released under GPLv3 in September 2017. If you use (parts of) it for your own teaching or analysis, please cite
 
 ```
-Wiedemann, Gregor; Niekler, Andreas (2017): Hands-on: a five day text mining course for humanists and social scientists in R. Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH@GSCL 2017), Berlin.
+Wiedemann, Gregor; Niekler, Andreas (2017): [Hands-on: a five day text mining course for humanists and social scientists in R](http://ceur-ws.org/Vol-1918/wiedemann.pdf). Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH@GSCL 2017), Berlin.
 ```
 
 Bibtex

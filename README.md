@@ -40,6 +40,9 @@ This course was created by Gregor Wiedemann and Andreas Niekler. It was freely r
 ```
 Wiedemann, Gregor; Niekler, Andreas (2017): [Hands-on: a five day text mining course for humanists and social scientists in R](http://ceur-ws.org/Vol-1918/wiedemann.pdf). Proceedings of the 1st Workshop Teaching NLP for Digital Humanities (Teach4DH@GSCL 2017), Berlin.
 ```
+PDF
+
+[Download paper](http://ceur-ws.org/Vol-1918/wiedemann.pdf)
 
 Bibtex
 

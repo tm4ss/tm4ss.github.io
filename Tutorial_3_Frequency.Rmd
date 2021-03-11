@@ -119,7 +119,7 @@ l <- length(terms_to_observe)
 legend('topleft', legend = terms_to_observe, col=1:l, text.col = 1:l, lty = 1:l)  
 ```
 
-Among other things, we can observe peaks in reference to `war` around the US civil war, around 1900 and WWII. The term nation also peaks around 1900 giving hints for further investigations on possible relatedness of both terms during that time. References to security, god of terror appear to be more 'modern' phenomena.
+Among other things, we can observe peaks in reference to `war` around the US civil war, around 1900 and WWII. The term nation also peaks around 1900 giving hints for further investigations on possible relatedness of both terms during that time. References to security, god or terror appear to be more 'modern' phenomena.
 
 # Grouping of sentiments
 

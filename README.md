@@ -1,6 +1,6 @@
 # tm4ss - Text Mining for Social Scientists and Digital Humanists
 
-This course consists of 8 tutorials written in R-markdown and further described in [this paper](http://gscl2017.dfki.de/proceedings.php). 
+This course consists of 8 tutorials written in R-markdown and further described in [this paper](http://ceur-ws.org/Vol-1918/wiedemann.pdf). 
 
 You can use *knitr* to create the tutorial sheets as HTML notebooks from the [R-markdown source code](https://github.com/tm4ss/tm4ss.github.io).
 
